@@ -1,2 +1,15 @@
-*.class
-*.log
+.idea
+.idea/
+workspace.xml
+workspace
+target
+
+.cache-main
+.cache-tests
+.classpath
+.project
+.settings/
+bin/
+tmp/
+
+**/*.protobin
