@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<model name="sales" script="../src/cqrs_entities.gsl" package="com.github.apuex.commerce.sales" dbSchema="sales">
+  <entity name="product" aggregationRoot="true">
+    <field name="product_id" type="string" length="64" required="true"/>
+    <field name="product_name" type="string" length="64" required="true" aggregation="true"/>
+    <field name="product_unit" type="string" length="64" required="true" aggregation="true"/>
+    <field name="unit_price" type="double" required="true" aggregation="true"/>
+    <field name="record_time" type="double" transient="true"/>
+    <field name="quantity_sold" type="double" transient="true"/>
+    <primaryKey name="product_pk">
+      <field name="product_id"/>
+    </primaryKey>
+    <aggregation name="product_sales">
+      <field name="product_name"/>
+      <field name="record_time"/>
+      <field name="quantity_sold"/>
+    </aggregation>
+  </entity>
+  <entity name="order" aggregationRoot="true">
+    <field name="order_id" type="string" length="64" required="true"/>
+    <field name="order_time" type="timestamp" required="true"/>
+    <field name="order_items" type="array" valueType="order_item" aggregation="true"/>
+    <primaryKey name="order_pk">
+      <field name="order_id"/>
+    </primaryKey>
+  </entity>
+  <entity name="order_item" aggregationTo="order">
+    <field name="item_name" joinKey="order_item_product_fk" refField="product_name"/>
+    <field name="unit_price" joinKey="order_item_product_fk" refField="unit_price"/>
+    <field name="order_quantity" type="double" required="true"/>
+    <foreignKey name="order_item_fk" refEntity="order">
+      <field name="order_id" refField="order_id"/>
+    </foreignKey>
+    <foreignKey name="order_item_product_fk" refEntity="product">
+      <field name="product_id" refField="product_id"/>
+    </foreignKey>
+    <primaryKey name="order_item_pk">
+      <field name="order_id"/>
+      <field name="product_id"/>
+    </primaryKey>
+  </entity>
+</model>
