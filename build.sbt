@@ -1,6 +1,6 @@
 import Dependencies._
 
-name         := "lagom-codegen"
+name         := "lagom-codegen-root"
 scalaVersion := scalaVersionNumber
 organization := artifactGroupName
 version      := artifactVersionNumber
@@ -8,12 +8,12 @@ maintainer   := artifactMaintainer
 
 lazy val root = (project in file("."))
   .aggregate(
-    lagom,
+    codegen,
     util,
     runtime
   )
 
-lazy val lagom = (project in file("codegen"))
+lazy val codegen = (project in file("codegen"))
   .dependsOn(util)
   .enablePlugins(GraalVMNativeImagePlugin)
 
