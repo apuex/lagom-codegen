@@ -35,7 +35,9 @@ object ModelLoader {
 
 class ModelLoader(val xml: Node) {
   val mapping = "mapping"
+  val message = "message"
   val api = "api"
+  val dao = "dao"
   val impl = "impl"
   val srcSystem = xml.\@("from")
   val destSystem = xml.\@("to")
@@ -46,10 +48,18 @@ class ModelLoader(val xml: Node) {
   val outputDir = s"${System.getProperty("output.dir", "target/generated")}"
   val rootProjectName = s"${cToShell(modelName)}"
   val rootProjectDir = s"${outputDir}/${rootProjectName}"
+  val messageProjectName = s"${cToShell(modelName)}-${message}"
+  val messageProjectDir = s"${rootProjectDir}/${message}"
+  val messageSrcPackage = s"${modelPackage}"
+  val messageSrcDir = s"${messageProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
   val apiProjectName = s"${cToShell(modelName)}-${api}"
   val apiProjectDir = s"${rootProjectDir}/${api}"
   val apiSrcPackage = s"${modelPackage}"
   val apiSrcDir = s"${apiProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
+  val daoProjectName = s"${cToShell(modelName)}-${dao}"
+  val daoProjectDir = s"${rootProjectDir}/${dao}"
+  val daoSrcPackage = s"${modelPackage}"
+  val daoSrcDir = s"${daoProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
   val implProjectName = s"${cToShell(modelName)}-${impl}"
   val implProjectDir = s"${rootProjectDir}/${impl}"
   val implSrcPackage = s"${modelPackage}.${impl}"

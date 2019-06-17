@@ -1,42 +1,73 @@
 <?xml version="1.0"?>
-<model name="sales" script="../src/cqrs_entities.gsl" package="com.github.apuex.commerce.sales" dbSchema="sales">
-  <entity name="product" aggregationRoot="true">
-    <field name="product_id" type="string" length="64" required="true"/>
-    <field name="product_name" type="string" length="64" required="true" aggregation="true"/>
-    <field name="product_unit" type="string" length="64" required="true" aggregation="true"/>
-    <field name="unit_price" type="double" required="true" aggregation="true"/>
-    <field name="record_time" type="double" transient="true"/>
-    <field name="quantity_sold" type="double" transient="true"/>
+<model name="sales" package="com.github.apuex.commerce.sales" dbSchema="sales">
+  <entity name="product" aggregate="true">
+    <field no="1" name="user_id" type="string"/>
+    <field no="2" name="product_id" type="string" length="64" required="true"/>
+    <field no="3" name="product_name" type="string" length="64" required="true"/>
+    <field no="4" name="product_unit" type="string" length="64" required="true"/>
+    <field no="5" name="unit_price" type="double" required="true"/>
+    <field no="6" name="record_time" type="double" transient="true"/>
+    <field no="7" name="quantity_sold" type="double" transient="true"/>
     <primaryKey name="product_pk">
       <field name="product_id"/>
     </primaryKey>
-    <aggregation name="product_sales">
-      <field name="product_name"/>
-      <field name="record_time"/>
-      <field name="quantity_sold"/>
-    </aggregation>
+    <message name="change_product_name">
+      <field no="1" name="user_id" type="string"/>
+      <field no="2" name="product_id" type="string" length="64" required="true"/>
+      <field no="3" name="product_name" type="string" length="64" required="true"/>
+    </message>
+    <message name="change_product_unit">
+      <field no="1" name="user_id" type="string"/>
+      <field no="2" name="product_id" type="string" length="64" required="true"/>
+      <field no="3" name="product_unit" type="string" length="64" required="true"/>
+    </message>
+    <message name="change_product_price">
+      <field no="1" name="user_id" type="string"/>
+      <field no="2" name="product_id" type="string" length="64" required="true"/>
+      <field no="3" name="product_price" type="string" length="64" required="true"/>
+    </message>
+    <aggregate name="product_sales">
+      <field no="1" name="user_id" type="string"/>
+      <field no="2" name="product_id" type="string" length="64" required="true"/>
+      <field no="3" name="product_name" type="string" length="64" required="true"/>
+      <field no="4" name="record_time" type="double" transient="true"/>
+      <field no="7" name="quantity_sold" type="double" transient="true"/>
+    </aggregate>
   </entity>
-  <entity name="order" aggregationRoot="true">
-    <field name="order_id" type="string" length="64" required="true"/>
-    <field name="order_time" type="timestamp" required="true"/>
-    <field name="order_items" type="array" valueType="order_item" aggregation="true"/>
+  <entity name="order" aggregateRoot="true">
+    <field no="1" name="order_id" type="string" length="64" required="true"/>
+    <field no="2" name="order_time" type="timestamp" required="true"/>
+    <field no="3" name="order_items" type="array" valueType="order_item"/>
     <primaryKey name="order_pk">
       <field name="order_id"/>
     </primaryKey>
+    <message name="add_order_items">
+      <field no="1" name="user_id" type="string"/>
+      <field no="2" name="order_id" type="string" length="64" required="true"/>
+      <field no="3" name="order_items" type="array" valueType="order_item"/>
+    </message>
+    <message name="remove_order_items">
+      <field no="1" name="user_id" type="string"/>
+      <field no="2" name="order_id" type="string" length="64" required="true"/>
+      <field no="3" name="order_items" type="array" valueType="order_item"/>
+    </message>
   </entity>
-  <entity name="order_item" aggregationTo="order">
-    <field name="item_name" joinKey="order_item_product_fk" refField="product_name"/>
-    <field name="unit_price" joinKey="order_item_product_fk" refField="unit_price"/>
-    <field name="order_quantity" type="double" required="true"/>
+  <entity name="order_item" aggregatesTo="order">
+    <field no="1" name="order_id" type="string" length="64" required="true"/>
+    <field no="2" name="item_id" type="string" length="64" required="true"/>
+    <field no="3" name="item_name" type="string" length="64" required="true"/>
+    <field no="4" name="item_unit" type="string" length="64" required="true"/>
+    <field no="5" name="unit_price" type="double" required="true"/>
+    <field no="5" name="order_quantity" type="double" required="true"/>
     <foreignKey name="order_item_fk" refEntity="order">
       <field name="order_id" refField="order_id"/>
     </foreignKey>
     <foreignKey name="order_item_product_fk" refEntity="product">
-      <field name="product_id" refField="product_id"/>
+      <field name="item_id" refField="product_id"/>
     </foreignKey>
     <primaryKey name="order_item_pk">
       <field name="order_id"/>
-      <field name="product_id"/>
+      <field name="item_id"/>
     </primaryKey>
   </entity>
 </model>
