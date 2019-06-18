@@ -18,8 +18,11 @@ class MessageGenerator(modelLoader: ModelLoader) {
     xml.child.filter(_.label == "entity")
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
-        if ("" == aggregatesTo) messagesForAggregate(toAggregate(x, xml))
-        else generateValueObject(toValueObject(x, aggregatesTo, xml))
+        if ("" == aggregatesTo) messagesForAggregate(toAggregate(x, xml), messageSrcPackage)
+        else {
+          val valueObject = toValueObject(x, aggregatesTo, xml)
+          generateValueObject(valueObject.name, valueObject.fields, messageSrcPackage)
+        }
       })
   }
 }
@@ -29,45 +32,102 @@ object MessageGenerator {
 
   def apply(modelLoader: ModelLoader): MessageGenerator = new MessageGenerator(modelLoader)
 
-  def messagesForAggregate(entity: Aggregate, primaryKey: PrimaryKey): Seq[String] = {
+  def messagesForEmbeddedAggregate(entity: Aggregate, name: String, messageSrcPackage: String): Seq[String] = {
     Seq(
+      generateValueObject(entity.name, entity.fields, messageSrcPackage),
       s"""
-         |
+         |message Get${cToPascal(entity.name)}Cmd {
+         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+         |  ${indent(generateFields(userField +: entity.primaryKey.fields), 2)}
+         |}
+       """.stripMargin.trim,
+      s"""
+         |message Update${cToPascal(entity.name)}Cmd {
+         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+         |  ${indent(generateFields(userField +: entity.fields), 2)}
+         |}
+       """.stripMargin.trim,
+      s"""
+         |message Update${cToPascal(entity.name)}Event{
+         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+         |  ${indent(generateFields(userField +: entity.fields), 2)}
+         |}
        """.stripMargin.trim
     )
   }
 
-  def messagesForAggregate(entity: Aggregate): Seq[String] = {
-    entity.aggregates.map(messagesForAggregate(_, entity.primaryKey)).flatMap(x => x) ++
-      Seq(generateValueObject(entity)) ++
-      generateCommands(entity) ++
-      generateEvents(entity)
+  def messagesForAggregate(entity: Aggregate, messageSrcPackage: String): Seq[String] = {
+    entity.aggregates.map(messagesForEmbeddedAggregate(_, entity.name, messageSrcPackage)).flatMap(x => x) ++
+      Seq(generateValueObject(entity.name, entity.fields, messageSrcPackage)) ++
+      generateCrud(entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage) ++
+      generateMessages(entity.messages, entity.name, messageSrcPackage)
   }
 
-  def generateCommands(entity: Aggregate): Seq[String] = Seq()
-
-  def generateEvents(entity: Aggregate): Seq[String] = Seq()
-
-  def generateValueObject(entity: Aggregate, primaryKey: PrimaryKey): String = {
+  def generateMessage(message: Message, name: String, messageSrcPackage: String): String = {
     s"""
-       |message ${cToPascal(entity.name)}Vo {
-       |  ${indent(generateFields(entity.fields), 2)}
+       |message ${cToPascal(message.name)}Cmd {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+       |  ${indent(generateFields(userField +: message.fields), 2)}
        |}
-     """.stripMargin
+     """.stripMargin.trim
   }
 
-  def generateValueObject(entity: Aggregate): String = {
+  def generateMessages(messages: Seq[Message], name: String, messageSrcPackage: String): Seq[String] = {
+    messages
+      .map(x => generateMessage(x, name, messageSrcPackage))
+  }
+
+  def generateCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
     s"""
-       |message ${cToPascal(entity.name)}Vo {
-       |  ${indent(generateFields(entity.fields), 2)}
+       |message Create${cToPascal(name)}Cmd {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+       |  ${indent(generateFields(userField +: fields), 2)}
        |}
-     """.stripMargin
-  }
-
-  def generateValueObject(entity: ValueObject): String = {
+     """.stripMargin.trim,
     s"""
-       |message ${cToPascal(entity.name)}Vo {
-       |  ${indent(generateFields(entity.fields), 2)}
+       |message Create${cToPascal(name)}Event {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  ${indent(generateFields(userField +: fields), 2)}
+       |}
+     """.stripMargin.trim,
+    s"""
+       |message Retrieve${cToPascal(name)}Cmd {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+       |  ${indent(generateFields(userField +: pkFields), 2)}
+       |}
+     """.stripMargin.trim,
+    s"""
+       |message Update${cToPascal(name)}Cmd {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+       |  ${indent(generateFields(userField +: fields), 2)}
+       |}
+     """.stripMargin.trim,
+    s"""
+       |message Update${cToPascal(name)}Event {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  ${indent(generateFields(userField +: fields), 2)}
+       |}
+     """.stripMargin.trim,
+    s"""
+       |message Delete${cToPascal(name)}Cmd {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+       |  ${indent(generateFields(userField +: pkFields), 2)}
+       |}
+     """.stripMargin.trim,
+    s"""
+       |message Create${cToPascal(name)}Event {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  ${indent(generateFields(userField +: pkFields), 2)}
+       |}
+     """.stripMargin.trim
+  )
+
+
+  def generateValueObject(name: String, fields: Seq[Field], messageSrcPackage: String): String = {
+    s"""
+       |message ${cToPascal(name)}Vo {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.ValueObject";
+       |  ${indent(generateFields(fields), 2)}
        |}
      """.stripMargin
   }
@@ -195,22 +255,47 @@ object MessageGenerator {
   def toAggregate(node: Node, primaryKey: PrimaryKey, root: Node): Aggregate = {
     Aggregate(
       node.\@("name"),
-      if ("true" == node.\@("root")) true else false,
-      shuffleFields(getFields(node, root), primaryKey.fields),
+      false,
+      shuffleFields(primaryKey.fields ++ getFields(node, root), primaryKey.fields),
+      Seq(),
       Seq(),
       primaryKey,
       Seq()
     )
   }
 
+  def toAggregate(field: Field, primaryKey: PrimaryKey, root: Node): Aggregate = {
+    Aggregate(
+      field.name,
+      false,
+      shuffleFields(primaryKey.fields :+ field, primaryKey.fields),
+      Seq(),
+      Seq(),
+      primaryKey,
+      Seq()
+    )
+  }
+
+  def toMessage(node: Node, primaryKey: PrimaryKey, root: Node): Message = {
+    Message(
+      node.\@("name"),
+      shuffleFields(primaryKey.fields ++ getFields(node, root), primaryKey.fields),
+      primaryKey
+    )
+  }
+
   def toAggregate(node: Node, root: Node): Aggregate = {
     val primaryKey = getPrimaryKey(node, root)
     val fields = shuffleFields(getFields(node, root), primaryKey.fields)
+    val aggregates = node.child.filter(_.label == "aggregate").map(toAggregate(_, primaryKey, root)) ++
+      fields.filter(_.aggregate)
+        .map(x => toAggregate(x, primaryKey, root))
     Aggregate(
       node.\@("name"),
       if ("true" == node.\@("root")) true else false,
       fields,
-      node.child.filter(_.label == "aggregate").map(toAggregate(_, primaryKey, root)),
+      aggregates,
+      node.child.filter(_.label == "message").map(toMessage(_, primaryKey, root)),
       primaryKey,
       getForeignKeys(node)
     )
