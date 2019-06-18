@@ -16,8 +16,9 @@ object ModelLoader {
 
   case class Field(name: String, _type: String, length: Int, required: Boolean, keyType: String, valueType: String, aggregate: Boolean, comment: String)
   case class PrimaryKey(name: String, fields: Seq[Field])
-  case class ForeignKey(name: String, fields: Seq[Field])
-  case class Aggregate(name: String, root:Boolean, fields: Seq[Field], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey])
+  case class ForeignKeyField(name: String, refField:String, required: Boolean)
+  case class ForeignKey(name: String, refEntity: String, fields: Seq[ForeignKeyField])
+  case class Aggregate(name: String, root:Boolean, fields: Seq[Field], aggregates: Seq[Aggregate], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey])
   case class ValueObject(name: String, fields: Seq[Field], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey])
   case class Message(name: String, fields: Seq[Field], primaryKey: PrimaryKey)
 
