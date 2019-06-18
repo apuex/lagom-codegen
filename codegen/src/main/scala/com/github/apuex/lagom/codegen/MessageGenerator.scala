@@ -187,11 +187,16 @@ object MessageGenerator {
       })
   }
 
+  def shuffleFields(fields: Seq[Field], pkFields: Seq[Field]): Seq[Field] = {
+    val pkNames = pkFields.map(_.name).toSet
+    pkFields ++ fields.filter(x => !pkNames.contains(x.name))
+  }
+
   def toAggregate(node: Node, primaryKey: PrimaryKey, root: Node): Aggregate = {
     Aggregate(
       node.\@("name"),
       if ("true" == node.\@("root")) true else false,
-      getFields(node, root),
+      shuffleFields(getFields(node, root), primaryKey.fields),
       Seq(),
       primaryKey,
       Seq()
@@ -200,11 +205,11 @@ object MessageGenerator {
 
   def toAggregate(node: Node, root: Node): Aggregate = {
     val primaryKey = getPrimaryKey(node, root)
-    val fields = getFields(node, root)
+    val fields = shuffleFields(getFields(node, root), primaryKey.fields)
     Aggregate(
       node.\@("name"),
       if ("true" == node.\@("root")) true else false,
-      getFields(node, root),
+      fields,
       node.child.filter(_.label == "aggregate").map(toAggregate(_, primaryKey, root)),
       primaryKey,
       getForeignKeys(node)
@@ -212,10 +217,11 @@ object MessageGenerator {
   }
 
   def toValueObject(node: Node, aggregatesTo: String, root: Node): ValueObject = {
+    val primaryKey = getPrimaryKey(node, root)
     ValueObject(
       node.\@("name"),
-      getFields(node, root),
-      getPrimaryKey(node, root),
+      shuffleFields(getFields(node, root), primaryKey.fields),
+      primaryKey,
       getForeignKeys(node)
     )
   }
