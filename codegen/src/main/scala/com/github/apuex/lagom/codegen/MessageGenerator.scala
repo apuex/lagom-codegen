@@ -20,6 +20,40 @@ class MessageGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     save(
+      "ValueObject.scala",
+      s"${generateValueObject(messageSrcPackage)}\n",
+      messageSrcDir
+    )
+    save(
+      "Command.scala",
+      s"${generateCommand(messageSrcPackage)}\n",
+      messageSrcDir
+    )
+    save(
+      "ShardingEntityCommand.scala",
+      s"${generateShardingEntityCommand(messageSrcPackage)}\n",
+      messageSrcDir
+    )
+    save(
+      "Event.scala",
+      s"${generateEvent(messageSrcPackage)}\n",
+      messageSrcDir
+    )
+
+    val aggregates = xml.child.filter(_.label == "entity")
+      .filter(x => {
+        val aggregatesTo = x.\@("aggregatesTo")
+        val enum = if ("true" == x.\@("enum")) true else false
+        (!enum && "" == aggregatesTo)
+      })
+    aggregates
+      .map(x => (x.\@("name"), generateShardingEntityCommand(x.\@("name"), getPrimaryKey(x, xml).fields, messageSrcPackage)))
+      .foreach(x => save(s"${cToPascal(x._1)}Command.scala", x._2, messageSrcDir))
+    aggregates
+      .map(x => (x.\@("name"), generateShardingEntityEvent(x.\@("name"), getPrimaryKey(x, xml).fields, messageSrcPackage)))
+      .foreach(x => save(s"${cToPascal(x._1)}Event.scala", x._2, messageSrcDir))
+
+    save(
       "messages.proto",
       s"${generateProtoContent(xml, messageSrcPackage)}\n",
       messageProtoDir
@@ -51,12 +85,12 @@ class MessageGenerator(modelLoader: ModelLoader) {
     val messages = xml.child.filter(_.label == "entity")
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
-        val enum = if("true" == x.\@("enum")) true else false
-        if (!enum || "" == aggregatesTo) generateMessagesForAggregate(toAggregate(x, xml), messageSrcPackage)
+        val enum = if ("true" == x.\@("enum")) true else false
+        if (!enum && "" == aggregatesTo) generateMessagesForAggregate(toAggregate(x, xml), messageSrcPackage)
         else {
           val valueObject = toValueObject(x, aggregatesTo, xml)
           val valueObjects = generateValueObject(valueObject.name, valueObject.fields, messageSrcPackage)
-          if(enum) {
+          if (enum) {
             val enumration = toEnumeration(x, aggregatesTo, xml)
             valueObjects ++
               generateEnumeration(enumration.name, enumration.options, messageSrcPackage)
@@ -64,40 +98,41 @@ class MessageGenerator(modelLoader: ModelLoader) {
             valueObjects
           }
         }
-      })
-      .flatMap(x => x)
+      }
+    )
+    .flatMap(x => x)
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
 
-      s"""
-         |${prelude}
-         |
+    s"""
+       |${prelude}
+       |
          |${messages}
        """.stripMargin.trim
   }
 
   def generateMessagesForEmbeddedAggregate(entity: Aggregate, name: String, messageSrcPackage: String): Seq[String] = {
     generateValueObject(entity.name, entity.fields, messageSrcPackage) ++
-    Seq(
-      s"""
-         |message Get${cToPascal(entity.name)}Cmd {
-         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
-         |  ${indent(generateFields(userField +: entity.primaryKey.fields), 2)}
-         |}
+      Seq(
+        s"""
+           |message Get${cToPascal(entity.name)}Cmd {
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+           |  ${indent(generateFields(userField +: entity.primaryKey.fields), 2)}
+           |}
        """.stripMargin.trim,
-      s"""
-         |message Update${cToPascal(entity.name)}Cmd {
-         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
-         |  ${indent(generateFields(userField +: entity.fields), 2)}
-         |}
+        s"""
+           |message Update${cToPascal(entity.name)}Cmd {
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+           |  ${indent(generateFields(userField +: entity.fields), 2)}
+           |}
        """.stripMargin.trim,
-      s"""
-         |message Update${cToPascal(entity.name)}Event{
-         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
-         |  ${indent(generateFields(userField +: entity.fields), 2)}
-         |}
+        s"""
+           |message Update${cToPascal(entity.name)}Event{
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+           |  ${indent(generateFields(userField +: entity.fields), 2)}
+           |}
        """.stripMargin.trim
-    )
+      )
   }
 
   def generateMessagesForAggregate(entity: Aggregate, messageSrcPackage: String): Seq[String] = {
@@ -210,18 +245,19 @@ class MessageGenerator(modelLoader: ModelLoader) {
 
   def generateEnumeration(name: String, options: Seq[EnumOption], messageSrcPackage: String): Seq[String] = Seq(
     s"""
-      |enum ${cToPascal(name)} {
-      |  option (scalapb.enum_options).extends = "${messageSrcPackage}.ValueObject";
-      |}
+       |enum ${cToPascal(name)} {
+       |  option (scalapb.enum_options).extends = "${messageSrcPackage}.ValueObject";
+       |  ${indent(generateEnumOptions(options), 2)}
+       |}
     """.stripMargin.trim
   )
 
   def generateField(field: Field, no: Int): String = {
     import field._
 
-    val protobufType = if ("array" == _type) s"repeated ${toProtobufType(valueType)}${if(isEntity(valueType)) "Vo" else ""}"
-    else if ("map" == _type) s"map <${toProtobufType(keyType)}${if(isEntity(keyType)) "Vo" else ""}, ${toProtobufType(valueType)}${if(isEntity(valueType)) "Vo" else ""}>"
-    else s"${toProtobufType(_type)}${if(isEntity(_type)) "Vo" else ""}"
+    val protobufType = if ("array" == _type) s"repeated ${toProtobufType(valueType)}${if (isEntity(valueType)) "Vo" else ""}"
+    else if ("map" == _type) s"map <${toProtobufType(keyType)}${if (isEntity(keyType)) "Vo" else ""}, ${toProtobufType(valueType)}${if (isEntity(valueType)) "Vo" else ""}>"
+    else s"${toProtobufType(_type)}${if (isEntity(_type)) "Vo" else ""}"
 
     s"""
        |${protobufType} ${cToCamel(name)} = ${no}; // ${comment}
@@ -234,9 +270,100 @@ class MessageGenerator(modelLoader: ModelLoader) {
       .map(x => {
         no += 1
         generateField(x, no)
-      })
-      .map(x => x)
+      }
+    )
+    .map(x => x)
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
+  }
+
+  def generateValueObject(messageSrcPackage: String): String = {
+    s"""
+       |package ${messageSrcPackage}
+       |
+       |trait ValueObject
+     """.stripMargin.trim
+  }
+
+  def generateCommand(messageSrcPackage: String): String = {
+    s"""
+       |package ${messageSrcPackage}
+       |
+       |trait Command {
+       |  def userId: String
+       |}
+     """.stripMargin.trim
+  }
+
+  def generateEntityIdField(name: String, keyFields: Seq[Field]): String = {
+    keyFields
+      .map(x =>
+        s"""
+           |def ${cToCamel(x.name)}: ${toJavaType(x._type)}
+         """.stripMargin.trim
+      )
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
+  }
+
+  def generateEntityId(name: String, keyFields: Seq[Field]): String = {
+    val key = keyFields
+      .map(x => if ("timestamp" == x._type)
+        s"""
+           |formatTimestamp(${cToCamel(x.name)}.seconds * 1000 + ${cToCamel(x.name)}.nanos / 1000000)
+         """.stripMargin.trim
+      else
+        s"""
+           |$${${cToCamel(x.name)}}
+         """.stripMargin.trim)
+      .reduceOption((l, r) => s"${l}_${r}")
+      .getOrElse("")
+
+    s"""
+       |s"${cToCamel(name)}_${key}"
+     """.stripMargin.trim
+  }
+
+  def generateShardingEntityCommand(name: String, keyFields: Seq[Field], messageSrcPackage: String): String = {
+    s"""
+       |package ${messageSrcPackage}
+       |
+       |trait ${cToPascal(name)}Command extends ShardingEntityCommand {
+       |  ${indent(generateEntityIdField(name, keyFields), 2)}
+       |  override def entityId: String = {
+       |    ${generateEntityId(name, keyFields)}
+       |  }
+       |}
+     """.stripMargin.trim
+  }
+
+  def generateShardingEntityEvent(name: String, keyFields: Seq[Field], messageSrcPackage: String): String = {
+    s"""
+       |package ${messageSrcPackage}
+       |
+       |trait ${cToPascal(name)}Event extends Event {
+       |  ${indent(generateEntityIdField(name, keyFields), 2)}
+       |}
+     """.stripMargin.trim
+  }
+
+  def generateShardingEntityCommand(messageSrcPackage: String): String = {
+    s"""
+       |package ${messageSrcPackage}
+       |
+       |trait ShardingEntityCommand extends Command {
+       |  def entityId: String
+       |}
+     """.stripMargin.trim
+  }
+
+  def generateEvent(messageSrcPackage: String): String = {
+    s"""
+       |package ${messageSrcPackage}
+       |
+       |trait Event {
+       |  def userId: String
+       |}
+     """.stripMargin.trim
   }
 }

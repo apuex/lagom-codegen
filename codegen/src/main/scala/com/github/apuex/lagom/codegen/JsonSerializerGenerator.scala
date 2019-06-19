@@ -16,6 +16,7 @@ class JsonSerializerGenerator(modelLoader: ModelLoader) {
     s"""
        |package ${apiSrcPackage}
        |
+       |import ${messageSrcPackage}._
        |import com.github.apuex.events.play.{EventEnvelope, EventEnvelopeProto}
        |import com.google.protobuf.any.Any
        |import play.api.libs.json._
@@ -25,7 +26,7 @@ class JsonSerializerGenerator(modelLoader: ModelLoader) {
        |
        |object ScalapbJson {
        |  // json parser and printer
-       |  val messagesCompanions = MappingsProto.messagesCompanions ++ EventEnvelopeProto.messagesCompanions
+       |  val messagesCompanions = MessagesProto.messagesCompanions ++ EventEnvelopeProto.messagesCompanions
        |  val registry: TypeRegistry = messagesCompanions
        |    .foldLeft(TypeRegistry())((r, mc) => r.addMessageByCompanion(mc.asInstanceOf[GenericCompanion]))
        |

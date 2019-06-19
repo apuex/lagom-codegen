@@ -112,7 +112,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
        |
        |import scala.concurrent.Future
        |
-       |trait ${cToPascal(modelName)}ServiceImpl extends ${cToPascal(modelName)}Service {
+       |class ${cToPascal(modelName)}ServiceImpl extends ${cToPascal(modelName)}Service {
        |
        |  def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
        |    ServiceCall { is =>

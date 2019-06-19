@@ -7,7 +7,7 @@
     <primaryKey name="payment_type_pk">
       <field name="payment_type_id"/>
     </primaryKey>
-    <enum name="payment_type" valueField="payment_type_no" nameField="payment_type_label" labelField="payment_type_label"/>
+    <enum name="payment_type" valueField="payment_type_no" nameField="payment_type_name" labelField="payment_type_label"/>
     <row payment_type_no="0" payment_type_name="CASH" payment_type_label="现金"/>
     <row payment_type_no="1" payment_type_name="CREDIT_CARD" payment_type_label="信用卡"/>
     <row payment_type_no="2" payment_type_name="VOUCHER" payment_type_label="优惠券"/>

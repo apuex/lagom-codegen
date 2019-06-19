@@ -67,7 +67,6 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |libraryDependencies ++= {
          |  Seq(
          |    sbRuntime,
-         |    ctxmap,
          |    playEvents,
          |    scalapbJson4s,
          |    scalaTest      % Test
@@ -217,7 +216,6 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  lazy val macwire         = "com.softwaremill.macwire"  %%  "macros"                              % "2.3.0"
          |
          |  lazy val sbRuntime       = "com.github.apuex.springbootsolution" %% "scala-runtime"              % "1.0.9"
-         |  lazy val ctxmap          = "com.github.apuex"          %% "context-mapping-runtime"              % "1.0.0"
          |  lazy val playEvents      = "com.github.apuex"          %%  "play-events"                         % "1.0.2"
          |  lazy val serializer      = "com.github.apuex.protobuf" %   "protobuf-serializer"                 % "1.0.1"
          |  lazy val playSocketIO    = "com.lightbend.play"        %%  "play-socket-io"                      % "1.0.0-beta-2"

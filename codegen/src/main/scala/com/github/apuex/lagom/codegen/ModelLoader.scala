@@ -137,14 +137,17 @@ object ModelLoader {
       .map(x => (x._1._2, x._2))
       .head
 
+    // disable aggregate attribute on referenced columns
     refField
-      .map(x => Field(fkField.name, x._type, x.length, fkField.required, x.keyType, x.valueType, x.aggregate, x.transient, x.comment))
+      .map(x => Field(fkField.name, x._type, x.length, fkField.required, x.keyType, x.valueType, false, x.transient, x.comment))
   }
 
   def getReferencedColumn(name: String, refKey: String, refEntity: String, refField: String, root: Node): Option[Field] = {
     val node = root.child.filter(x => x.label == "entity" && x.\@("name") == refEntity).head
     Some(getFields(node, root)
       .filter(_.name == refField).head)
+      // disable aggregate attribute on referenced columns
+      .map(x => Field(name, x._type, x.length, false, x.keyType, x.valueType, false, x.transient, x.comment))
   }
 
   def getForeignKeys(node: Node): Seq[ForeignKey] = {
