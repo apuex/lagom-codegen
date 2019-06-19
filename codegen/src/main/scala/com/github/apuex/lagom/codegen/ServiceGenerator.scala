@@ -57,12 +57,12 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     save(
-      s"${cToPascal(modelName)}Service.scala",
+      s"${cToPascal(s"${modelName}_${service}")}.scala",
       generateService(),
       apiSrcDir
     )
     save(
-      s"${cToPascal(s"${modelName}_${impl}")}ServiceImpl.scala",
+      s"${cToPascal(s"${modelName}_${service}_${impl}")}.scala",
       generateServiceImpl(),
       implSrcDir
     )
@@ -70,8 +70,9 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def generateService(): String = {
     s"""
-       |package ${modelPackage}
+       |package ${apiSrcPackage}
        |
+       |import ${messageSrcPackage}._
        |import akka._
        |import akka.stream.scaladsl._
        |import com.lightbend.lagom.scaladsl.api._
@@ -101,8 +102,25 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def generateServiceImpl(): String = {
     s"""
+       |package ${implSrcPackage}
        |
-     """.stripMargin
+       |import akka._
+       |import akka.stream.scaladsl._
+       |import ${messageSrcPackage}._
+       |import com.lightbend.lagom.scaladsl.api._
+       |import play.api.libs.json.Json
+       |
+       |import scala.concurrent.Future
+       |
+       |trait ${cToPascal(modelName)}ServiceImpl extends ${cToPascal(modelName)}Service {
+       |
+       |  def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
+       |    ServiceCall { is =>
+       |      Future.successful(is.map(x => x))
+       |    }
+       |  }
+       |}
+     """.stripMargin.trim
   }
   def calls(): String = ""
   def callJsonFormats(): String = ""

@@ -16,12 +16,22 @@ object ModelLoader {
   def apply(xml: Node): ModelLoader = new ModelLoader(xml)
 
   case class Field(name: String, _type: String, length: Int, required: Boolean, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
+
   case class PrimaryKey(name: String, fields: Seq[Field])
-  case class ForeignKeyField(name: String, refField:String, required: Boolean)
+
+  case class ForeignKeyField(name: String, refField: String, required: Boolean)
+
   case class ForeignKey(name: String, refEntity: String, fields: Seq[ForeignKeyField])
+
   case class Message(name: String, fields: Seq[Field], primaryKey: PrimaryKey, transient: Boolean)
-  case class Aggregate(name: String, root:Boolean, fields: Seq[Field], aggregates: Seq[Aggregate], messages: Seq[Message], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey], transient: Boolean)
+
+  case class Aggregate(name: String, root: Boolean, fields: Seq[Field], aggregates: Seq[Aggregate], messages: Seq[Message], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey], transient: Boolean)
+
   case class ValueObject(name: String, fields: Seq[Field], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey], transient: Boolean)
+
+  case class EnumOption(value: Int, name: String, label: String)
+
+  case class Enumeration(name: String, options: Seq[EnumOption])
 
   val userField = Field("user_id", "string", 64, false, "", "", false, false, "用户ID")
 
@@ -76,7 +86,7 @@ object ModelLoader {
           val refField = x.\@("refField")
           val refEntity = foreignKeys.filter(_.name == refKey)
             .map(_.refEntity)
-          if(refEntity.isEmpty) {
+          if (refEntity.isEmpty) {
             println(s"name = ${name}")
             println(s"refKey = ${refKey}")
             println(s"refField = ${refField}")
@@ -222,6 +232,25 @@ object ModelLoader {
     )
   }
 
+  def toEnumeration(node: Node, aggregatesTo: String, root: Node): Enumeration = {
+    val enumDef = node.child.filter(_.label == "enum").head
+    val valueField = enumDef.\@("valueField")
+    val nameField = enumDef.\@("nameField")
+    val labelField = enumDef.\@("labelField")
+    val options = node.child.filter(_.label == "row")
+      .map(x => {
+        EnumOption(
+          x.\@(valueField).toInt,
+          x.\@(nameField),
+          x.\@(labelField)
+        )
+      })
+    Enumeration(
+      node.\@("name"),
+      options
+    )
+  }
+
   def save(fileName: String, content: String, dir: String): Unit = {
     new File(dir).mkdirs()
     val pw = new PrintWriter(new File(dir, fileName), "utf-8")
@@ -235,7 +264,10 @@ class ModelLoader(val xml: Node) {
   val message = "message"
   val api = "api"
   val dao = "dao"
+  val service = "service"
   val impl = "impl"
+  val app: String = "app"
+  val loader: String = "loader"
   val modelName = xml.\@("name")
   val modelPackage = xml.\@("package")
   val modelVersion = xml.\@("version")
@@ -247,6 +279,7 @@ class ModelLoader(val xml: Node) {
   val messageProjectDir = s"${rootProjectDir}/${message}"
   val messageSrcPackage = s"${modelPackage}"
   val messageSrcDir = s"${messageProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
+  val messageProtoDir = s"${messageProjectDir}/src/main/protobuf"
   val apiProjectName = s"${cToShell(modelName)}-${api}"
   val apiProjectDir = s"${rootProjectDir}/${api}"
   val apiSrcPackage = s"${modelPackage}"
@@ -259,5 +292,17 @@ class ModelLoader(val xml: Node) {
   val implProjectDir = s"${rootProjectDir}/${impl}"
   val implSrcPackage = s"${modelPackage}.${impl}"
   val implSrcDir = s"${implProjectDir}/src/main/scala/${implSrcPackage.replace('.', '/')}"
+  val appProjectName = s"${cToShell(modelName)}-${cToShell(app)}"
+  val appProjectDir = s"${rootProjectDir}/${app}"
+  val applicationConfDir = s"${appProjectDir}/conf"
   val hyphen = if ("microsoft" == s"${System.getProperty("symbol.naming", "microsoft")}") "" else "-"
+  val nonEnumNames = xml.child.filter(x => x.label == "entity" && "true" != x.\@("enum"))
+    .map(_.\@("name"))
+    .toSet
+  val enumNames = xml.child.filter(x => x.label == "entity" && "true" == x.\@("enum"))
+    .map(_.\@("name"))
+    .toSet
+
+  def isEntity(name: String): Boolean = nonEnumNames.contains(name)
+  def isEnum(name: String): Boolean = !nonEnumNames.contains(name) && enumNames.contains(name)
 }

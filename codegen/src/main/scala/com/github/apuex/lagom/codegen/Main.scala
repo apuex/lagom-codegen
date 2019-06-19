@@ -7,6 +7,8 @@ object Main extends App {
       "\tjava -jar <this jar> <arg list>")
   } else {
     args(0) match {
+      case "generate-application-conf" => ApplicationConfGenerator(args.drop(1)(0)).generate()
+      case "generate-application-loader" => ApplicationLoaderGenerator(args.drop(1)(0)).generate()
       case "generate-message" => MessageGenerator(args.drop(1)(0)).generate()
       case "generate-entity" => EntityGenerator(args.drop(1)(0)).generate()
       case "generate-json-serializer" => JsonSerializerGenerator(args.drop(1)(0)).generate()
@@ -20,11 +22,14 @@ object Main extends App {
   }
 
   def generateAll(fileName: String): Unit = {
-    MessageGenerator(fileName).generate()
-    EntityGenerator(fileName).generate()
-    JsonSerializerGenerator(fileName).generate()
-    ServiceGenerator(fileName).generate()
-    DaoGenerator(fileName).generate()
-    ProjectGenerator(fileName).generate()
+    val modelLoader = ModelLoader(fileName)
+    ApplicationConfGenerator(modelLoader).generate()
+    ApplicationLoaderGenerator(modelLoader).generate()
+    MessageGenerator(modelLoader).generate()
+    EntityGenerator(modelLoader).generate()
+    JsonSerializerGenerator(modelLoader).generate()
+    ServiceGenerator(modelLoader).generate()
+    DaoGenerator(modelLoader).generate()
+    ProjectGenerator(modelLoader).generate()
   }
 }

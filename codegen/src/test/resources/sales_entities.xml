@@ -1,5 +1,19 @@
 <?xml version="1.0"?>
 <model name="sales" package="com.github.apuex.commerce.sales" dbSchema="sales">
+  <entity name="payment_type" enum="true">
+    <field name="payment_type_id" type="int" comment="支付方式代码"/>
+    <field name="payment_type_name" type="string" length="64" comment="支付方式常量符号"/>
+    <field name="payment_type_label" type="string" length="64" comment="支付方式文字描述"/>
+    <primaryKey name="payment_type_pk">
+      <field name="payment_type_id"/>
+    </primaryKey>
+    <enum name="payment_type" valueField="payment_type_no" nameField="payment_type_label" labelField="payment_type_label"/>
+    <row payment_type_no="0" payment_type_name="CASH" payment_type_label="现金"/>
+    <row payment_type_no="1" payment_type_name="CREDIT_CARD" payment_type_label="信用卡"/>
+    <row payment_type_no="2" payment_type_name="VOUCHER" payment_type_label="优惠券"/>
+    <row payment_type_no="3" payment_type_name="ALIPAY" payment_type_label="支付宝"/>
+    <row payment_type_no="4" payment_type_name="WECHAT" payment_type_label="微信"/>
+  </entity>
   <entity name="product" aggregate="true">
     <field name="product_id" type="string" length="64" comment="商品编号"/>
     <field name="product_name" type="string" length="64" aggregate="true"  comment="商品名称"/>

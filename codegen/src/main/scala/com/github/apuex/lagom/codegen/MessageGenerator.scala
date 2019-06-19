@@ -6,43 +6,25 @@ import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime.TextUtils.indent
 import com.github.apuex.springbootsolution.runtime.TypeConverters._
 
-class MessageGenerator(modelLoader: ModelLoader) {
-
-  import modelLoader._
-
-  def generate(): Unit = {
-    val prelude = generateProtoPrelude(messageSrcPackage)
-    val messages = xml.child.filter(_.label == "entity")
-      .map(x => {
-        val aggregatesTo = x.\@("aggregatesTo")
-        if ("" == aggregatesTo) generateMessagesForAggregate(toAggregate(x, xml), messageSrcPackage)
-        else {
-          val valueObject = toValueObject(x, aggregatesTo, xml)
-          generateValueObject(valueObject.name, valueObject.fields, messageSrcPackage)
-        }
-      })
-      .flatMap(x => x)
-      .reduceOption((l, r) => s"${l}\n\n${r}")
-      .getOrElse("")
-
-    val content =
-      s"""
-         |${prelude}
-         |
-         |${messages}
-       """.stripMargin.trim
-    save(
-      "messages.proto",
-      s"${content}\n",
-      messageSrcDir
-    )
-  }
-}
+import scala.xml.Node
 
 object MessageGenerator {
   def apply(fileName: String): MessageGenerator = new MessageGenerator(ModelLoader(fileName))
 
   def apply(modelLoader: ModelLoader): MessageGenerator = new MessageGenerator(modelLoader)
+}
+
+class MessageGenerator(modelLoader: ModelLoader) {
+
+  import modelLoader._
+
+  def generate(): Unit = {
+    save(
+      "messages.proto",
+      s"${generateProtoContent(xml, messageSrcPackage)}\n",
+      messageProtoDir
+    )
+  }
 
   def generateProtoPrelude(messageSrcPackage: String): String = {
     s"""
@@ -62,6 +44,36 @@ object MessageGenerator {
        |  flat_package: true
        |};
      """.stripMargin.trim
+  }
+
+  def generateProtoContent(xml: Node, messageSrcPackage: String): String = {
+    val prelude = generateProtoPrelude(messageSrcPackage)
+    val messages = xml.child.filter(_.label == "entity")
+      .map(x => {
+        val aggregatesTo = x.\@("aggregatesTo")
+        val enum = if("true" == x.\@("enum")) true else false
+        if (!enum || "" == aggregatesTo) generateMessagesForAggregate(toAggregate(x, xml), messageSrcPackage)
+        else {
+          val valueObject = toValueObject(x, aggregatesTo, xml)
+          val valueObjects = generateValueObject(valueObject.name, valueObject.fields, messageSrcPackage)
+          if(enum) {
+            val enumration = toEnumeration(x, aggregatesTo, xml)
+            valueObjects ++
+              generateEnumeration(enumration.name, enumration.options, messageSrcPackage)
+          } else {
+            valueObjects
+          }
+        }
+      })
+      .flatMap(x => x)
+      .reduceOption((l, r) => s"${l}\n\n${r}")
+      .getOrElse("")
+
+      s"""
+         |${prelude}
+         |
+         |${messages}
+       """.stripMargin.trim
   }
 
   def generateMessagesForEmbeddedAggregate(entity: Aggregate, name: String, messageSrcPackage: String): Seq[String] = {
@@ -189,11 +201,27 @@ object MessageGenerator {
      """.stripMargin.trim
   )
 
+  def generateEnumOptions(options: Seq[EnumOption]): String = {
+    options
+      .map(x => s"${x.name} = ${x.value}; // ${x.label}")
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
+  }
+
+  def generateEnumeration(name: String, options: Seq[EnumOption], messageSrcPackage: String): Seq[String] = Seq(
+    s"""
+      |enum ${cToPascal(name)} {
+      |  option (scalapb.enum_options).extends = "${messageSrcPackage}.ValueObject";
+      |}
+    """.stripMargin.trim
+  )
+
   def generateField(field: Field, no: Int): String = {
     import field._
-    val protobufType = if ("array" == _type) s"repeated ${toProtobufType(valueType)}"
-    else if ("map" == _type) s"map <${toProtobufType(keyType)}, ${toProtobufType(valueType)}>"
-    else toProtobufType(_type)
+
+    val protobufType = if ("array" == _type) s"repeated ${toProtobufType(valueType)}${if(isEntity(valueType)) "Vo" else ""}"
+    else if ("map" == _type) s"map <${toProtobufType(keyType)}${if(isEntity(keyType)) "Vo" else ""}, ${toProtobufType(valueType)}${if(isEntity(valueType)) "Vo" else ""}>"
+    else s"${toProtobufType(_type)}${if(isEntity(_type)) "Vo" else ""}"
 
     s"""
        |${protobufType} ${cToCamel(name)} = ${no}; // ${comment}

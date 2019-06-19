@@ -24,6 +24,65 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
     aggregates should be(
       List(
         Aggregate(
+          "payment_type",
+          false,
+          List(
+            Field(
+              "payment_type_id",
+              "int",
+              0,
+              false,
+              "",
+              "",
+              false,
+              false,
+              "支付方式代码"
+            ),
+            Field(
+              "payment_type_name",
+              "string",
+              64,
+              false,
+              "",
+              "",
+              false,
+              false,
+              "支付方式常量符号"
+            ),
+            Field(
+              "payment_type_label",
+              "string",
+              64,
+              false,
+              "",
+              "",
+              false,
+              false,
+              "支付方式文字描述"
+            )
+          ),
+          List(),
+          List(),
+          PrimaryKey(
+            "payment_type_pk",
+            List(
+              Field(
+                "payment_type_id",
+                "int",
+                0,
+                false,
+                "",
+                "",
+                false,
+                false,
+                "支付方式代码"
+              )
+            )
+          ),
+          List(),
+          false
+        ),
+        Aggregate(
           "product",
           false,
           List(
@@ -172,6 +231,7 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
 
     primaryKeys should be(
       Seq(
+        "payment_type" -> PrimaryKey("payment_type_pk", List(Field("payment_type_id", "int", 0, false, "", "", false, false, "支付方式代码"))),
         "product_sales" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, false, "", "", false, false, "商品编号"))),
         "product" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, false, "", "", false, false, "商品编号"))),
         "order" -> PrimaryKey("order_pk", List(Field("order_id", "string", 64, false, "", "", false, false, "订单编号"))),

@@ -12,8 +12,9 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
   val xml: Node = factory.load(getClass.getClassLoader.getResourceAsStream("sales_entities.xml"))
 
   val model = ModelLoader(xml)
-
+  val messageGenerator = MessageGenerator(model)
   import model._
+  import messageGenerator._
 
   "A MessageGenerator" should "generateMessagesForEmbeddedAggregate" in {
     val aggregate = xml.child.filter(_.label == "entity")
