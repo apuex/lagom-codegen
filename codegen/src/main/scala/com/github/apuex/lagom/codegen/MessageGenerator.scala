@@ -140,8 +140,9 @@ object MessageGenerator {
     val keyType = node.\@("keyType")
     val valueType = node.\@("valueType")
     val aggregate = if ("true" == node.\@("aggregate")) true else false
+    val transient = if ("true" == node.\@("transient")) true else false
     val comment = node.\@("comment")
-    Field(name, _type, length, required, keyType, valueType, aggregate, comment)
+    Field(name, _type, length, required, keyType, valueType, aggregate, transient, comment)
   }
 
   def getFields(node: Node, root: Node): Seq[Field] = {
@@ -226,7 +227,7 @@ object MessageGenerator {
       .head
 
     refField
-      .map(x => Field(fkField.name, x._type, x.length, fkField.required, x.keyType, x.valueType, x.aggregate, x.comment))
+      .map(x => Field(fkField.name, x._type, x.length, fkField.required, x.keyType, x.valueType, x.aggregate, x.transient, x.comment))
   }
 
   def getReferencedColumn(name: String, refKey: String, refEntity: String, refField: String, root: Node): Option[Field] = {
@@ -253,6 +254,7 @@ object MessageGenerator {
   }
 
   def toAggregate(node: Node, primaryKey: PrimaryKey, root: Node): Aggregate = {
+    val transient = if ("true" == node.\@("transient")) true else false
     Aggregate(
       node.\@("name"),
       false,
@@ -260,7 +262,8 @@ object MessageGenerator {
       Seq(),
       Seq(),
       primaryKey,
-      Seq()
+      Seq(),
+      transient
     )
   }
 
@@ -272,15 +275,18 @@ object MessageGenerator {
       Seq(),
       Seq(),
       primaryKey,
-      Seq()
+      Seq(),
+      field.transient
     )
   }
 
   def toMessage(node: Node, primaryKey: PrimaryKey, root: Node): Message = {
+    val transient = if ("true" == node.\@("transient")) true else false
     Message(
       node.\@("name"),
       shuffleFields(primaryKey.fields ++ getFields(node, root), primaryKey.fields),
-      primaryKey
+      primaryKey,
+      transient
     )
   }
 
@@ -297,7 +303,8 @@ object MessageGenerator {
       aggregates,
       node.child.filter(_.label == "message").map(toMessage(_, primaryKey, root)),
       primaryKey,
-      getForeignKeys(node)
+      getForeignKeys(node),
+      if ("true" == node.\@("transient")) true else false
     )
   }
 
@@ -307,7 +314,8 @@ object MessageGenerator {
       node.\@("name"),
       shuffleFields(getFields(node, root), primaryKey.fields),
       primaryKey,
-      getForeignKeys(node)
+      getForeignKeys(node),
+      if ("true" == node.\@("transient")) true else false
     )
   }
 

@@ -13,15 +13,15 @@ object ModelLoader {
 
   def apply(xml: Node): ModelLoader = new ModelLoader(xml)
 
-  case class Field(name: String, _type: String, length: Int, required: Boolean, keyType: String, valueType: String, aggregate: Boolean, comment: String)
+  case class Field(name: String, _type: String, length: Int, required: Boolean, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
   case class PrimaryKey(name: String, fields: Seq[Field])
   case class ForeignKeyField(name: String, refField:String, required: Boolean)
   case class ForeignKey(name: String, refEntity: String, fields: Seq[ForeignKeyField])
-  case class Message(name: String, fields: Seq[Field], primaryKey: PrimaryKey)
-  case class Aggregate(name: String, root:Boolean, fields: Seq[Field], aggregates: Seq[Aggregate], messages: Seq[Message], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey])
-  case class ValueObject(name: String, fields: Seq[Field], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey])
+  case class Message(name: String, fields: Seq[Field], primaryKey: PrimaryKey, transient: Boolean)
+  case class Aggregate(name: String, root:Boolean, fields: Seq[Field], aggregates: Seq[Aggregate], messages: Seq[Message], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey], transient: Boolean)
+  case class ValueObject(name: String, fields: Seq[Field], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey], transient: Boolean)
 
-  val userField = Field("user_id", "string", 64, false, "", "", false, "user identifier.")
+  val userField = Field("user_id", "string", 64, false, "", "", false, false, "user identifier.")
 
   def importPackagesForService(model: Node, service: Node): String = {
     s"""
