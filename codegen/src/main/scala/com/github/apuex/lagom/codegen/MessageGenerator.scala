@@ -59,8 +59,10 @@ object MessageGenerator {
   def messagesForAggregate(entity: Aggregate, messageSrcPackage: String): Seq[String] = {
     entity.aggregates.map(messagesForEmbeddedAggregate(_, entity.name, messageSrcPackage)).flatMap(x => x) ++
       Seq(generateValueObject(entity.name, entity.fields, messageSrcPackage)) ++
-      generateCrud(entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage) ++
-      generateMessages(entity.messages, entity.name, messageSrcPackage)
+      generateCrudCmd(entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage) ++
+      (if (entity.transient) Seq() else generateCrudEvt(entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage)) ++
+      generateMessages(entity.messages, entity.name, messageSrcPackage) ++
+      (if (entity.transient) Seq() else generateEvents(entity.messages, entity.name, messageSrcPackage))
   }
 
   def generateMessage(message: Message, name: String, messageSrcPackage: String): String = {
@@ -72,12 +74,48 @@ object MessageGenerator {
      """.stripMargin.trim
   }
 
+  def generateEvent(message: Message, name: String, messageSrcPackage: String): String = {
+    s"""
+       |message ${cToPascal(message.name)}Event {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  ${indent(generateFields(userField +: message.fields), 2)}
+       |}
+     """.stripMargin.trim
+  }
+
   def generateMessages(messages: Seq[Message], name: String, messageSrcPackage: String): Seq[String] = {
     messages
       .map(x => generateMessage(x, name, messageSrcPackage))
   }
 
-  def generateCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
+  def generateEvents(messages: Seq[Message], name: String, messageSrcPackage: String): Seq[String] = {
+    messages
+      .filter(!_.transient)
+      .map(x => generateEvent(x, name, messageSrcPackage))
+  }
+
+  def generateCrudEvt(name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
+    s"""
+       |message Create${cToPascal(name)}Event {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  ${indent(generateFields(userField +: fields), 2)}
+       |}
+     """.stripMargin.trim,
+    s"""
+       |message Update${cToPascal(name)}Event {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  ${indent(generateFields(userField +: fields), 2)}
+       |}
+     """.stripMargin.trim,
+    s"""
+       |message Create${cToPascal(name)}Event {
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  ${indent(generateFields(userField +: pkFields), 2)}
+       |}
+     """.stripMargin.trim
+  )
+
+  def generateCrudCmd(name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
     s"""
        |message Create${cToPascal(name)}Cmd {
        |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
