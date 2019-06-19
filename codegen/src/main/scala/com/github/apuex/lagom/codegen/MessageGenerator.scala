@@ -11,7 +11,8 @@ class MessageGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    xml.child.filter(_.label == "entity")
+    val prelude = generateProtoPrelude(messageSrcPackage)
+    val messages = xml.child.filter(_.label == "entity")
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         if ("" == aggregatesTo) generateMessagesForAggregate(toAggregate(x, xml), messageSrcPackage)
@@ -21,8 +22,20 @@ class MessageGenerator(modelLoader: ModelLoader) {
         }
       })
       .flatMap(x => x)
-      .reduceOption((l, r) => s"${l}\n${r}")
+      .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
+
+    val content =
+      s"""
+         |${prelude}
+         |
+         |${messages}
+       """.stripMargin.trim
+    save(
+      "messages.proto",
+      s"${content}\n",
+      messageSrcDir
+    )
   }
 }
 
@@ -30,6 +43,26 @@ object MessageGenerator {
   def apply(fileName: String): MessageGenerator = new MessageGenerator(ModelLoader(fileName))
 
   def apply(modelLoader: ModelLoader): MessageGenerator = new MessageGenerator(modelLoader)
+
+  def generateProtoPrelude(messageSrcPackage: String): String = {
+    s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
+       |syntax = "proto3";
+       |import "google/protobuf/timestamp.proto";
+       |
+       |package ${messageSrcPackage};
+       |option java_package = "${messageSrcPackage}";
+       |option java_outer_classname = "Messages";
+       |option java_multiple_files = true;
+       |
+       |import "scalapb/scalapb.proto";
+       |option (scalapb.options) = {
+       |  flat_package: true
+       |};
+     """.stripMargin.trim
+  }
 
   def generateMessagesForEmbeddedAggregate(entity: Aggregate, name: String, messageSrcPackage: String): Seq[String] = {
     generateValueObject(entity.name, entity.fields, messageSrcPackage) ++

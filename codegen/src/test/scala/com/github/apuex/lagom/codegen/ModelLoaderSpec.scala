@@ -1,6 +1,5 @@
 package com.github.apuex.lagom.codegen
 
-import com.github.apuex.lagom.codegen.MessageGenerator._
 import com.github.apuex.lagom.codegen.ModelLoader._
 import org.scalatest._
 
