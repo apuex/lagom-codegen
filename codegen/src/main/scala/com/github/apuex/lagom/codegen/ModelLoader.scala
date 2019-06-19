@@ -236,9 +236,7 @@ class ModelLoader(val xml: Node) {
   val api = "api"
   val dao = "dao"
   val impl = "impl"
-  val srcSystem = xml.\@("from")
-  val destSystem = xml.\@("to")
-  val modelName = if("" == xml.\@("name").trim) s"${srcSystem}_${destSystem}_${mapping}" else xml.\@("name")
+  val modelName = xml.\@("name")
   val modelPackage = xml.\@("package")
   val modelVersion = xml.\@("version")
   val modelMaintainer = xml.\@("maintainer")

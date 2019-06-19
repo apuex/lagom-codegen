@@ -3,6 +3,7 @@ package com.github.apuex.lagom.codegen
 import java.io.{File, PrintWriter}
 
 import com.github.apuex.lagom.codegen.ServiceGenerator._
+import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime.TextUtils.indent
 
@@ -56,11 +57,15 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     save(
-      srcSystem,
-      generateService())
+      s"${cToPascal(modelName)}Service.scala",
+      generateService(),
+      apiSrcDir
+    )
     save(
-      destSystem,
-      generateServiceImpl())
+      s"${cToPascal(s"${modelName}_${impl}")}ServiceImpl.scala",
+      generateServiceImpl(),
+      implSrcDir
+    )
   }
 
   def generateService(): String = {
@@ -72,7 +77,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
        |import com.lightbend.lagom.scaladsl.api._
        |import play.api.libs.json.Json
        |
-       |trait ${cToPascal(destSystem)}Service extends Service {
+       |trait ${cToPascal(modelName)}Service extends Service {
        |
        |  ${indent(calls(), 2)}
        |
@@ -84,7 +89,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
        |
        |    ${indent(callJsonFormats(), 4)}
        |
-       |    named("${cToShell(destSystem)}")
+       |    named("${cToShell(modelName)}")
        |      .withCalls(
        |        ${indent(callDescs(), 8)}
        |        pathCall("/api/events?offset", events _)
@@ -102,12 +107,6 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   def calls(): String = ""
   def callJsonFormats(): String = ""
   def callDescs(): String = ""
-  def save(name: String, definition: String): Unit = {
-    new File(apiSrcDir).mkdirs()
-    val pw = new PrintWriter(s"${apiSrcDir}/${cToPascal(name)}.scala", "utf-8")
-    pw.println(definition)
-    pw.close()
-  }
 }
 
 
