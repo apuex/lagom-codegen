@@ -439,3 +439,68 @@ message OrderItemVo {
   double orderQuantity = 6; // 数量
 }
 
+message CreateOrderItemCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  string productId = 3; // 商品编号
+  string productName = 4; // 商品名称
+  string itemUnit = 5; // 计价单位
+  double unitPrice = 6; // 单价
+  double orderQuantity = 7; // 数量
+}
+
+message RetrieveOrderItemCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  string productId = 3; // 商品编号
+}
+
+message UpdateOrderItemCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  string productId = 3; // 商品编号
+  string productName = 4; // 商品名称
+  string itemUnit = 5; // 计价单位
+  double unitPrice = 6; // 单价
+  double orderQuantity = 7; // 数量
+}
+
+message DeleteOrderItemCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  string productId = 3; // 商品编号
+}
+
+message CreateOrderItemEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  string productId = 3; // 商品编号
+  string productName = 4; // 商品名称
+  string itemUnit = 5; // 计价单位
+  double unitPrice = 6; // 单价
+  double orderQuantity = 7; // 数量
+}
+
+message UpdateOrderItemEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  string productId = 3; // 商品编号
+  string productName = 4; // 商品名称
+  string itemUnit = 5; // 计价单位
+  double unitPrice = 6; // 单价
+  double orderQuantity = 7; // 数量
+}
+
+message DeleteOrderItemEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  string productId = 3; // 商品编号
+}
+

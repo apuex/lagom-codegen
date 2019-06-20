@@ -94,7 +94,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
             valueObjects ++
               generateEnumeration(enumration.name, enumration.options, messageSrcPackage)
           } else {
-            valueObjects
+            valueObjects ++
+              generateCrudCmd(aggregatesTo, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage) ++
+              generateCrudEvt(aggregatesTo, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage)
           }
         }
       })
@@ -137,8 +139,8 @@ class MessageGenerator(modelLoader: ModelLoader) {
     entity.aggregates.map(generateMessagesForEmbeddedAggregate(_, entity.name, messageSrcPackage)).flatMap(x => x) ++
       generateValueObject(entity.name, entity.fields, messageSrcPackage) ++
       generateValueObjectList(entity.name, entity.fields, messageSrcPackage) ++
-      generateCrudCmd(entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage) ++
-      (if (entity.transient) Seq() else generateCrudEvt(entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage)) ++
+      generateCrudCmd(entity.name, entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage) ++
+      (if (entity.transient) Seq() else generateCrudEvt(entity.name, entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage)) ++
       generateMessages(entity.messages, entity.name, messageSrcPackage) ++
       (if (entity.transient) Seq() else generateEvents(entity.messages, entity.name, messageSrcPackage))
   }
@@ -172,49 +174,49 @@ class MessageGenerator(modelLoader: ModelLoader) {
       .map(x => generateEvent(x, name, messageSrcPackage))
   }
 
-  def generateCrudEvt(name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
+  def generateCrudEvt(aggregate: String, name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
     s"""
        |message Create${cToPascal(name)}Event {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Event";
        |  ${indent(generateFields(userField +: fields), 2)}
        |}
      """.stripMargin.trim,
     s"""
        |message Update${cToPascal(name)}Event {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Event";
        |  ${indent(generateFields(userField +: fields), 2)}
        |}
      """.stripMargin.trim,
     s"""
        |message Delete${cToPascal(name)}Event {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Event";
        |  ${indent(generateFields(userField +: pkFields), 2)}
        |}
      """.stripMargin.trim
   )
 
-  def generateCrudCmd(name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
+  def generateCrudCmd(aggregate: String, name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
     s"""
        |message Create${cToPascal(name)}Cmd {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Command";
        |  ${indent(generateFields(userField +: fields), 2)}
        |}
      """.stripMargin.trim,
     s"""
        |message Retrieve${cToPascal(name)}Cmd {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Command";
        |  ${indent(generateFields(userField +: pkFields), 2)}
        |}
      """.stripMargin.trim,
     s"""
        |message Update${cToPascal(name)}Cmd {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Command";
        |  ${indent(generateFields(userField +: fields), 2)}
        |}
      """.stripMargin.trim,
     s"""
        |message Delete${cToPascal(name)}Cmd {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Command";
        |  ${indent(generateFields(userField +: pkFields), 2)}
        |}
      """.stripMargin.trim
