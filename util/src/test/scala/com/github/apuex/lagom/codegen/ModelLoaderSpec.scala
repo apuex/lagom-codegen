@@ -3,33 +3,36 @@ package com.github.apuex.lagom.codegen
 import com.github.apuex.lagom.codegen.ModelLoader._
 import org.scalatest._
 
-import scala.xml.Node
-import scala.xml.parsing.NoBindingFactoryAdapter
-
 class ModelLoaderSpec extends FlatSpec with Matchers {
-  val factory = new NoBindingFactoryAdapter
-  val xml: Node = factory.load(getClass.getClassLoader.getResourceAsStream("sales_entities.xml"))
-
-  val model = ModelLoader(xml)
+  val model = fromClasspath("sales_entities.xml")
   import model._
 
-  "A ModelLoader" should "load modelName" in {
+  "A Model" should "have modelName == sales" in {
+    modelName should not be("")
     modelName should be("sales")
   }
 
-  it should "load modelVersion" in {
+  it should "have modelVersion == 1.0.0" in {
+    modelVersion should not be("")
     modelVersion should be("1.0.0")
   }
 
-  it should "load modelPackage" in {
+  it should "have modelPackage == com.github.apuex.commerce.sales" in {
+    modelPackage should not be("")
     modelPackage should be("com.github.apuex.commerce.sales")
   }
 
-  it should "load modelMaintainer" in {
+  it should "have modelMaintainer == xtwxy@hotmail.com" in {
+    modelMaintainer should not be("")
     modelMaintainer should be("xtwxy@hotmail.com")
   }
 
-  it should "generate aggregate roots" in {
+  it should "have modelMaintainer == sales" in {
+    modelMaintainer should not be("")
+    modelMaintainer should be("sales")
+  }
+
+  "A ModelLoader" should "load aggregate roots" in {
     val aggregates = xml.child.filter(_.label == "entity")
       .map(x => {
         if ("" == x.\@("aggregatesTo")) Some(toAggregate(x, xml))
@@ -44,26 +47,26 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
           "alarm",
           false,
           List(
-            Field("alarm_id","string",64,false,"","",false,false,""),
-            Field("alarm_begin","timestamp",0,false,"","",true,false,""),
-            Field("alarm_end","timestamp",0,false,"","",true,false,""),
-            Field("alarm_desc","string",64,false,"","",false,false,"")
+            Field("alarm_id", "string", 64, false, "", "", false, false, ""),
+            Field("alarm_begin", "timestamp", 0, false, "", "", true, false, ""),
+            Field("alarm_end", "timestamp", 0, false, "", "", true, false, ""),
+            Field("alarm_desc", "string", 64, false, "", "", false, false, "")
           ),
           List(
             Aggregate(
               "alarm_begin",
               false,
               List(
-                Field("alarm_id","string",64,false,"","",false,false,""),
-                Field("alarm_begin","timestamp",0,false,"","",true,false,""),
+                Field("alarm_id", "string", 64, false, "", "", false, false, ""),
+                Field("alarm_begin", "timestamp", 0, false, "", "", true, false, ""),
               ),
               List(),
               List(),
               PrimaryKey(
                 "alarm_pk",
                 List(
-                  Field("alarm_id","string",64,false,"","",false,false,""),
-                  Field("alarm_begin","timestamp",0,false,"","",true,false,"")
+                  Field("alarm_id", "string", 64, false, "", "", false, false, ""),
+                  Field("alarm_begin", "timestamp", 0, false, "", "", true, false, "")
                 )
               ),
               List(),
@@ -73,17 +76,17 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
               "alarm_end",
               false,
               List(
-                Field("alarm_id","string",64,false,"","",false,false,""),
-                Field("alarm_begin","timestamp",0,false,"","",true,false,""),
-                Field("alarm_end","timestamp",0,false,"","",true,false,"")
+                Field("alarm_id", "string", 64, false, "", "", false, false, ""),
+                Field("alarm_begin", "timestamp", 0, false, "", "", true, false, ""),
+                Field("alarm_end", "timestamp", 0, false, "", "", true, false, "")
               ),
               List(),
               List(),
               PrimaryKey(
                 "alarm_pk",
                 List(
-                  Field("alarm_id","string",64,false,"","",false,false,""),
-                  Field("alarm_begin","timestamp",0,false,"","",true,false,"")
+                  Field("alarm_id", "string", 64, false, "", "", false, false, ""),
+                  Field("alarm_begin", "timestamp", 0, false, "", "", true, false, "")
                 )
               ),
               List(),
@@ -93,8 +96,8 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
           PrimaryKey(
             "alarm_pk",
             List(
-              Field("alarm_id","string",64,false,"","",false,false,""),
-              Field("alarm_begin","timestamp",0,false,"","",true,false,"")
+              Field("alarm_id", "string", 64, false, "", "", false, false, ""),
+              Field("alarm_begin", "timestamp", 0, false, "", "", true, false, "")
             )
           ),
           List(),
@@ -311,8 +314,8 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
         "alarm" -> PrimaryKey(
           "alarm_pk",
           List(
-            Field("alarm_id","string",64,false,"","",false,false,""),
-            Field("alarm_begin","timestamp",0,false,"","",true,false,"")
+            Field("alarm_id", "string", 64, false, "", "", false, false, ""),
+            Field("alarm_begin", "timestamp", 0, false, "", "", true, false, "")
           )
         ),
         "payment_type" -> PrimaryKey("payment_type_pk", List(Field("payment_type_id", "int", 0, false, "", "", false, false, "支付方式代码"))),

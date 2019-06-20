@@ -10,10 +10,16 @@ import scala.xml.parsing._
 object ModelLoader {
   def apply(fileName: String): ModelLoader = {
     val factory = new NoBindingFactoryAdapter
-    new ModelLoader(factory.load(fileName))
+    ModelLoader(factory.load(fileName), fileName)
   }
 
-  def apply(xml: Node): ModelLoader = new ModelLoader(xml)
+  def fromClasspath(path: String): ModelLoader = {
+    val factory = new NoBindingFactoryAdapter
+    val xml: Node = factory.load(getClass.getClassLoader.getResourceAsStream(path))
+    ModelLoader(xml, path)
+  }
+
+  def apply(xml: Node, modelFileName: String): ModelLoader = new ModelLoader(xml, modelFileName)
 
   case class Field(name: String, _type: String, length: Int, required: Boolean, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
 
@@ -262,7 +268,7 @@ object ModelLoader {
   }
 }
 
-class ModelLoader(val xml: Node) {
+class ModelLoader(val xml: Node, val modelFileName: String) {
   val model = "model"
   val message = "message"
   val api = "api"
@@ -275,13 +281,14 @@ class ModelLoader(val xml: Node) {
   val modelPackage = xml.\@("package")
   val modelVersion = xml.\@("version")
   val modelMaintainer = xml.\@("maintainer")
+  val modelDbSchema = xml.\@("dbSchema")
   val outputDir = s"${System.getProperty("output.dir", "target/generated")}"
   val rootProjectName = s"${cToShell(modelName)}"
   val rootProjectDir = s"${outputDir}/${rootProjectName}"
   val modelProjectName = s"${cToShell(modelName)}-${model}"
   val modelProjectDir = s"${rootProjectDir}/${model}"
   val modelSrcPackage = s"${modelPackage}"
-  val modelSrcDir = s"${modelProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
+  val modelTestSrcDir = s"${modelProjectDir}/src/test/scala/${modelPackage.replace('.', '/')}"
   val messageProjectName = s"${cToShell(modelName)}-${message}"
   val messageProjectDir = s"${rootProjectDir}/${message}"
   val messageSrcPackage = s"${modelPackage}"

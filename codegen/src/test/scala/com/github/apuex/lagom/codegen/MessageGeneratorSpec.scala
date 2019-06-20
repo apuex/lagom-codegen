@@ -1,20 +1,14 @@
 package com.github.apuex.lagom.codegen
 
-import com.github.apuex.lagom.codegen.MessageGenerator._
 import com.github.apuex.lagom.codegen.ModelLoader._
 import org.scalatest._
 
-import scala.xml.Node
-import scala.xml.parsing.NoBindingFactoryAdapter
-
 class MessageGeneratorSpec extends FlatSpec with Matchers {
-  val factory = new NoBindingFactoryAdapter
-  val xml: Node = factory.load(getClass.getClassLoader.getResourceAsStream("sales_entities.xml"))
-
-  val model = ModelLoader(xml)
+  val model = fromClasspath("sales_entities.xml")
   val messageGenerator = MessageGenerator(model)
-  import model._
+
   import messageGenerator._
+  import model._
 
   "A MessageGenerator" should "generateMessagesForEmbeddedAggregate" in {
     val aggregate = xml.child.filter(_.label == "entity")
@@ -31,6 +25,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
       .flatMap(x => x)
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
+    generated should not be("")
     generated should be(
       s"""
          |message ProductSalesVo {
