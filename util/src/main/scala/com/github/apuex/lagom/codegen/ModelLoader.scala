@@ -4,8 +4,8 @@ import java.io.{File, PrintWriter}
 
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 
-import scala.xml.parsing._
 import scala.xml._
+import scala.xml.parsing._
 
 object ModelLoader {
   def apply(fileName: String): ModelLoader = {

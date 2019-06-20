@@ -8,6 +8,7 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
+    codegenUtil    % Test,
     scalaTest      % Test
   )
 }
