@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
-<model name="sales" package="com.github.apuex.commerce.sales" dbSchema="sales">
+<model name="sales"
+       package="com.github.apuex.commerce.sales"
+       version="1.0.0"
+       dbSchema="sales"
+       maintainer="xtwxy@hotmail.com">
   <entity name="payment_type" enum="true">
     <field name="payment_type_id" type="int" comment="支付方式代码"/>
     <field name="payment_type_name" type="string" length="64" comment="支付方式常量符号"/>

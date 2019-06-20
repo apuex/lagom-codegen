@@ -11,8 +11,25 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
   val xml: Node = factory.load(getClass.getClassLoader.getResourceAsStream("sales_entities.xml"))
 
   val model = ModelLoader(xml)
+  import model._
 
-  "A ModelLoader" should "generate aggregate roots" in {
+  "A ModelLoader" should "load modelName" in {
+    modelName should be("sales")
+  }
+
+  it should "load modelVersion" in {
+    modelVersion should be("1.0.0")
+  }
+
+  it should "load modelPackage" in {
+    modelPackage should be("com.github.apuex.commerce.sales")
+  }
+
+  it should "load modelMaintainer" in {
+    modelMaintainer should be("xtwxy@hotmail.com")
+  }
+
+  it should "generate aggregate roots" in {
     val aggregates = xml.child.filter(_.label == "entity")
       .map(x => {
         if ("" == x.\@("aggregatesTo")) Some(toAggregate(x, xml))
