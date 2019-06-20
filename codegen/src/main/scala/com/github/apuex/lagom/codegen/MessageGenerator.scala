@@ -99,8 +99,8 @@ class MessageGenerator(modelLoader: ModelLoader) {
           }
         }
       }
-    )
-    .flatMap(x => x)
+      )
+      .flatMap(x => x)
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
 
@@ -271,8 +271,8 @@ class MessageGenerator(modelLoader: ModelLoader) {
         no += 1
         generateField(x, no)
       }
-    )
-    .map(x => x)
+      )
+      .map(x => x)
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
   }
@@ -295,54 +295,80 @@ class MessageGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def generateEntityIdField(name: String, keyFields: Seq[Field]): String = {
-    keyFields
-      .map(x =>
-        s"""
-           |def ${cToCamel(x.name)}: ${toJavaType(x._type)}
+  def generateEntityIdFields(name: String, keyFields: Seq[Field]): (String, String) = {
+    var dependencies: Set[String] = Set()
+    var entityIdFields = keyFields
+      .map(x => {
+        if ("timestamp" == x._type) {
+          dependencies += "com.google.protobuf.timestamp.Timestamp"
+          s"""
+             |def ${cToCamel(x.name)}: Option[${toJavaType(x._type)}]
          """.stripMargin.trim
-      )
+        } else {
+          s"""
+             |def ${cToCamel(x.name)}: ${toJavaType(x._type)}
+         """.stripMargin.trim
+        }
+      })
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
+
+    (dependencies
+      .map(x => s"import ${x}")
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse(""),
+      entityIdFields)
   }
 
-  def generateEntityId(name: String, keyFields: Seq[Field]): String = {
+  def generateEntityId(name: String, keyFields: Seq[Field]): (String, String) = {
+    var dependencies: Set[String] = Set()
     val key = keyFields
-      .map(x => if ("timestamp" == x._type)
+      .map(x => if ("timestamp" == x._type) {
+        dependencies += "com.google.protobuf.timestamp.Timestamp"
+        dependencies += "com.github.apuex.springbootsolution.runtime.DateFormat._"
         s"""
-           |formatTimestamp(${cToCamel(x.name)}.seconds * 1000 + ${cToCamel(x.name)}.nanos / 1000000)
+           |$${${cToCamel(x.name)}.map(x => formatTimestamp(x.seconds * 1000 + x.nanos / 1000000))}
          """.stripMargin.trim
-      else
+      } else {
         s"""
            |$${${cToCamel(x.name)}}
-         """.stripMargin.trim)
+         """.stripMargin.trim
+      })
       .reduceOption((l, r) => s"${l}_${r}")
       .getOrElse("")
 
-    s"""
-       |s"${cToCamel(name)}_${key}"
-     """.stripMargin.trim
+    (dependencies
+      .map(x => s"import ${x}")
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse(""),
+      s"""
+         |s"${cToCamel(name)}_${key}"
+     """.stripMargin.trim)
   }
 
   def generateShardingEntityCommand(name: String, keyFields: Seq[Field], messageSrcPackage: String): String = {
+    val (dependencies, entityId) = generateEntityId(name, keyFields)
     s"""
        |package ${messageSrcPackage}
+       |${dependencies}
        |
        |trait ${cToPascal(name)}Command extends ShardingEntityCommand {
-       |  ${indent(generateEntityIdField(name, keyFields), 2)}
+       |  ${indent(generateEntityIdFields(name, keyFields)._2, 2)}
        |  override def entityId: String = {
-       |    ${generateEntityId(name, keyFields)}
+       |    ${entityId}
        |  }
        |}
      """.stripMargin.trim
   }
 
   def generateShardingEntityEvent(name: String, keyFields: Seq[Field], messageSrcPackage: String): String = {
+    val (dependencies, entityIdFields) = generateEntityIdFields(name, keyFields)
     s"""
        |package ${messageSrcPackage}
+       |${dependencies}
        |
        |trait ${cToPascal(name)}Event extends Event {
-       |  ${indent(generateEntityIdField(name, keyFields), 2)}
+       |  ${indent(entityIdFields, 2)}
        |}
      """.stripMargin.trim
   }

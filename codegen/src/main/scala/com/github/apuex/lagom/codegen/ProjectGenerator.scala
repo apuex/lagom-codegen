@@ -37,6 +37,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |libraryDependencies ++= {
          |  Seq(
+         |    sbRuntime,
          |    scalapbRuntime % "protobuf",
          |    scalapbJson4s,
          |    scalaTest      % Test

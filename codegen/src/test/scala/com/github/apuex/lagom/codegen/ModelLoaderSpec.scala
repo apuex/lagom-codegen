@@ -41,6 +41,66 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
     aggregates should be(
       List(
         Aggregate(
+          "alarm",
+          false,
+          List(
+            Field("alarm_id","string",64,false,"","",false,false,""),
+            Field("alarm_begin","timestamp",0,false,"","",true,false,""),
+            Field("alarm_end","timestamp",0,false,"","",true,false,""),
+            Field("alarm_desc","string",64,false,"","",false,false,"")
+          ),
+          List(
+            Aggregate(
+              "alarm_begin",
+              false,
+              List(
+                Field("alarm_id","string",64,false,"","",false,false,""),
+                Field("alarm_begin","timestamp",0,false,"","",true,false,""),
+              ),
+              List(),
+              List(),
+              PrimaryKey(
+                "alarm_pk",
+                List(
+                  Field("alarm_id","string",64,false,"","",false,false,""),
+                  Field("alarm_begin","timestamp",0,false,"","",true,false,"")
+                )
+              ),
+              List(),
+              false
+            ),
+            Aggregate(
+              "alarm_end",
+              false,
+              List(
+                Field("alarm_id","string",64,false,"","",false,false,""),
+                Field("alarm_begin","timestamp",0,false,"","",true,false,""),
+                Field("alarm_end","timestamp",0,false,"","",true,false,"")
+              ),
+              List(),
+              List(),
+              PrimaryKey(
+                "alarm_pk",
+                List(
+                  Field("alarm_id","string",64,false,"","",false,false,""),
+                  Field("alarm_begin","timestamp",0,false,"","",true,false,"")
+                )
+              ),
+              List(),
+              false)
+          ),
+          List(),
+          PrimaryKey(
+            "alarm_pk",
+            List(
+              Field("alarm_id","string",64,false,"","",false,false,""),
+              Field("alarm_begin","timestamp",0,false,"","",true,false,"")
+            )
+          ),
+          List(),
+          false
+        ),
+        Aggregate(
           "payment_type",
           false,
           List(
@@ -107,7 +167,7 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
             Field("product_name", "string", 64, false, "", "", true, false, "商品名称"),
             Field("product_unit", "string", 64, false, "", "", true, false, "计价单位"),
             Field("unit_price", "double", 0, false, "", "", true, false, "单价"),
-            Field("record_time", "double", 0, false, "", "", false, true, "销量最后更新时间"),
+            Field("record_time", "timestamp", 0, false, "", "", false, true, "销量最后更新时间"),
             Field("quantity_sold", "double", 0, false, "", "", false, true, "销量")
           ),
           List(
@@ -116,7 +176,7 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
               false,
               List(
                 Field("product_id", "string", 64, false, "", "", false, false, "商品编号"),
-                Field("record_time", "double", 0, false, "", "", false, true, "销量最后更新时间"),
+                Field("record_time", "timestamp", 0, false, "", "", false, true, "销量最后更新时间"),
                 Field("quantity_sold", "double", 0, false, "", "", false, true, "销量")
               ),
               List(),
@@ -248,6 +308,13 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
 
     primaryKeys should be(
       Seq(
+        "alarm" -> PrimaryKey(
+          "alarm_pk",
+          List(
+            Field("alarm_id","string",64,false,"","",false,false,""),
+            Field("alarm_begin","timestamp",0,false,"","",true,false,"")
+          )
+        ),
         "payment_type" -> PrimaryKey("payment_type_pk", List(Field("payment_type_id", "int", 0, false, "", "", false, false, "支付方式代码"))),
         "product_sales" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, false, "", "", false, false, "商品编号"))),
         "product" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, false, "", "", false, false, "商品编号"))),

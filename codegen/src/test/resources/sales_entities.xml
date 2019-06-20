@@ -4,6 +4,16 @@
        version="1.0.0"
        dbSchema="sales"
        maintainer="xtwxy@hotmail.com">
+  <entity name="alarm" aggregate="true">
+    <field name="alarm_id" type="string" length="64"/>
+    <field name="alarm_begin" type="timestamp" aggregate="true"/>
+    <field name="alarm_end" type="timestamp" aggregate="true"/>
+    <field name="alarm_desc" type="string" length="64"/>
+    <primaryKey name="alarm_pk">
+      <field name="alarm_id"/>
+      <field name="alarm_begin"/>
+    </primaryKey>
+  </entity>
   <entity name="payment_type" enum="true">
     <field name="payment_type_id" type="int" comment="支付方式代码"/>
     <field name="payment_type_name" type="string" length="64" comment="支付方式常量符号"/>
@@ -23,7 +33,7 @@
     <field name="product_name" type="string" length="64" aggregate="true"  comment="商品名称"/>
     <field name="product_unit" type="string" length="64" aggregate="true" comment="计价单位"/>
     <field name="unit_price" type="double" aggregate="true" comment="单价"/>
-    <field name="record_time" type="double" transient="true" comment="销量最后更新时间"/>
+    <field name="record_time" type="timestamp" transient="true" comment="销量最后更新时间"/>
     <field name="quantity_sold" type="double" transient="true" comment="销量"/>
     <primaryKey name="product_pk">
       <field name="product_id"/>

@@ -36,7 +36,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |message ProductSalesVo {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
          |  string productId = 1; // 商品编号
-         |  double recordTime = 2; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 2; // 销量最后更新时间
          |  double quantitySold = 3; // 销量
          |}
          |
@@ -55,7 +55,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
-         |  double recordTime = 3; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 3; // 销量最后更新时间
          |  double quantitySold = 4; // 销量
          |}
          |
@@ -63,7 +63,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
-         |  double recordTime = 3; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 3; // 销量最后更新时间
          |  double quantitySold = 4; // 销量
          |}
          |
@@ -182,7 +182,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |message ProductSalesVo {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
          |  string productId = 1; // 商品编号
-         |  double recordTime = 2; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 2; // 销量最后更新时间
          |  double quantitySold = 3; // 销量
          |}
          |
@@ -201,7 +201,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
-         |  double recordTime = 3; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 3; // 销量最后更新时间
          |  double quantitySold = 4; // 销量
          |}
          |
@@ -209,7 +209,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
-         |  double recordTime = 3; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 3; // 销量最后更新时间
          |  double quantitySold = 4; // 销量
          |}
          |
@@ -312,7 +312,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productName = 2; // 商品名称
          |  string productUnit = 3; // 计价单位
          |  double unitPrice = 4; // 单价
-         |  double recordTime = 5; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 5; // 销量最后更新时间
          |  double quantitySold = 6; // 销量
          |}
          |
@@ -328,7 +328,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productName = 3; // 商品名称
          |  string productUnit = 4; // 计价单位
          |  double unitPrice = 5; // 单价
-         |  double recordTime = 6; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
          |  double quantitySold = 7; // 销量
          |}
          |
@@ -345,7 +345,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productName = 3; // 商品名称
          |  string productUnit = 4; // 计价单位
          |  double unitPrice = 5; // 单价
-         |  double recordTime = 6; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
          |  double quantitySold = 7; // 销量
          |}
          |
@@ -362,7 +362,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productName = 3; // 商品名称
          |  string productUnit = 4; // 计价单位
          |  double unitPrice = 5; // 单价
-         |  double recordTime = 6; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
          |  double quantitySold = 7; // 销量
          |}
          |
@@ -373,7 +373,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productName = 3; // 商品名称
          |  string productUnit = 4; // 计价单位
          |  double unitPrice = 5; // 单价
-         |  double recordTime = 6; // 销量最后更新时间
+         |  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
          |  double quantitySold = 7; // 销量
          |}
          |
