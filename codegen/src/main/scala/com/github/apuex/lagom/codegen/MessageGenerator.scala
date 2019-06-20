@@ -1,6 +1,5 @@
 package com.github.apuex.lagom.codegen
 
-import com.github.apuex.lagom.codegen.MessageGenerator._
 import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime.TextUtils.indent

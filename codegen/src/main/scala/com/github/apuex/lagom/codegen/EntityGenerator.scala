@@ -1,7 +1,5 @@
 package com.github.apuex.lagom.codegen
 
-import java.io.{File, PrintWriter}
-
 object EntityGenerator{
   def apply(fileName: String): EntityGenerator = new EntityGenerator(ModelLoader(fileName))
 

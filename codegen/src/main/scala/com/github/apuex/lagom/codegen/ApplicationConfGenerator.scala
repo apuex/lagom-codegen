@@ -3,9 +3,6 @@ package com.github.apuex.lagom.codegen
 import java.io.{File, PrintWriter}
 
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
-import com.github.apuex.springbootsolution.runtime.TextUtils.indent
-
-import scala.collection.mutable
 
 object ApplicationConfGenerator {
   def apply(fileName: String): ApplicationConfGenerator = new ApplicationConfGenerator(ModelLoader(fileName))
