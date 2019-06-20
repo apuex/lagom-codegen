@@ -20,11 +20,6 @@ message AlarmBeginVo {
   google.protobuf.Timestamp alarmBegin = 2; //
 }
 
-message AlarmBeginListVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  repeated AlarmBeginVo items = 1;
-}
-
 message GetAlarmBeginCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
   string userId = 1; // 用户ID
@@ -51,11 +46,6 @@ message AlarmEndVo {
   string alarmId = 1; //
   google.protobuf.Timestamp alarmBegin = 2; //
   google.protobuf.Timestamp alarmEnd = 3; //
-}
-
-message AlarmEndListVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  repeated AlarmEndVo items = 1;
 }
 
 message GetAlarmEndCmd {
@@ -158,11 +148,6 @@ message PaymentTypeVo {
   string paymentTypeLabel = 3; // 支付方式文字描述
 }
 
-message PaymentTypeListVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  repeated PaymentTypeVo items = 1;
-}
-
 enum PaymentType {
   option (scalapb.enum_options).extends = "com.github.apuex.commerce.sales.ValueObject";
   CASH = 0; // 现金
@@ -177,11 +162,6 @@ message ProductSalesVo {
   string productId = 1; // 商品编号
   google.protobuf.Timestamp recordTime = 2; // 销量最后更新时间
   double quantitySold = 3; // 销量
-}
-
-message ProductSalesListVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  repeated ProductSalesVo items = 1;
 }
 
 message GetProductSalesCmd {
@@ -212,11 +192,6 @@ message ProductNameVo {
   string productName = 2; // 商品名称
 }
 
-message ProductNameListVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  repeated ProductNameVo items = 1;
-}
-
 message GetProductNameCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
   string userId = 1; // 用户ID
@@ -243,11 +218,6 @@ message ProductUnitVo {
   string productUnit = 2; // 计价单位
 }
 
-message ProductUnitListVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  repeated ProductUnitVo items = 1;
-}
-
 message GetProductUnitCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
   string userId = 1; // 用户ID
@@ -272,11 +242,6 @@ message UnitPriceVo {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
   string productId = 1; // 商品编号
   double unitPrice = 2; // 单价
-}
-
-message UnitPriceListVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  repeated UnitPriceVo items = 1;
 }
 
 message GetUnitPriceCmd {
@@ -382,11 +347,6 @@ message OrderLinesVo {
   repeated OrderItemVo orderLines = 2; // 购买清单
 }
 
-message OrderLinesListVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  repeated OrderLinesVo items = 1;
-}
-
 message GetOrderLinesCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
   string userId = 1; // 用户ID
@@ -477,10 +437,5 @@ message OrderItemVo {
   string itemUnit = 4; // 计价单位
   double unitPrice = 5; // 单价
   double orderQuantity = 6; // 数量
-}
-
-message OrderItemListVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  repeated OrderItemVo items = 1;
 }
 
