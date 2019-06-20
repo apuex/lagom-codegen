@@ -47,6 +47,7 @@
     <field name="order_id" type="string" length="64" comment="订单编号"/>
     <field name="order_time" type="timestamp" comment="下单时间"/>
     <field name="order_lines" type="array" valueType="order_item" aggregate="true" comment="购买清单"/>
+    <field name="order_payment_type" type="payment_type" aggregate="true" comment="支付方式"/>
     <primaryKey name="order_pk">
       <field name="order_id"/>
     </primaryKey>

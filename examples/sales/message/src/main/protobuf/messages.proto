@@ -367,11 +367,38 @@ message UpdateOrderLinesEvent{
   repeated OrderItemVo orderLines = 3; // 购买清单
 }
 
+message OrderPaymentTypeVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string orderId = 1; // 订单编号
+  PaymentType orderPaymentType = 2; // 支付方式
+}
+
+message GetOrderPaymentTypeCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+}
+
+message UpdateOrderPaymentTypeCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  PaymentType orderPaymentType = 3; // 支付方式
+}
+
+message UpdateOrderPaymentTypeEvent{
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  PaymentType orderPaymentType = 3; // 支付方式
+}
+
 message OrderVo {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
   string orderId = 1; // 订单编号
   google.protobuf.Timestamp orderTime = 2; // 下单时间
   repeated OrderItemVo orderLines = 3; // 购买清单
+  PaymentType orderPaymentType = 4; // 支付方式
 }
 
 message OrderListVo {
@@ -385,6 +412,7 @@ message CreateOrderCmd {
   string orderId = 2; // 订单编号
   google.protobuf.Timestamp orderTime = 3; // 下单时间
   repeated OrderItemVo orderLines = 4; // 购买清单
+  PaymentType orderPaymentType = 5; // 支付方式
 }
 
 message RetrieveOrderCmd {
@@ -399,6 +427,7 @@ message UpdateOrderCmd {
   string orderId = 2; // 订单编号
   google.protobuf.Timestamp orderTime = 3; // 下单时间
   repeated OrderItemVo orderLines = 4; // 购买清单
+  PaymentType orderPaymentType = 5; // 支付方式
 }
 
 message DeleteOrderCmd {
@@ -413,6 +442,7 @@ message CreateOrderEvent {
   string orderId = 2; // 订单编号
   google.protobuf.Timestamp orderTime = 3; // 下单时间
   repeated OrderItemVo orderLines = 4; // 购买清单
+  PaymentType orderPaymentType = 5; // 支付方式
 }
 
 message UpdateOrderEvent {
@@ -421,6 +451,7 @@ message UpdateOrderEvent {
   string orderId = 2; // 订单编号
   google.protobuf.Timestamp orderTime = 3; // 下单时间
   repeated OrderItemVo orderLines = 4; // 购买清单
+  PaymentType orderPaymentType = 5; // 支付方式
 }
 
 message DeleteOrderEvent {
