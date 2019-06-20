@@ -83,11 +83,26 @@ class ApplicationConfGenerator(modelLoader: ModelLoader) {
          |    serialization-bindings {
          |      "java.io.Serializable" = none
          |      // scalapb 0.8.4
-         |      // "scalapb.GeneratedMessage" = ${cToShell(modelName)}-protobuf
+         |      "scalapb.GeneratedMessage" = ${cToShell(modelName)}-protobuf
          |      // google protobuf-java 3.6.1
          |      "com.google.protobuf.GeneratedMessageV3" = ${cToShell(modelName)}-protobuf
          |    }
          |  }
+         |
+         |//  remote {
+         |//    netty.tcp {
+         |//      hostname = "localhost" // default to the first seed node
+         |//      port = 2553               // default port
+         |//      hostname = $${? HOSTNAME}   // override with -DHOSTNAME
+         |//      port = $${? PORT}           // override with -DPORT
+         |//    }
+         |//  }
+         |//
+         |//  cluster {
+         |//    seed-nodes = [
+         |//      "akka.tcp://${cToShell(modelName)}@localhost:2553",
+         |//    ]
+         |//  }
          |
          |  // leveldb persistence plugin for development environment.
          |  // TODO: replace it with cassandra plugins for production unless you known what you are doing.
