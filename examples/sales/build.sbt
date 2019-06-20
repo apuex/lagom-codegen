@@ -8,6 +8,7 @@ maintainer   := artifactMaintainer
 
 lazy val root = (project in file("."))
   .aggregate(
+    `model`,
     `message`,
     `api`,
     `dao`,
@@ -15,7 +16,9 @@ lazy val root = (project in file("."))
     `app`
   )
 
+lazy val `model` = (project in file("model"))
 lazy val `message` = (project in file("message"))
+  .dependsOn(`model`)
 lazy val `api` = (project in file("api"))
   .dependsOn(`message`)
   .enablePlugins(LagomScala)

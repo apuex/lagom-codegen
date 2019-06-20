@@ -263,7 +263,7 @@ object ModelLoader {
 }
 
 class ModelLoader(val xml: Node) {
-  val mapping = "mapping"
+  val model = "model"
   val message = "message"
   val api = "api"
   val dao = "dao"
@@ -278,6 +278,10 @@ class ModelLoader(val xml: Node) {
   val outputDir = s"${System.getProperty("output.dir", "target/generated")}"
   val rootProjectName = s"${cToShell(modelName)}"
   val rootProjectDir = s"${outputDir}/${rootProjectName}"
+  val modelProjectName = s"${cToShell(modelName)}-${model}"
+  val modelProjectDir = s"${rootProjectDir}/${model}"
+  val modelSrcPackage = s"${modelPackage}"
+  val modelSrcDir = s"${modelProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
   val messageProjectName = s"${cToShell(modelName)}-${message}"
   val messageProjectDir = s"${rootProjectDir}/${message}"
   val messageSrcPackage = s"${modelPackage}"

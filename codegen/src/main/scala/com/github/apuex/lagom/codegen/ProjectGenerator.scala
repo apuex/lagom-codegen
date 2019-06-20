@@ -16,10 +16,34 @@ class ProjectGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     rootProjectSettings()
+    modelProjectSettings()
     messageProjectSettings()
     apiProjectSettings()
     implProjectSettings()
     appProjectSettings()
+  }
+
+  def modelProjectSettings(): Unit = {
+    new File(modelProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${modelProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |import Dependencies._
+         |
+         |name         := "${modelProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    scalaTest      % Test
+         |  )
+         |}
+       """.stripMargin.trim
+    )
+    printWriter.close()
   }
 
   def messageProjectSettings(): Unit = {
@@ -285,6 +309,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |lazy val root = (project in file("."))
          |  .aggregate(
+         |    `${model}`,
          |    `${message}`,
          |    `${api}`,
          |    `${dao}`,
@@ -292,7 +317,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |    `${app}`
          |  )
          |
+         |lazy val `${model}` = (project in file("${model}"))
          |lazy val `${message}` = (project in file("${message}"))
+         |  .dependsOn(`${model}`)
          |lazy val `${api}` = (project in file("${api}"))
          |  .dependsOn(`${message}`)
          |  .enablePlugins(LagomScala)
