@@ -13,3 +13,6 @@ bin/
 tmp/
 
 **/*.protobin
+**/*.log
+
+log/
