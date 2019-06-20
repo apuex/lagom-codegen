@@ -1,0 +1,486 @@
+/*****************************************************
+ ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+ *****************************************************/
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+package com.github.apuex.commerce.sales;
+option java_package = "com.github.apuex.commerce.sales";
+option java_outer_classname = "Messages";
+option java_multiple_files = true;
+
+import "scalapb/scalapb.proto";
+option (scalapb.options) = {
+  flat_package: true
+};
+
+message AlarmBeginVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string alarmId = 1; //
+  google.protobuf.Timestamp alarmBegin = 2; //
+}
+
+message AlarmBeginListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated AlarmBeginVo items = 1;
+}
+
+message GetAlarmBeginCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+}
+
+message UpdateAlarmBeginCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+}
+
+message UpdateAlarmBeginEvent{
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+}
+
+message AlarmEndVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string alarmId = 1; //
+  google.protobuf.Timestamp alarmBegin = 2; //
+  google.protobuf.Timestamp alarmEnd = 3; //
+}
+
+message AlarmEndListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated AlarmEndVo items = 1;
+}
+
+message GetAlarmEndCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+}
+
+message UpdateAlarmEndCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  google.protobuf.Timestamp alarmEnd = 4; //
+}
+
+message UpdateAlarmEndEvent{
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  google.protobuf.Timestamp alarmEnd = 4; //
+}
+
+message AlarmVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string alarmId = 1; //
+  google.protobuf.Timestamp alarmBegin = 2; //
+  google.protobuf.Timestamp alarmEnd = 3; //
+  string alarmDesc = 4; //
+}
+
+message AlarmListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated AlarmVo items = 1;
+}
+
+message CreateAlarmCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  google.protobuf.Timestamp alarmEnd = 4; //
+  string alarmDesc = 5; //
+}
+
+message RetrieveAlarmCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+}
+
+message UpdateAlarmCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  google.protobuf.Timestamp alarmEnd = 4; //
+  string alarmDesc = 5; //
+}
+
+message DeleteAlarmCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+}
+
+message CreateAlarmEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  google.protobuf.Timestamp alarmEnd = 4; //
+  string alarmDesc = 5; //
+}
+
+message UpdateAlarmEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  google.protobuf.Timestamp alarmEnd = 4; //
+  string alarmDesc = 5; //
+}
+
+message DeleteAlarmEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+}
+
+message PaymentTypeVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  int32 paymentTypeId = 1; // 支付方式代码
+  string paymentTypeName = 2; // 支付方式常量符号
+  string paymentTypeLabel = 3; // 支付方式文字描述
+}
+
+message PaymentTypeListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated PaymentTypeVo items = 1;
+}
+
+enum PaymentType {
+  option (scalapb.enum_options).extends = "com.github.apuex.commerce.sales.ValueObject";
+  CASH = 0; // 现金
+  CREDIT_CARD = 1; // 信用卡
+  VOUCHER = 2; // 优惠券
+  ALIPAY = 3; // 支付宝
+  WECHAT = 4; // 微信
+}
+
+message ProductSalesVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string productId = 1; // 商品编号
+  google.protobuf.Timestamp recordTime = 2; // 销量最后更新时间
+  double quantitySold = 3; // 销量
+}
+
+message ProductSalesListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated ProductSalesVo items = 1;
+}
+
+message GetProductSalesCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+}
+
+message UpdateProductSalesCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  google.protobuf.Timestamp recordTime = 3; // 销量最后更新时间
+  double quantitySold = 4; // 销量
+}
+
+message UpdateProductSalesEvent{
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  google.protobuf.Timestamp recordTime = 3; // 销量最后更新时间
+  double quantitySold = 4; // 销量
+}
+
+message ProductNameVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string productId = 1; // 商品编号
+  string productName = 2; // 商品名称
+}
+
+message ProductNameListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated ProductNameVo items = 1;
+}
+
+message GetProductNameCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+}
+
+message UpdateProductNameCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  string productName = 3; // 商品名称
+}
+
+message UpdateProductNameEvent{
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  string productName = 3; // 商品名称
+}
+
+message ProductUnitVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string productId = 1; // 商品编号
+  string productUnit = 2; // 计价单位
+}
+
+message ProductUnitListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated ProductUnitVo items = 1;
+}
+
+message GetProductUnitCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+}
+
+message UpdateProductUnitCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  string productUnit = 3; // 计价单位
+}
+
+message UpdateProductUnitEvent{
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  string productUnit = 3; // 计价单位
+}
+
+message UnitPriceVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string productId = 1; // 商品编号
+  double unitPrice = 2; // 单价
+}
+
+message UnitPriceListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated UnitPriceVo items = 1;
+}
+
+message GetUnitPriceCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+}
+
+message UpdateUnitPriceCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  double unitPrice = 3; // 单价
+}
+
+message UpdateUnitPriceEvent{
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  double unitPrice = 3; // 单价
+}
+
+message ProductVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string productId = 1; // 商品编号
+  string productName = 2; // 商品名称
+  string productUnit = 3; // 计价单位
+  double unitPrice = 4; // 单价
+  google.protobuf.Timestamp recordTime = 5; // 销量最后更新时间
+  double quantitySold = 6; // 销量
+}
+
+message ProductListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated ProductVo items = 1;
+}
+
+message CreateProductCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  string productName = 3; // 商品名称
+  string productUnit = 4; // 计价单位
+  double unitPrice = 5; // 单价
+  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
+  double quantitySold = 7; // 销量
+}
+
+message RetrieveProductCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+}
+
+message UpdateProductCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  string productName = 3; // 商品名称
+  string productUnit = 4; // 计价单位
+  double unitPrice = 5; // 单价
+  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
+  double quantitySold = 7; // 销量
+}
+
+message DeleteProductCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+}
+
+message CreateProductEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  string productName = 3; // 商品名称
+  string productUnit = 4; // 计价单位
+  double unitPrice = 5; // 单价
+  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
+  double quantitySold = 7; // 销量
+}
+
+message UpdateProductEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+  string productName = 3; // 商品名称
+  string productUnit = 4; // 计价单位
+  double unitPrice = 5; // 单价
+  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
+  double quantitySold = 7; // 销量
+}
+
+message DeleteProductEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
+  string userId = 1; // 用户ID
+  string productId = 2; // 商品编号
+}
+
+message OrderLinesVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string orderId = 1; // 订单编号
+  repeated OrderItemVo orderLines = 2; // 购买清单
+}
+
+message OrderLinesListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated OrderLinesVo items = 1;
+}
+
+message GetOrderLinesCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+}
+
+message UpdateOrderLinesCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  repeated OrderItemVo orderLines = 3; // 购买清单
+}
+
+message UpdateOrderLinesEvent{
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  repeated OrderItemVo orderLines = 3; // 购买清单
+}
+
+message OrderVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string orderId = 1; // 订单编号
+  google.protobuf.Timestamp orderTime = 2; // 下单时间
+  repeated OrderItemVo orderLines = 3; // 购买清单
+}
+
+message OrderListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated OrderVo items = 1;
+}
+
+message CreateOrderCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  google.protobuf.Timestamp orderTime = 3; // 下单时间
+  repeated OrderItemVo orderLines = 4; // 购买清单
+}
+
+message RetrieveOrderCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+}
+
+message UpdateOrderCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  google.protobuf.Timestamp orderTime = 3; // 下单时间
+  repeated OrderItemVo orderLines = 4; // 购买清单
+}
+
+message DeleteOrderCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+}
+
+message CreateOrderEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  google.protobuf.Timestamp orderTime = 3; // 下单时间
+  repeated OrderItemVo orderLines = 4; // 购买清单
+}
+
+message UpdateOrderEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  google.protobuf.Timestamp orderTime = 3; // 下单时间
+  repeated OrderItemVo orderLines = 4; // 购买清单
+}
+
+message DeleteOrderEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+}
+
+message OrderItemVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string orderId = 1; // 订单编号
+  string productId = 2; // 商品编号
+  string productName = 3; // 商品名称
+  string itemUnit = 4; // 计价单位
+  double unitPrice = 5; // 单价
+  double orderQuantity = 6; // 数量
+}
+
+message OrderItemListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated OrderItemVo items = 1;
+}
+
