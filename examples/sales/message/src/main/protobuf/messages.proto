@@ -14,63 +14,6 @@ option (scalapb.options) = {
   flat_package: true
 };
 
-message AlarmBeginVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  string alarmId = 1; //
-  google.protobuf.Timestamp alarmBegin = 2; //
-}
-
-message GetAlarmBeginCmd {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
-  string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-}
-
-message UpdateAlarmBeginCmd {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
-  string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-}
-
-message UpdateAlarmBeginEvent{
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
-  string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-}
-
-message AlarmEndVo {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  string alarmId = 1; //
-  google.protobuf.Timestamp alarmBegin = 2; //
-  google.protobuf.Timestamp alarmEnd = 3; //
-}
-
-message GetAlarmEndCmd {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
-  string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-}
-
-message UpdateAlarmEndCmd {
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
-  string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  google.protobuf.Timestamp alarmEnd = 4; //
-}
-
-message UpdateAlarmEndEvent{
-  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
-  string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  google.protobuf.Timestamp alarmEnd = 4; //
-}
-
 message AlarmVo {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
   string alarmId = 1; //
@@ -141,6 +84,40 @@ message DeleteAlarmEvent {
   google.protobuf.Timestamp alarmBegin = 3; //
 }
 
+message BeginAlarmCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  string alarmDesc = 4; //
+}
+
+message EndAlarmCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  google.protobuf.Timestamp alarmEnd = 4; //
+  string alarmDesc = 5; //
+}
+
+message BeginAlarmEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  string alarmDesc = 4; //
+}
+
+message EndAlarmEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
+  string userId = 1; // 用户ID
+  string alarmId = 2; //
+  google.protobuf.Timestamp alarmBegin = 3; //
+  google.protobuf.Timestamp alarmEnd = 4; //
+  string alarmDesc = 5; //
+}
+
 message PaymentTypeVo {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
   int32 paymentTypeId = 1; // 支付方式代码
@@ -198,14 +175,14 @@ message GetProductNameCmd {
   string productId = 2; // 商品编号
 }
 
-message UpdateProductNameCmd {
+message ChangeProductNameCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
   string userId = 1; // 用户ID
   string productId = 2; // 商品编号
   string productName = 3; // 商品名称
 }
 
-message UpdateProductNameEvent{
+message ChangeProductNameEvent{
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
   string userId = 1; // 用户ID
   string productId = 2; // 商品编号
@@ -224,14 +201,14 @@ message GetProductUnitCmd {
   string productId = 2; // 商品编号
 }
 
-message UpdateProductUnitCmd {
+message ChangeProductUnitCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
   string userId = 1; // 用户ID
   string productId = 2; // 商品编号
   string productUnit = 3; // 计价单位
 }
 
-message UpdateProductUnitEvent{
+message ChangeProductUnitEvent{
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
   string userId = 1; // 用户ID
   string productId = 2; // 商品编号
@@ -250,14 +227,14 @@ message GetUnitPriceCmd {
   string productId = 2; // 商品编号
 }
 
-message UpdateUnitPriceCmd {
+message ChangeUnitPriceCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
   string userId = 1; // 用户ID
   string productId = 2; // 商品编号
   double unitPrice = 3; // 单价
 }
 
-message UpdateUnitPriceEvent{
+message ChangeUnitPriceEvent{
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
   string userId = 1; // 用户ID
   string productId = 2; // 商品编号
@@ -353,14 +330,28 @@ message GetOrderLinesCmd {
   string orderId = 2; // 订单编号
 }
 
-message UpdateOrderLinesCmd {
+message AddOrderLinesCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
   string userId = 1; // 用户ID
   string orderId = 2; // 订单编号
   repeated OrderItemVo orderLines = 3; // 购买清单
 }
 
-message UpdateOrderLinesEvent{
+message AddOrderLinesEvent{
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  repeated OrderItemVo orderLines = 3; // 购买清单
+}
+
+message RemoveOrderLinesCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
+  string userId = 1; // 用户ID
+  string orderId = 2; // 订单编号
+  repeated OrderItemVo orderLines = 3; // 购买清单
+}
+
+message RemoveOrderLinesEvent{
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
   string userId = 1; // 用户ID
   string orderId = 2; // 订单编号
@@ -379,14 +370,14 @@ message GetOrderPaymentTypeCmd {
   string orderId = 2; // 订单编号
 }
 
-message UpdateOrderPaymentTypeCmd {
+message ChangeOrderPaymentTypeCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderCommand";
   string userId = 1; // 用户ID
   string orderId = 2; // 订单编号
   PaymentType orderPaymentType = 3; // 支付方式
 }
 
-message UpdateOrderPaymentTypeEvent{
+message ChangeOrderPaymentTypeEvent{
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.OrderEvent";
   string userId = 1; // 用户ID
   string orderId = 2; // 订单编号
