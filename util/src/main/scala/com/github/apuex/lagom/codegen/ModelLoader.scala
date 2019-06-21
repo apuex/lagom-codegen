@@ -2,7 +2,9 @@ package com.github.apuex.lagom.codegen
 
 import java.io.{File, PrintWriter}
 
+import com.github.apuex.lagom.codegen.ModelLoader.Field
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+import com.github.apuex.springbootsolution.runtime.TypeConverters._
 
 import scala.xml._
 import scala.xml.parsing._
@@ -310,13 +312,52 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val appProjectDir = s"${rootProjectDir}/${app}"
   val applicationConfDir = s"${appProjectDir}/conf"
   val hyphen = if ("microsoft" == s"${System.getProperty("symbol.naming", "microsoft")}") "" else "-"
-  val nonEnumNames = xml.child.filter(x => x.label == "entity" && "true" != x.\@("enum"))
-    .map(_.\@("name"))
+
+  val nonEnumNames = xml.child
+    .filter(x => x.label == "entity" && "true" != x.\@("enum"))
+    .map(x => x.\@("name") +:
+      (x.child.filter(_.label == "aggregate")
+        .map(_.\@("name")) ++
+        x.child.filter(f => f.label == "field" && "true" == f.\@("aggregate"))
+          .map(_.\@("name")))
+    )
+    .flatMap(x => x)
     .toSet
+
   val enumNames = xml.child.filter(x => x.label == "entity" && "true" == x.\@("enum"))
     .map(_.\@("name"))
     .toSet
 
   def isEntity(name: String): Boolean = nonEnumNames.contains(name)
+
   def isEnum(name: String): Boolean = !nonEnumNames.contains(name) && enumNames.contains(name)
+
+  def defFieldType(name: String): String = {
+    if (isEntity(name)) s"${cToPascal(name)}Vo"
+    else cToPascal(toJavaType(name))
+  }
+
+  def defFieldType(field: Field): String = {
+    // recursive array/map definition is not supported.
+    if ("array" == field._type)
+      s"""
+         |Seq[${defFieldType(field.valueType)}]
+       """.stripMargin
+    else if ("map" == field._type)
+      s"""
+         |Map[${defFieldType(field.valueType)}, ${defFieldType(field.valueType)}]
+       """.stripMargin
+    else defFieldType(field._type)
+  }
+
+  def defMethodParams(fields: Seq[Field]): String = {
+    fields
+      .map(x => {
+        s"""
+           |${cToCamel(x.name)}: ${defFieldType(x)}
+         """.stripMargin.trim
+      })
+      .reduceOption((l, r) => s"${l}, ${r}")
+      .getOrElse("")
+  }
 }
