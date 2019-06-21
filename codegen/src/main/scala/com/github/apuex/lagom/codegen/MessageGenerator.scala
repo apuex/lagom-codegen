@@ -112,8 +112,32 @@ class MessageGenerator(modelLoader: ModelLoader) {
   }
 
   def generateMessagesForEmbeddedAggregate(entity: Aggregate, name: String, messageSrcPackage: String): Seq[String] = {
-    generateValueObject(entity.name, entity.fields, messageSrcPackage) ++
-      Seq(
+    val nonKeyFieldCount = entity.fields.length - entity.primaryKey.fields.length
+    val keyFieldNames = entity.primaryKey.fields.map(_.name).toSet
+    val nonKeyFields = entity.fields.filter(x => !keyFieldNames.contains(x.name))
+    val messages = if (nonKeyFieldCount > 1) Seq(
+      s"""
+         |message Get${cToPascal(entity.name)}Cmd {
+         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+         |  ${indent(generateFields(userField +: entity.primaryKey.fields), 2)}
+         |}
+       """.stripMargin.trim,
+      s"""
+         |message Update${cToPascal(entity.name)}Cmd {
+         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+         |  ${indent(generateFields(userField +: entity.fields), 2)}
+         |}
+       """.stripMargin.trim,
+      s"""
+         |message Update${cToPascal(entity.name)}Event{
+         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+         |  ${indent(generateFields(userField +: entity.fields), 2)}
+         |}
+       """.stripMargin.trim
+    )
+    else if (nonKeyFieldCount == 1) {
+      val field = nonKeyFields.head
+      if("array" == field._type || "map" == field._type) Seq(
         s"""
            |message Get${cToPascal(entity.name)}Cmd {
            |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
@@ -121,18 +145,54 @@ class MessageGenerator(modelLoader: ModelLoader) {
            |}
        """.stripMargin.trim,
         s"""
-           |message Update${cToPascal(entity.name)}Cmd {
+           |message Add${cToPascal(entity.name)}Cmd {
            |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
            |  ${indent(generateFields(userField +: entity.fields), 2)}
            |}
        """.stripMargin.trim,
         s"""
-           |message Update${cToPascal(entity.name)}Event{
+           |message Add${cToPascal(entity.name)}Event{
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+           |  ${indent(generateFields(userField +: entity.fields), 2)}
+           |}
+       """.stripMargin.trim,
+        s"""
+           |message Remove${cToPascal(entity.name)}Cmd {
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+           |  ${indent(generateFields(userField +: entity.fields), 2)}
+           |}
+       """.stripMargin.trim,
+        s"""
+           |message Remove${cToPascal(entity.name)}Event{
            |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
            |  ${indent(generateFields(userField +: entity.fields), 2)}
            |}
        """.stripMargin.trim
       )
+      else Seq(
+        s"""
+           |message Get${cToPascal(entity.name)}Cmd {
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+           |  ${indent(generateFields(userField +: entity.primaryKey.fields), 2)}
+           |}
+       """.stripMargin.trim,
+        s"""
+           |message Change${cToPascal(entity.name)}Cmd {
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
+           |  ${indent(generateFields(userField +: entity.fields), 2)}
+           |}
+       """.stripMargin.trim,
+        s"""
+           |message Change${cToPascal(entity.name)}Event{
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+           |  ${indent(generateFields(userField +: entity.fields), 2)}
+           |}
+       """.stripMargin.trim
+      )
+    } else { // this cannot be happen.
+      Seq()
+    }
+    generateValueObject(entity.name, entity.fields, messageSrcPackage) ++ messages
   }
 
   def generateMessagesForAggregate(entity: Aggregate, messageSrcPackage: String): Seq[String] = {

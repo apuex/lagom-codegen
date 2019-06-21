@@ -69,14 +69,14 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productId = 2; // 商品编号
          |}
          |
-         |message UpdateProductNameCmd {
+         |message ChangeProductNameCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
          |  string productName = 3; // 商品名称
          |}
          |
-         |message UpdateProductNameEvent{
+         |message ChangeProductNameEvent{
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
@@ -95,14 +95,14 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productId = 2; // 商品编号
          |}
          |
-         |message UpdateProductUnitCmd {
+         |message ChangeProductUnitCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
          |  string productUnit = 3; // 计价单位
          |}
          |
-         |message UpdateProductUnitEvent{
+         |message ChangeProductUnitEvent{
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
@@ -121,14 +121,14 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productId = 2; // 商品编号
          |}
          |
-         |message UpdateUnitPriceCmd {
+         |message ChangeUnitPriceCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
          |  double unitPrice = 3; // 单价
          |}
          |
-         |message UpdateUnitPriceEvent{
+         |message ChangeUnitPriceEvent{
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
@@ -195,14 +195,14 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productId = 2; // 商品编号
          |}
          |
-         |message UpdateProductNameCmd {
+         |message ChangeProductNameCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
          |  string productName = 3; // 商品名称
          |}
          |
-         |message UpdateProductNameEvent{
+         |message ChangeProductNameEvent{
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
@@ -221,14 +221,14 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productId = 2; // 商品编号
          |}
          |
-         |message UpdateProductUnitCmd {
+         |message ChangeProductUnitCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
          |  string productUnit = 3; // 计价单位
          |}
          |
-         |message UpdateProductUnitEvent{
+         |message ChangeProductUnitEvent{
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
@@ -247,14 +247,14 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productId = 2; // 商品编号
          |}
          |
-         |message UpdateUnitPriceCmd {
+         |message ChangeUnitPriceCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
          |  double unitPrice = 3; // 单价
          |}
          |
-         |message UpdateUnitPriceEvent{
+         |message ChangeUnitPriceEvent{
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号

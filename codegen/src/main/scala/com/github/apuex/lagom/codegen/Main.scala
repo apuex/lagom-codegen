@@ -15,6 +15,7 @@ object Main extends App {
       case "generate-json-serializer" => JsonSerializerGenerator(args.drop(1)(0)).generate()
       case "generate-service" => ServiceGenerator(args.drop(1)(0)).generate()
       case "generate-dao" => DaoGenerator(args.drop(1)(0)).generate()
+      case "generate-dao-mysql" => DaoMysqlImplGenerator(args.drop(1)(0)).generate()
       case "generate-project-settings" => ProjectGenerator(args.drop(1)(0)).generate()
       case "generate-all" => generateAll(args.drop(1)(0))
       case c =>
@@ -32,6 +33,7 @@ object Main extends App {
     JsonSerializerGenerator(modelLoader).generate()
     ServiceGenerator(modelLoader).generate()
     DaoGenerator(modelLoader).generate()
+    DaoMysqlImplGenerator(modelLoader).generate()
     ProjectGenerator(modelLoader).generate()
   }
 }

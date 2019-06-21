@@ -48,59 +48,36 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
           "alarm",
           false,
           List(
-            Field("alarm_id", "string", 64, false, "", "", false, false, ""),
-            Field("alarm_begin", "timestamp", 0, false, "", "", true, false, ""),
-            Field("alarm_end", "timestamp", 0, false, "", "", true, false, ""),
-            Field("alarm_desc", "string", 64, false, "", "", false, false, "")
-          ),
-          List(
-            Aggregate(
-              "alarm_begin",
-              false,
-              List(
-                Field("alarm_id", "string", 64, false, "", "", false, false, ""),
-                Field("alarm_begin", "timestamp", 0, false, "", "", true, false, ""),
-              ),
-              List(),
-              List(),
-              PrimaryKey(
-                "alarm_pk",
-                List(
-                  Field("alarm_id", "string", 64, false, "", "", false, false, ""),
-                  Field("alarm_begin", "timestamp", 0, false, "", "", true, false, "")
-                )
-              ),
-              List(),
-              false
-            ),
-            Aggregate(
-              "alarm_end",
-              false,
-              List(
-                Field("alarm_id", "string", 64, false, "", "", false, false, ""),
-                Field("alarm_begin", "timestamp", 0, false, "", "", true, false, ""),
-                Field("alarm_end", "timestamp", 0, false, "", "", true, false, "")
-              ),
-              List(),
-              List(),
-              PrimaryKey(
-                "alarm_pk",
-                List(
-                  Field("alarm_id", "string", 64, false, "", "", false, false, ""),
-                  Field("alarm_begin", "timestamp", 0, false, "", "", true, false, "")
-                )
-              ),
-              List(),
-              false)
+            Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""),
+            Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, ""),
+            Field("alarm_end", "timestamp", 0, false, "", "", "", "", "", false, false, ""),
+            Field("alarm_desc", "string", 64, false, "", "", "", "", "", false, false, "")
           ),
           List(),
-          PrimaryKey(
-            "alarm_pk",
-            List(
-              Field("alarm_id", "string", 64, false, "", "", false, false, ""),
-              Field("alarm_begin", "timestamp", 0, false, "", "", true, false, "")
+          List(
+            Message(
+              "begin_alarm",
+              List(
+                Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""),
+                Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, ""),
+                Field("alarm_desc", "string", 64, false, "", "", "", "", "", false, false, "")
+              ),
+              PrimaryKey("alarm_pk", List(Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""), Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, ""))),
+              false
+            ),
+            Message(
+              "end_alarm",
+              List(
+                Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""),
+                Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, ""),
+                Field("alarm_end", "timestamp", 0, false, "", "", "", "", "", false, false, ""),
+                Field("alarm_desc", "string", 64, false, "", "", "", "", "", false, false, "")
+              ),
+              PrimaryKey("alarm_pk", List(Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""), Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, ""))),
+              false
             )
           ),
+          PrimaryKey("alarm_pk", List(Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""), Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, ""))),
           List(),
           false
         ),
@@ -115,6 +92,9 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
               false,
               "",
               "",
+              "",
+              "",
+              "",
               false,
               false,
               "支付方式代码"
@@ -126,6 +106,9 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
               false,
               "",
               "",
+              "",
+              "",
+              "",
               false,
               false,
               "支付方式常量符号"
@@ -135,6 +118,9 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
               "string",
               64,
               false,
+              "",
+              "",
+              "",
               "",
               "",
               false,
@@ -154,6 +140,9 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
                 false,
                 "",
                 "",
+                "",
+                "",
+                "",
                 false,
                 false,
                 "支付方式代码"
@@ -167,28 +156,28 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
           "product",
           false,
           List(
-            Field("product_id", "string", 64, false, "", "", false, false, "商品编号"),
-            Field("product_name", "string", 64, false, "", "", true, false, "商品名称"),
-            Field("product_unit", "string", 64, false, "", "", true, false, "计价单位"),
-            Field("unit_price", "double", 0, false, "", "", true, false, "单价"),
-            Field("record_time", "timestamp", 0, false, "", "", false, true, "销量最后更新时间"),
-            Field("quantity_sold", "double", 0, false, "", "", false, true, "销量")
+            Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号"),
+            Field("product_name", "string", 64, false, "", "", "", "", "", true, false, "商品名称"),
+            Field("product_unit", "string", 64, false, "", "", "", "", "", true, false, "计价单位"),
+            Field("unit_price", "double", 0, false, "", "", "", "", "", true, false, "单价"),
+            Field("record_time", "timestamp", 0, false, "", "", "", "", "", false, true, "销量最后更新时间"),
+            Field("quantity_sold", "double", 0, false, "", "", "", "", "", false, true, "销量")
           ),
           List(
             Aggregate(
               "product_sales",
               false,
               List(
-                Field("product_id", "string", 64, false, "", "", false, false, "商品编号"),
-                Field("record_time", "timestamp", 0, false, "", "", false, true, "销量最后更新时间"),
-                Field("quantity_sold", "double", 0, false, "", "", false, true, "销量")
+                Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号"),
+                Field("record_time", "timestamp", 0, false, "", "", "", "", "", false, true, "销量最后更新时间"),
+                Field("quantity_sold", "double", 0, false, "", "", "", "", "", false, true, "销量")
               ),
               List(),
               List(),
               PrimaryKey(
                 "product_pk",
                 List(
-                  Field("product_id", "string", 64, false, "", "", false, false, "商品编号")
+                  Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号")
                 )
               ),
               List(),
@@ -198,15 +187,15 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
               "product_name",
               false,
               List(
-                Field("product_id", "string", 64, false, "", "", false, false, "商品编号"),
-                Field("product_name", "string", 64, false, "", "", true, false, "商品名称")
+                Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号"),
+                Field("product_name", "string", 64, false, "", "", "", "", "", true, false, "商品名称")
               ),
               List(),
               List(),
               PrimaryKey(
                 "product_pk",
                 List(
-                  Field("product_id", "string", 64, false, "", "", false, false, "商品编号")
+                  Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号")
                 )
               ),
               List(),
@@ -216,15 +205,15 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
               "product_unit",
               false,
               List(
-                Field("product_id", "string", 64, false, "", "", false, false, "商品编号"),
-                Field("product_unit", "string", 64, false, "", "", true, false, "计价单位")
+                Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号"),
+                Field("product_unit", "string", 64, false, "", "", "", "", "", true, false, "计价单位")
               ),
               List(),
               List(),
               PrimaryKey(
                 "product_pk",
                 List(
-                  Field("product_id", "string", 64, false, "", "", false, false, "商品编号")
+                  Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号")
                 )
               ),
               List(),
@@ -234,15 +223,15 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
               "unit_price",
               false,
               List(
-                Field("product_id", "string", 64, false, "", "", false, false, "商品编号"),
-                Field("unit_price", "double", 0, false, "", "", true, false, "单价")
+                Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号"),
+                Field("unit_price", "double", 0, false, "", "", "", "", "", true, false, "单价")
               ),
               List(),
               List(),
               PrimaryKey(
                 "product_pk",
                 List(
-                  Field("product_id", "string", 64, false, "", "", false, false, "商品编号")
+                  Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号")
                 )
               ),
               List(),
@@ -253,7 +242,7 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
           PrimaryKey(
             "product_pk",
             List(
-              Field("product_id", "string", 64, false, "", "", false, false, "商品编号")
+              Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号")
             )
           ),
           List(),
@@ -263,25 +252,25 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
           "order",
           false,
           List(
-            Field("order_id", "string", 64, false, "", "", false, false, "订单编号"),
-            Field("order_time", "timestamp", 0, false, "", "", false, false, "下单时间"),
-            Field("order_lines", "array", 0, false, "", "order_item", true, false, "购买清单"),
-            Field("order_payment_type", "payment_type", 0, false, "", "", true, false, "支付方式")
+            Field("order_id", "string", 64, false, "", "", "", "", "", false, false, "订单编号"),
+            Field("order_time", "timestamp", 0, false, "", "", "", "", "", false, false, "下单时间"),
+            Field("order_lines", "array", 0, false, "", "", "", "", "order_item", true, false, "购买清单"),
+            Field("order_payment_type", "payment_type", 0, false, "", "", "", "", "", true, false, "支付方式")
           ),
           List(
             Aggregate(
               "order_lines",
               false,
               List(
-                Field("order_id", "string", 64, false, "", "", false, false, "订单编号"),
-                Field("order_lines", "array", 0, false, "", "order_item", true, false, "购买清单")
+                Field("order_id", "string", 64, false, "", "", "", "", "", false, false, "订单编号"),
+                Field("order_lines", "array", 0, false, "", "", "", "", "order_item", true, false, "购买清单")
               ),
               List(),
               List(),
               PrimaryKey(
                 "order_pk",
                 List(
-                  Field("order_id", "string", 64, false, "", "", false, false, "订单编号")
+                  Field("order_id", "string", 64, false, "", "", "", "", "", false, false, "订单编号")
                 )
               ),
               List(),
@@ -291,15 +280,15 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
               "order_payment_type",
               false,
               List(
-                Field("order_id", "string", 64, false, "", "", false, false, "订单编号"),
-                Field("order_payment_type", "payment_type", 0, false, "", "", true, false, "支付方式")
+                Field("order_id", "string", 64, false, "", "", "", "", "", false, false, "订单编号"),
+                Field("order_payment_type", "payment_type", 0, false, "", "", "", "", "", true, false, "支付方式")
               ),
               List(),
               List(),
               PrimaryKey(
                 "order_pk",
                 List(
-                  Field("order_id", "string", 64, false, "", "", false, false, "订单编号")
+                  Field("order_id", "string", 64, false, "", "", "", "", "", false, false, "订单编号")
                 )
               ),
               List(),
@@ -310,7 +299,7 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
           PrimaryKey(
             "order_pk",
             List(
-              Field("order_id", "string", 64, false, "", "", false, false, "订单编号")
+              Field("order_id", "string", 64, false, "", "", "", "", "", false, false, "订单编号")
             )
           ),
           List(),
@@ -334,15 +323,15 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
         "alarm" -> PrimaryKey(
           "alarm_pk",
           List(
-            Field("alarm_id", "string", 64, false, "", "", false, false, ""),
-            Field("alarm_begin", "timestamp", 0, false, "", "", true, false, "")
+            Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""),
+            Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, "")
           )
         ),
-        "payment_type" -> PrimaryKey("payment_type_pk", List(Field("payment_type_id", "int", 0, false, "", "", false, false, "支付方式代码"))),
-        "product_sales" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, false, "", "", false, false, "商品编号"))),
-        "product" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, false, "", "", false, false, "商品编号"))),
-        "order" -> PrimaryKey("order_pk", List(Field("order_id", "string", 64, false, "", "", false, false, "订单编号"))),
-        "order_item" -> PrimaryKey("order_item_pk", List(Field("order_id", "string", 64, false, "", "", false, false, "订单编号"), Field("product_id", "string", 64, false, "", "", false, false, "商品编号")))
+        "payment_type" -> PrimaryKey("payment_type_pk", List(Field("payment_type_id", "int", 0, false, "", "", "", "", "", false, false, "支付方式代码"))),
+        "product_sales" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号"))),
+        "product" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号"))),
+        "order" -> PrimaryKey("order_pk", List(Field("order_id", "string", 64, false, "", "", "", "", "", false, false, "订单编号"))),
+        "order_item" -> PrimaryKey("order_item_pk", List(Field("order_id", "string", 64, false, "", "", "", "", "", false, false, "订单编号"), Field("product_id", "string", 64, false, "", "", "", "", "", false, false, "商品编号")))
       )
     )
   }
@@ -385,7 +374,6 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
 
-    println(selectByPkDefs)
     selectByPkDefs should be(
       s"""
          |def selectByAlarmPk(alarmId: String, alarmBegin: Timestamp): AlarmVo

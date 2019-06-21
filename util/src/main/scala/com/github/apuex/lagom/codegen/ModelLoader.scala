@@ -23,7 +23,7 @@ object ModelLoader {
 
   def apply(xml: Node, modelFileName: String): ModelLoader = new ModelLoader(xml, modelFileName)
 
-  case class Field(name: String, _type: String, length: Int, required: Boolean, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
+  case class Field(name: String, _type: String, length: Int, required: Boolean, entity:String, keyField: String, valueField: String, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
 
   case class PrimaryKey(name: String, fields: Seq[Field])
 
@@ -41,7 +41,7 @@ object ModelLoader {
 
   case class Enumeration(name: String, options: Seq[EnumOption])
 
-  val userField = Field("user_id", "string", 64, false, "", "", false, false, "用户ID")
+  val userField = Field("user_id", "string", 64, false, "", "", "", "", "", false, false, "用户ID")
 
   def importPackagesForService(model: Node, service: Node): String = {
     s"""
@@ -67,12 +67,15 @@ object ModelLoader {
     val _type = node.\@("type")
     val length = if ("" == node.\@("length")) 0 else node.\@("length").toInt
     val required = if ("true" == node.\@("required")) true else false
+    val entity = node.\@("entity")
+    val keyField = node.\@("keyField")
+    val valueField = node.\@("valueField")
     val keyType = node.\@("keyType")
     val valueType = node.\@("valueType")
     val aggregate = if ("true" == node.\@("aggregate")) true else false
     val transient = if ("true" == node.\@("transient")) true else false
     val comment = node.\@("comment")
-    Field(name, _type, length, required, keyType, valueType, aggregate, transient, comment)
+    Field(name, _type, length, required, entity, keyField, valueField, keyType, valueType, aggregate, transient, comment)
   }
 
   def getFieldNames(node: Node): Seq[String] = {
@@ -147,7 +150,7 @@ object ModelLoader {
 
     // disable aggregate attribute on referenced columns
     refField
-      .map(x => Field(fkField.name, x._type, x.length, fkField.required, x.keyType, x.valueType, false, x.transient, x.comment))
+      .map(x => Field(fkField.name, x._type, x.length, fkField.required, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, false, x.transient, x.comment))
   }
 
   def getReferencedColumn(name: String, refKey: String, refEntity: String, refField: String, root: Node): Option[Field] = {
@@ -155,7 +158,7 @@ object ModelLoader {
     Some(getFields(node, root)
       .filter(_.name == refField).head)
       // disable aggregate attribute on referenced columns
-      .map(x => Field(name, x._type, x.length, false, x.keyType, x.valueType, false, x.transient, x.comment))
+      .map(x => Field(name, x._type, x.length, false, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, false, x.transient, x.comment))
   }
 
   def getForeignKeys(node: Node): Seq[ForeignKey] = {
@@ -204,11 +207,13 @@ object ModelLoader {
     )
   }
 
-  def toMessage(node: Node, primaryKey: PrimaryKey, root: Node): Message = {
+  def toMessage(node: Node, fields: Seq[Field], primaryKey: PrimaryKey, root: Node): Message = {
     val transient = if ("true" == node.\@("transient")) true else false
+    val fieldNames = getFieldNames(node).toSet
+    val messageFields = fields.filter(x => fieldNames.contains(x.name))
     Message(
       node.\@("name"),
-      shuffleFields(primaryKey.fields ++ getFields(node, root), primaryKey.fields),
+      shuffleFields(primaryKey.fields ++ messageFields, primaryKey.fields),
       primaryKey,
       transient
     )
@@ -225,7 +230,7 @@ object ModelLoader {
       if ("true" == node.\@("root")) true else false,
       fields,
       aggregates,
-      node.child.filter(_.label == "message").map(toMessage(_, primaryKey, root)),
+      node.child.filter(_.label == "message").map(toMessage(_, fields, primaryKey, root)),
       primaryKey,
       getForeignKeys(node),
       if ("true" == node.\@("transient")) true else false
@@ -275,6 +280,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val message = "message"
   val api = "api"
   val dao = "dao"
+  val mysql = "mysql"
   val service = "service"
   val impl = "impl"
   val app: String = "app"
@@ -302,8 +308,12 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val apiSrcDir = s"${apiProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
   val daoProjectName = s"${cToShell(modelName)}-${dao}"
   val daoProjectDir = s"${rootProjectDir}/${dao}"
-  val daoSrcPackage = s"${modelPackage}"
-  val daoSrcDir = s"${daoProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
+  val daoSrcPackage = s"${modelPackage}.${dao}"
+  val daoSrcDir = s"${daoProjectDir}/src/main/scala/${daoSrcPackage.replace('.', '/')}"
+  val daoMysqlProjectName = s"${cToShell(modelName)}-${dao}-${mysql}"
+  val daoMysqlProjectDir = s"${rootProjectDir}/${dao}-${mysql}"
+  val daoMysqlSrcPackage = s"${modelPackage}.${dao}.${mysql}"
+  val daoMysqlSrcDir = s"${daoProjectDir}/src/main/scala/${daoMysqlSrcPackage.replace('.', '/')}"
   val implProjectName = s"${cToShell(modelName)}-${impl}"
   val implProjectDir = s"${rootProjectDir}/${impl}"
   val implSrcPackage = s"${modelPackage}.${impl}"
@@ -357,6 +367,14 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
            |${cToCamel(x.name)}: ${defFieldType(x)}
          """.stripMargin.trim
       })
+      .reduceOption((l, r) => s"${l}, ${r}")
+      .getOrElse("")
+  }
+
+  def substituteMethodParams(fields: Seq[Field], alias: String): String = {
+    val t = if("" == alias) "" else s"${alias}."
+    fields
+      .map(x => s"${t}${cToCamel(x.name)}")
       .reduceOption((l, r) => s"${l}, ${r}")
       .getOrElse("")
   }

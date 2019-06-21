@@ -18,171 +18,130 @@ class DaoGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    generateDaoContent(xml, daoSrcPackage)
+    generateDaoContent(xml)
       .foreach(x => save(x._1, x._2, daoSrcDir))
   }
 
-  def generateDaoContent(xml: Node, messageSrcPackage: String): Seq[(String, String)] = {
+  def generateDaoContent(xml: Node): Seq[(String, String)] = {
     xml.child.filter(_.label == "entity")
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         val enum = if ("true" == x.\@("enum")) true else false
-        if (!enum && "" == aggregatesTo) generateDaoForAggregate(toAggregate(x, xml), messageSrcPackage)
+        if (!enum && "" == aggregatesTo) generateDaoForAggregate(toAggregate(x, xml))
         else {
           val valueObject = toValueObject(x, aggregatesTo, xml)
-          generateDaoForValueObject(valueObject, messageSrcPackage)
+          generateDaoForValueObject(valueObject)
         }
       })
   }
 
-  def generateDaoForAggregate(aggregate: Aggregate, messageSrcPackage: String): (String, String) = {
+  def generateDaoForAggregate(aggregate: Aggregate): (String, String) = {
+    import aggregate._
     val className = s"${cToPascal(aggregate.name)}Dao"
     val fileName = s"${className}.scala"
+    val calls = (
+      defCrud(name) ++
+        defByForeignKeys(name, fields, foreignKeys)
+      )
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
+
     val content =
       s"""
-         |class ${className} {
+         |package ${daoSrcPackage}
          |
+         |import ${messageSrcPackage}._
+         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+         |import com.google.protobuf.timestamp.Timestamp
+         |import java.sql.Connection
+         |import play._
+         |import anorm.SqlParser._
+         |import anorm.ParameterValue._
+         |import anorm._
+         |
+         |class ${className} {
+         |  ${indent(calls, 2)}
          |}
      """.stripMargin.trim
 
     (fileName, content)
   }
 
-  def generateDaoForValueObject(valueObject: ValueObject, messageSrcPackage: String): (String, String) = {
+  def generateDaoForValueObject(valueObject: ValueObject): (String, String) = {
+    import valueObject._
     val className = s"${cToPascal(valueObject.name)}Dao"
     val fileName = s"${className}.scala"
+    val calls = (
+      defCrud(name) ++
+        defByForeignKeys(name, fields, foreignKeys)
+      )
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
     val content =
       s"""
-         |class ${className} {
+         |package ${daoSrcPackage}
          |
+         |import ${messageSrcPackage}._
+         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+         |import com.google.protobuf.timestamp.Timestamp
+         |import java.sql.Connection
+         |import play._
+         |import anorm.SqlParser._
+         |import anorm.ParameterValue._
+         |import anorm._
+         |
+         |class ${className} {
+         |  ${indent(calls, 2)}
          |}
      """.stripMargin.trim
 
     (fileName, content)
   }
 
-  def generateCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fkFields: Seq[Field]): String = {
+  def defCrud(name: String): Seq[String] = Seq(
     s"""
-       |def create(c: Create${cToPascal(name)}Cmd): Int = {
-       |
-       |}
-       |
-       |def retrieve(c: Retrieve${cToPascal(name)}Cmd): ${cToPascal(name)}Vo = {
-       |
-       |}
-       |
-       |def update(c: Update${cToPascal(name)}Cmd): Int = {
-       |
-       |}
-       |
-       |def delete(c: Delete${cToPascal(name)}Cmd): Int = {
-       |
-       |}
-       |
-       |def query${cToPascal(name)}(c: QueryCommand): ${cToPascal(name)}ListVo = {
-       |
-       |}
-     """.stripMargin.trim
-  }
-
-  def selectSql(name: String, fields: Seq[Field]): String = {
+       |def create${cToPascal(name)}(c: Create${cToPascal(name)}Cmd)(implicit c: Connection): Int
+     """.stripMargin.trim,
     s"""
-       |
-     """.stripMargin.trim
-  }
-
-  def whereClause(): String = {
-    "val whereClause = WhereClauseWithNamedParams(fieldConverter)"
-  }
-
-  def fieldConverter(fields: Seq[Field]): String = {
-    val cases = fields
-      .map(x =>
-        s"""
-           |case "${cToCamel(x.name)}" => "${x.name}"
-         """.stripMargin.trim
-      )
-      .reduceOption((l, r) => s"${l}\n${r}")
-      .getOrElse("")
-
+       |def retrieve${cToPascal(name)}(c: Retrieve${cToPascal(name)}Cmd)(implicit c: Connection): ${cToPascal(name)}Vo
+     """.stripMargin.trim,
     s"""
-       |val fieldConverter: SymbolConverter = {
-       |  ${indent(cases, 2)}
-       |  case x: String => camelToC(x)
-       |}
+       |def update${cToPascal(name)}(c: Update${cToPascal(name)}Cmd)(implicit c: Connection): Int
+     """.stripMargin.trim,
+    s"""
+       |def delete${cToPascal(name)}(c: Delete${cToPascal(name)}Cmd)(implicit c: Connection): Int
+     """.stripMargin.trim,
+    s"""
+       |def query${cToPascal(name)}(c: QueryCommand)(implicit c: Connection): Seq[${cToPascal(name)}Vo]
      """.stripMargin.trim
-  }
+  )
 
-  def paramParser(fields: Seq[Field]): String = {
-    val cases = fields
+  def defByForeignKeys(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
+    foreignKeys
       .map(x => {
-        val javaType = cToPascal(toJavaType(x._type))
-        if ("String" == javaType)
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> paramValue
-         """.stripMargin.trim
-        else
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> ${javaType}Parser.parse(paramValue)
-         """.stripMargin.trim
+        val fieldNames = x.fields
+          .map(_.name)
+          .toSet
+
+        val fkFields = fields
+          .filter(x => fieldNames.contains(x.name))
+        defByForeignKey(name, fkFields)
       })
-      .reduceOption((l, r) => s"${l}\n${r}")
+  }
+
+  def defByForeignKey(name: String, keyFields: Seq[Field]): String = {
+    val by = keyFields
+      .map(x => cToPascal(x.name))
+      .reduceOption((x, y) => s"${x}${y}")
       .getOrElse("")
 
     s"""
-       |def parseParam(fieldName: String, paramName:String, paramValue: String): NamedParameter = fieldName match {
-       |  ${indent(cases, 2)}
-       |}
+       |def selectBy${by}(${defMethodParams(keyFields)})(implicit c: Connection): Seq[${cToPascal(name)}Vo]
+       |def deleteBy${by}(${defMethodParams(keyFields)})(implicit c: Connection): Int
      """.stripMargin.trim
-  }
-
-  def rowParser(name: String, fields: Seq[Field]): String = {
-    val gets = fields
-      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
-      .map(x =>
-        s"""
-           |get[${cToPascal(toJdbcType(x._type))}]("${x.name}")
-         """.stripMargin.trim
-      )
-      .reduceOption((l, r) => s"${l} ~ \n${r}")
-      .getOrElse("")
-
-    val pattern = fields
-      .filter(x => isJdbcType(x._type))
-      .map(x => cToCamel(x.name))
-      .reduceOption((l, r) => s"${l} ~ ${r}")
-      .getOrElse("")
-
-    val constructorParam = fields
-      .map(x =>
-        if(isJdbcType(x._type)) cToCamel(x.name)
-        else if(isEnum(x._type)) s"${cToPascal(x.name)}.fromValue(${cToCamel(x.name)})"
-        else { // TODO: array, map or value object type,
-          ""
-        }
-      )
-      .reduceOption((l, r) => s"${l},\n${r}")
-      .getOrElse("")
-
-    s"""
-       |private def rowParser(implicit c: Connection): RowParser[${cToPascal(name)}Vo] = {
-       |  ${indent(gets, 2)} map {
-       |    case ${pattern} =>
-       |      ${cToPascal(name)}Vo(
-       |        ${indent(constructorParam, 8)}
-       |      )
-       |  }
-       |}
-     """.stripMargin
-  }
-
-  def namedParams(): String = {
-    s"""
-       |private def namedParams(q: QueryCommand): Seq[NamedParameter] = {
-       |  whereClause.toNamedParams(q.getPredicate, toImmutableScalaMap(q.getParamsMap))
-       |    .map(x => parseParam(x._1, x._2, x._3))
-       |    .asInstanceOf[Seq[NamedParameter]]
-       |}
-     """.stripMargin
   }
 }

@@ -6,13 +6,20 @@
        maintainer="xtwxy@hotmail.com">
   <entity name="alarm" aggregate="true">
     <field name="alarm_id" type="string" length="64"/>
-    <field name="alarm_begin" type="timestamp" aggregate="true"/>
-    <field name="alarm_end" type="timestamp" aggregate="true"/>
+    <field name="alarm_begin" type="timestamp"/>
+    <field name="alarm_end" type="timestamp"/>
     <field name="alarm_desc" type="string" length="64"/>
     <primaryKey name="alarm_pk">
       <field name="alarm_id"/>
       <field name="alarm_begin"/>
     </primaryKey>
+    <message name="begin_alarm">
+      <field name="alarm_desc"/>
+    </message>
+    <message name="end_alarm">
+      <field name="alarm_end"/>
+      <field name="alarm_desc"/>
+    </message>
   </entity>
   <entity name="payment_type" enum="true">
     <field name="payment_type_id" type="int" comment="支付方式代码"/>
@@ -21,7 +28,8 @@
     <primaryKey name="payment_type_pk">
       <field name="payment_type_id"/>
     </primaryKey>
-    <enum name="payment_type" valueField="payment_type_no" nameField="payment_type_name" labelField="payment_type_label"/>
+    <enum name="payment_type" valueField="payment_type_no" nameField="payment_type_name"
+          labelField="payment_type_label"/>
     <row payment_type_no="0" payment_type_name="CASH" payment_type_label="现金"/>
     <row payment_type_no="1" payment_type_name="CREDIT_CARD" payment_type_label="信用卡"/>
     <row payment_type_no="2" payment_type_name="VOUCHER" payment_type_label="优惠券"/>
@@ -30,7 +38,7 @@
   </entity>
   <entity name="product" aggregate="true">
     <field name="product_id" type="string" length="64" comment="商品编号"/>
-    <field name="product_name" type="string" length="64" aggregate="true"  comment="商品名称"/>
+    <field name="product_name" type="string" length="64" aggregate="true" comment="商品名称"/>
     <field name="product_unit" type="string" length="64" aggregate="true" comment="计价单位"/>
     <field name="unit_price" type="double" aggregate="true" comment="单价"/>
     <field name="record_time" type="timestamp" transient="true" comment="销量最后更新时间"/>
