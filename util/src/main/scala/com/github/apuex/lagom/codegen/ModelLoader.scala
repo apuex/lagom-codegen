@@ -313,7 +313,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val daoMysqlProjectName = s"${cToShell(modelName)}-${dao}-${mysql}"
   val daoMysqlProjectDir = s"${rootProjectDir}/${dao}-${mysql}"
   val daoMysqlSrcPackage = s"${modelPackage}.${dao}.${mysql}"
-  val daoMysqlSrcDir = s"${daoProjectDir}/src/main/scala/${daoMysqlSrcPackage.replace('.', '/')}"
+  val daoMysqlSrcDir = s"${daoMysqlProjectDir}/src/main/scala/${daoMysqlSrcPackage.replace('.', '/')}"
   val implProjectName = s"${cToShell(modelName)}-${impl}"
   val implProjectDir = s"${rootProjectDir}/${impl}"
   val implSrcPackage = s"${modelPackage}.${impl}"

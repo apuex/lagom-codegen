@@ -1,7 +1,6 @@
 import Dependencies._
-import sbtassembly.MergeStrategy
 
-name         := "sales-impl"
+name         := "sales-dao-mysql"
 scalaVersion := scalaVersionNumber
 organization := artifactGroupName
 version      := artifactVersionNumber
@@ -9,11 +8,9 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
-    playEvents,
-    akkaPersistence,
-    akkaPersistenceQuery,
-    akkaClusterSharding,
-    macwire        % Provided,
+    jdbc,
+    playAnorm,
+    mysqlDriver,
     scalaTest      % Test
   )
 }

@@ -19,29 +19,44 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    generateDaoContent(xml, daoMysqlSrcPackage)
+    generateDaoContent(xml)
       .foreach(x => save(x._1, x._2, daoMysqlSrcDir))
   }
 
-  def generateDaoContent(xml: Node, messageSrcPackage: String): Seq[(String, String)] = {
+  def generateDaoContent(xml: Node): Seq[(String, String)] = {
     xml.child.filter(_.label == "entity")
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         val enum = if ("true" == x.\@("enum")) true else false
-        if (!enum && "" == aggregatesTo) generateDaoForAggregate(toAggregate(x, xml), messageSrcPackage)
+        if (!enum && "" == aggregatesTo) generateDaoForAggregate(toAggregate(x, xml))
         else {
           val valueObject = toValueObject(x, aggregatesTo, xml)
-          generateDaoForValueObject(valueObject, messageSrcPackage)
+          generateDaoForValueObject(valueObject)
         }
       })
   }
 
-  def generateDaoForAggregate(aggregate: Aggregate, messageSrcPackage: String): (String, String) = {
-    val className = s"${cToPascal(aggregate.name)}Dao"
+  def generateDaoForAggregate(aggregate: Aggregate): (String, String) = {
+    val traitName = s"${cToPascal(aggregate.name)}Dao"
+    val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
     val content =
       s"""
-         |class ${className} {
+         |package ${daoMysqlSrcPackage}
+         |
+         |import ${messageSrcPackage}._
+         |import ${daoSrcPackage}._
+         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+         |import com.google.protobuf.timestamp.Timestamp
+         |import java.sql.Connection
+         |import play._
+         |import anorm.SqlParser._
+         |import anorm.ParameterValue._
+         |import anorm._
+         |
+         |class ${className} extends ${traitName} {
          |
          |}
      """.stripMargin.trim
@@ -49,8 +64,9 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     (fileName, content)
   }
 
-  def generateDaoForValueObject(valueObject: ValueObject, messageSrcPackage: String): (String, String) = {
-    val className = s"${cToPascal(valueObject.name)}Dao"
+  def generateDaoForValueObject(valueObject: ValueObject): (String, String) = {
+    val traitName = s"${cToPascal(valueObject.name)}Dao"
+    val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
     val selectByForeignKey = valueObject.foreignKeys
       .map(x => {
@@ -72,7 +88,21 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
     val content =
       s"""
-         |class ${className}Impl extends ${className} {
+         |package ${daoMysqlSrcPackage}
+         |
+         |import ${messageSrcPackage}._
+         |import ${daoSrcPackage}._
+         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+         |import com.google.protobuf.timestamp.Timestamp
+         |import java.sql.Connection
+         |import play._
+         |import anorm.SqlParser._
+         |import anorm.ParameterValue._
+         |import anorm._
+         |
+         |class ${className} extends ${traitName} {
          |  ${indent(selectByForeignKey, 2)}
          |}
      """.stripMargin.trim

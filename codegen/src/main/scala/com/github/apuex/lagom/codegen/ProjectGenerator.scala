@@ -19,6 +19,8 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     modelProjectSettings()
     messageProjectSettings()
     apiProjectSettings()
+    daoProjectSettings()
+    daoMysqlProjectSettings()
     implProjectSettings()
     appProjectSettings()
   }
@@ -103,6 +105,57 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     printWriter.close()
   }
 
+
+  def daoProjectSettings(): Unit = {
+    new File(daoProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${daoProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |import Dependencies._
+         |
+         |name         := "${daoProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    jdbc,
+         |    scalaTest      % Test
+         |  )
+         |}
+       """.stripMargin.trim
+    )
+    printWriter.close()
+  }
+
+  def daoMysqlProjectSettings(): Unit = {
+    new File(daoMysqlProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${daoMysqlProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |import Dependencies._
+         |
+         |name         := "${daoMysqlProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    jdbc,
+         |    playAnorm,
+         |    mysqlDriver,
+         |    scalaTest      % Test
+         |  )
+         |}
+       """.stripMargin.trim
+    )
+    printWriter.close()
+  }
+
   def implProjectSettings(): Unit = {
     new File(implSrcDir).mkdirs()
     val printWriter = new PrintWriter(s"${implProjectDir}/build.sbt", "utf-8")
@@ -120,7 +173,6 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |libraryDependencies ++= {
          |  Seq(
          |    playEvents,
-         |    playGuice,
          |    akkaPersistence,
          |    akkaPersistenceQuery,
          |    akkaClusterSharding,
@@ -233,10 +285,10 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  lazy val play            = "com.typesafe.play"         %%  "play"                                % playVersion
          |  lazy val playTest        = "com.typesafe.play"         %%  "play-test"                           % playVersion
          |  lazy val jodaTime        = "joda-time"                 %   "joda-time"                           % "2.10.1"
-         |  lazy val googleGuice     = "com.google.inject"         %   "guice"                               % "4.2.0"
-         |  lazy val scalapbRuntime  = "com.thesamet.scalapb"      %% "scalapb-runtime"                      % scalapbVersion
-         |  lazy val scalapbJson4s   = "com.thesamet.scalapb"      %% "scalapb-json4s"                       % "0.9.0-M1"
-         |  lazy val playGuice       = "com.typesafe.play"         %%  "play-guice"                          % playVersion
+         |  lazy val scalapbRuntime  = "com.thesamet.scalapb"      %%  "scalapb-runtime"                     % scalapbVersion
+         |  lazy val scalapbJson4s   = "com.thesamet.scalapb"      %%  "scalapb-json4s"                      % "0.9.0-M1"
+         |  lazy val playAnorm       = "org.playframework.anorm"   %%  "anorm"                               % "2.6.2"
+         |  lazy val mysqlDriver     = "mysql"                     %   "mysql-connector-java"                % "8.0.16"
          |  lazy val playJson        = "com.typesafe.play"         %%  "play-json"                           % playVersion
          |  lazy val lagomApi        = "com.lightbend.lagom"       %%  "lagom-scaladsl-api"                  % lagomVersion
          |  lazy val macwire         = "com.softwaremill.macwire"  %%  "macros"                              % "2.3.0"
@@ -315,6 +367,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |    `${message}`,
          |    `${api}`,
          |    `${dao}`,
+         |    `${dao}-${mysql}`,
          |    `${impl}`,
          |    `${app}`
          |  )
@@ -327,6 +380,8 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  .enablePlugins(LagomScala)
          |lazy val `${dao}` = (project in file("${dao}"))
          |  .dependsOn(`message`)
+         |lazy val `${dao}-${mysql}` = (project in file("${dao}-${mysql}"))
+         |  .dependsOn(`${dao}`)
          |lazy val `${impl}` = (project in file("${impl}"))
          |  .dependsOn(`${api}`)
          |  .dependsOn(`${dao}`)

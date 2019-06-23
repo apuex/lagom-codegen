@@ -56,12 +56,8 @@ class DaoGenerator(modelLoader: ModelLoader) {
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.google.protobuf.timestamp.Timestamp
          |import java.sql.Connection
-         |import play._
-         |import anorm.SqlParser._
-         |import anorm.ParameterValue._
-         |import anorm._
          |
-         |class ${className} {
+         |trait ${className} {
          |  ${indent(calls, 2)}
          |}
      """.stripMargin.trim
@@ -89,12 +85,8 @@ class DaoGenerator(modelLoader: ModelLoader) {
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.google.protobuf.timestamp.Timestamp
          |import java.sql.Connection
-         |import play._
-         |import anorm.SqlParser._
-         |import anorm.ParameterValue._
-         |import anorm._
          |
-         |class ${className} {
+         |trait ${className} {
          |  ${indent(calls, 2)}
          |}
      """.stripMargin.trim
@@ -104,19 +96,19 @@ class DaoGenerator(modelLoader: ModelLoader) {
 
   def defCrud(name: String): Seq[String] = Seq(
     s"""
-       |def create${cToPascal(name)}(c: Create${cToPascal(name)}Cmd)(implicit c: Connection): Int
+       |def create${cToPascal(name)}(cmc: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int
      """.stripMargin.trim,
     s"""
-       |def retrieve${cToPascal(name)}(c: Retrieve${cToPascal(name)}Cmd)(implicit c: Connection): ${cToPascal(name)}Vo
+       |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo
      """.stripMargin.trim,
     s"""
-       |def update${cToPascal(name)}(c: Update${cToPascal(name)}Cmd)(implicit c: Connection): Int
+       |def update${cToPascal(name)}(cmd: Update${cToPascal(name)}Cmd)(implicit conn: Connection): Int
      """.stripMargin.trim,
     s"""
-       |def delete${cToPascal(name)}(c: Delete${cToPascal(name)}Cmd)(implicit c: Connection): Int
+       |def delete${cToPascal(name)}(cmd: Delete${cToPascal(name)}Cmd)(implicit conn: Connection): Int
      """.stripMargin.trim,
     s"""
-       |def query${cToPascal(name)}(c: QueryCommand)(implicit c: Connection): Seq[${cToPascal(name)}Vo]
+       |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
      """.stripMargin.trim
   )
 
@@ -140,8 +132,8 @@ class DaoGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
 
     s"""
-       |def selectBy${by}(${defMethodParams(keyFields)})(implicit c: Connection): Seq[${cToPascal(name)}Vo]
-       |def deleteBy${by}(${defMethodParams(keyFields)})(implicit c: Connection): Int
+       |def selectBy${by}(${defMethodParams(keyFields)})(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
+       |def deleteBy${by}(${defMethodParams(keyFields)})(implicit conn: Connection): Int
      """.stripMargin.trim
   }
 }

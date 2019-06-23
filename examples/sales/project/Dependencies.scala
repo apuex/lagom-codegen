@@ -28,10 +28,10 @@ object Dependencies {
   lazy val play            = "com.typesafe.play"         %%  "play"                                % playVersion
   lazy val playTest        = "com.typesafe.play"         %%  "play-test"                           % playVersion
   lazy val jodaTime        = "joda-time"                 %   "joda-time"                           % "2.10.1"
-  lazy val googleGuice     = "com.google.inject"         %   "guice"                               % "4.2.0"
-  lazy val scalapbRuntime  = "com.thesamet.scalapb"      %% "scalapb-runtime"                      % scalapbVersion
-  lazy val scalapbJson4s   = "com.thesamet.scalapb"      %% "scalapb-json4s"                       % "0.9.0-M1"
-  lazy val playGuice       = "com.typesafe.play"         %%  "play-guice"                          % playVersion
+  lazy val scalapbRuntime  = "com.thesamet.scalapb"      %%  "scalapb-runtime"                     % scalapbVersion
+  lazy val scalapbJson4s   = "com.thesamet.scalapb"      %%  "scalapb-json4s"                      % "0.9.0-M1"
+  lazy val playAnorm       = "org.playframework.anorm"   %%  "anorm"                               % "2.6.2"
+  lazy val mysqlDriver     = "mysql"                     %   "mysql-connector-java"                % "8.0.16"
   lazy val playJson        = "com.typesafe.play"         %%  "play-json"                           % playVersion
   lazy val lagomApi        = "com.lightbend.lagom"       %%  "lagom-scaladsl-api"                  % lagomVersion
   lazy val macwire         = "com.softwaremill.macwire"  %%  "macros"                              % "2.3.0"
