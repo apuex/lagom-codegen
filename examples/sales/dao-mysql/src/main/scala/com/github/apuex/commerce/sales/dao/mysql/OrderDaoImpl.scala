@@ -3,7 +3,6 @@ package com.github.apuex.commerce.sales.dao.mysql
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
 import com.github.apuex.springbootsolution.runtime._
-import com.github.apuex.springbootsolution.runtime._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.google.protobuf.timestamp.Timestamp
 import java.sql.Connection

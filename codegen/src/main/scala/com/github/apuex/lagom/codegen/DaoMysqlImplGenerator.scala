@@ -47,7 +47,6 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import ${messageSrcPackage}._
          |import ${daoSrcPackage}._
          |import com.github.apuex.springbootsolution.runtime._
-         |import com.github.apuex.springbootsolution.runtime._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.google.protobuf.timestamp.Timestamp
          |import java.sql.Connection
@@ -92,7 +91,6 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |
          |import ${messageSrcPackage}._
          |import ${daoSrcPackage}._
-         |import com.github.apuex.springbootsolution.runtime._
          |import com.github.apuex.springbootsolution.runtime._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.google.protobuf.timestamp.Timestamp
