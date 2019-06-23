@@ -125,6 +125,34 @@ message PaymentTypeVo {
   string paymentTypeLabel = 3; // 支付方式文字描述
 }
 
+message CreatePaymentTypeCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.PaymentTypeCommand";
+  string userId = 1; // 用户ID
+  int32 paymentTypeId = 2; // 支付方式代码
+  string paymentTypeName = 3; // 支付方式常量符号
+  string paymentTypeLabel = 4; // 支付方式文字描述
+}
+
+message RetrievePaymentTypeCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.PaymentTypeCommand";
+  string userId = 1; // 用户ID
+  int32 paymentTypeId = 2; // 支付方式代码
+}
+
+message UpdatePaymentTypeCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.PaymentTypeCommand";
+  string userId = 1; // 用户ID
+  int32 paymentTypeId = 2; // 支付方式代码
+  string paymentTypeName = 3; // 支付方式常量符号
+  string paymentTypeLabel = 4; // 支付方式文字描述
+}
+
+message DeletePaymentTypeCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.PaymentTypeCommand";
+  string userId = 1; // 用户ID
+  int32 paymentTypeId = 2; // 支付方式代码
+}
+
 enum PaymentType {
   option (scalapb.enum_options).extends = "com.github.apuex.commerce.sales.ValueObject";
   CASH = 0; // 现金

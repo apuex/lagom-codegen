@@ -42,8 +42,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
     val aggregates = xml.child.filter(_.label == "entity")
       .filter(x => {
         val aggregatesTo = x.\@("aggregatesTo")
-        val enum = if ("true" == x.\@("enum")) true else false
-        (!enum && "" == aggregatesTo)
+        ("" == aggregatesTo)
       })
     aggregates
       .map(x => (x.\@("name"), generateShardingEntityCommand(x.\@("name"), getPrimaryKey(x, xml).fields, messageSrcPackage)))
@@ -92,6 +91,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
           if (enum) {
             val enumration = toEnumeration(x, aggregatesTo, xml)
             valueObjects ++
+              generateCrudCmd(valueObject.name, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage) ++
               generateEnumeration(enumration.name, enumration.options, messageSrcPackage)
           } else {
             valueObjects ++
@@ -366,11 +366,11 @@ class MessageGenerator(modelLoader: ModelLoader) {
         if ("timestamp" == x._type) {
           dependencies += "com.google.protobuf.timestamp.Timestamp"
           s"""
-             |def ${cToCamel(x.name)}: Option[${toJavaType(x._type)}]
+             |def ${cToCamel(x.name)}: Option[${cToPascal(toJavaType(x._type))}]
          """.stripMargin.trim
         } else {
           s"""
-             |def ${cToCamel(x.name)}: ${toJavaType(x._type)}
+             |def ${cToCamel(x.name)}: ${cToPascal(toJavaType(x._type))}
          """.stripMargin.trim
         }
       })

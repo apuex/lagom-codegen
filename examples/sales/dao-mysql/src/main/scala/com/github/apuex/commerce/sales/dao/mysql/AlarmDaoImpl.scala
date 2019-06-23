@@ -18,4 +18,6 @@ class AlarmDaoImpl extends AlarmDao {
   def updateAlarm(cmd: UpdateAlarmCmd)(implicit conn: Connection): Int = ???
   def deleteAlarm(cmd: DeleteAlarmCmd)(implicit conn: Connection): Int = ???
   def queryAlarm(cmd: QueryCommand)(implicit conn: Connection): Seq[AlarmVo] = ???
+  def beginAlarm(cmc: BeginAlarmCmd)(implicit conn: Connection): Int = ???
+  def endAlarm(cmc: EndAlarmCmd)(implicit conn: Connection): Int = ???
 }

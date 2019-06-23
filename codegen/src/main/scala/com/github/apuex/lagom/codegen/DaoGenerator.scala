@@ -41,7 +41,8 @@ class DaoGenerator(modelLoader: ModelLoader) {
     val fileName = s"${className}.scala"
     val calls = (
       defCrud(name) ++
-        defByForeignKeys(name, fields, foreignKeys)
+        defByForeignKeys(name, fields, foreignKeys) ++
+        defMessages(aggregate.messages)
       )
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
@@ -92,6 +93,26 @@ class DaoGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
 
     (fileName, content)
+  }
+
+  def defMessage(message: Message): String = {
+    val returnType = if ("" == message.returnType) "Int"
+    else {
+      val baseName = message.returnType.replace("*", "")
+      val multiple = message.returnType.endsWith("*")
+      if(multiple) {
+        if(isEntity(baseName)) s"Seq[${cToPascal(baseName)}Vo]" else s"${cToPascal(baseName)}Vo"
+      } else {
+        cToPascal(toJavaType(baseName))
+      }
+    }
+    s"""
+       |def ${cToCamel(message.name)}(cmc: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType}
+     """.stripMargin.trim
+  }
+
+  def defMessages(messages: Seq[Message]): Seq[String] = {
+    messages.map(defMessage(_))
   }
 
   def defCrud(name: String): Seq[String] = Seq(

@@ -63,7 +63,8 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
                 Field("alarm_desc", "string", 64, false, "", "", "", "", "", false, false, "")
               ),
               PrimaryKey("alarm_pk", List(Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""), Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, ""))),
-              false
+              false,
+              ""
             ),
             Message(
               "end_alarm",
@@ -74,7 +75,8 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
                 Field("alarm_desc", "string", 64, false, "", "", "", "", "", false, false, "")
               ),
               PrimaryKey("alarm_pk", List(Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""), Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, ""))),
-              false
+              false,
+              ""
             )
           ),
           PrimaryKey("alarm_pk", List(Field("alarm_id", "string", 64, false, "", "", "", "", "", false, false, ""), Field("alarm_begin", "timestamp", 0, false, "", "", "", "", "", false, false, ""))),

@@ -31,7 +31,7 @@ object ModelLoader {
 
   case class ForeignKey(name: String, refEntity: String, fields: Seq[ForeignKeyField])
 
-  case class Message(name: String, fields: Seq[Field], primaryKey: PrimaryKey, transient: Boolean)
+  case class Message(name: String, fields: Seq[Field], primaryKey: PrimaryKey, transient: Boolean, returnType: String)
 
   case class Aggregate(name: String, root: Boolean, fields: Seq[Field], aggregates: Seq[Aggregate], messages: Seq[Message], primaryKey: PrimaryKey, foreignKeys: Seq[ForeignKey], transient: Boolean)
 
@@ -215,7 +215,8 @@ object ModelLoader {
       node.\@("name"),
       shuffleFields(primaryKey.fields ++ messageFields, primaryKey.fields),
       primaryKey,
-      transient
+      transient,
+      node.\@("returnType")
     )
   }
 
