@@ -35,6 +35,39 @@ class DaoGenerator(modelLoader: ModelLoader) {
       })
   }
 
+  def defEmbeddedAggregateMessage(aggregate: Aggregate): String = {
+    val nonKeyFieldCount = aggregate.fields.length - aggregate.primaryKey.fields.length
+    val keyFieldNames = aggregate.primaryKey.fields.map(_.name).toSet
+    val nonKeyFields = aggregate.fields.filter(x => !keyFieldNames.contains(x.name))
+    if (nonKeyFieldCount > 1)
+      s"""
+         |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo
+         |def update${cToPascal(aggregate.name)}(cmd: Update${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
+     """.stripMargin.trim
+    else if (nonKeyFieldCount == 1) {
+      val field = nonKeyFields.head
+      if ("array" == field._type || "map" == field._type)
+        s"""
+           |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo
+           |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
+           |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
+     """.stripMargin.trim
+      else
+        s"""
+           |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo
+           |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
+     """.stripMargin.trim
+    } else { // this cannot be happen.
+      s"""
+         |
+     """.stripMargin.trim
+    }
+  }
+
+  def defEmbeddedAggregateMessages(aggregates: Seq[Aggregate]): Seq[String] = {
+    aggregates.map(defEmbeddedAggregateMessage(_))
+  }
+
   def generateDaoForAggregate(aggregate: Aggregate): (String, String) = {
     import aggregate._
     val className = s"${cToPascal(aggregate.name)}Dao"
@@ -42,7 +75,8 @@ class DaoGenerator(modelLoader: ModelLoader) {
     val calls = (
       defCrud(name) ++
         defByForeignKeys(name, fields, foreignKeys) ++
-        defMessages(aggregate.messages)
+        defMessages(aggregate.messages) ++
+        defEmbeddedAggregateMessages(aggregate.aggregates)
       )
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
@@ -100,14 +134,14 @@ class DaoGenerator(modelLoader: ModelLoader) {
     else {
       val baseName = message.returnType.replace("*", "")
       val multiple = message.returnType.endsWith("*")
-      if(multiple) {
-        if(isEntity(baseName)) s"Seq[${cToPascal(baseName)}Vo]" else s"${cToPascal(baseName)}Vo"
+      if (multiple) {
+        if (isEntity(baseName)) s"Seq[${cToPascal(baseName)}Vo]" else s"${cToPascal(baseName)}Vo"
       } else {
         cToPascal(toJavaType(baseName))
       }
     }
     s"""
-       |def ${cToCamel(message.name)}(cmc: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType}
+       |def ${cToCamel(message.name)}(cmd: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType}
      """.stripMargin.trim
   }
 
@@ -117,7 +151,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
 
   def defCrud(name: String): Seq[String] = Seq(
     s"""
-       |def create${cToPascal(name)}(cmc: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int
+       |def create${cToPascal(name)}(cmd: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int
      """.stripMargin.trim,
     s"""
        |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo

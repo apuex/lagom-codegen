@@ -8,7 +8,7 @@ import com.google.protobuf.timestamp.Timestamp
 import java.sql.Connection
 
 trait OrderItemDao {
-  def createOrderItem(cmc: CreateOrderItemCmd)(implicit conn: Connection): Int
+  def createOrderItem(cmd: CreateOrderItemCmd)(implicit conn: Connection): Int
   def retrieveOrderItem(cmd: RetrieveOrderItemCmd)(implicit conn: Connection): OrderItemVo
   def updateOrderItem(cmd: UpdateOrderItemCmd)(implicit conn: Connection): Int
   def deleteOrderItem(cmd: DeleteOrderItemCmd)(implicit conn: Connection): Int
