@@ -11,6 +11,7 @@ trait AlarmDao {
   def updateAlarm(cmd: UpdateAlarmCmd)(implicit conn: Connection): Int
   def deleteAlarm(cmd: DeleteAlarmCmd)(implicit conn: Connection): Int
   def queryAlarm(cmd: QueryCommand)(implicit conn: Connection): Seq[AlarmVo]
+  def retrieveAlarmByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[AlarmVo]
   def beginAlarm(cmd: BeginAlarmCmd)(implicit conn: Connection): Int
   def endAlarm(cmd: EndAlarmCmd)(implicit conn: Connection): Int
 }

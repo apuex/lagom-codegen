@@ -11,6 +11,7 @@ trait ProductDao {
   def updateProduct(cmd: UpdateProductCmd)(implicit conn: Connection): Int
   def deleteProduct(cmd: DeleteProductCmd)(implicit conn: Connection): Int
   def queryProduct(cmd: QueryCommand)(implicit conn: Connection): Seq[ProductVo]
+  def retrieveProductByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[ProductVo]
   def getProductSales(cmd: GetProductSalesCmd)(implicit conn: Connection): ProductSalesVo
   def updateProductSales(cmd: UpdateProductSalesCmd)(implicit conn: Connection): Int
   def getProductName(cmd: GetProductNameCmd)(implicit conn: Connection): ProductNameVo

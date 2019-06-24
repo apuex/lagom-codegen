@@ -160,6 +160,9 @@ class DaoGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim,
     s"""
        |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
+     """.stripMargin.trim,
+    s"""
+       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
      """.stripMargin.trim
   )
 

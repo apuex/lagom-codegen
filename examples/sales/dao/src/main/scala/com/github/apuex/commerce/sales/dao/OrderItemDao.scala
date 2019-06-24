@@ -11,6 +11,7 @@ trait OrderItemDao {
   def updateOrderItem(cmd: UpdateOrderItemCmd)(implicit conn: Connection): Int
   def deleteOrderItem(cmd: DeleteOrderItemCmd)(implicit conn: Connection): Int
   def queryOrderItem(cmd: QueryCommand)(implicit conn: Connection): Seq[OrderItemVo]
+  def retrieveOrderItemByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[OrderItemVo]
   def selectByOrderId(orderId: String)(implicit conn: Connection): Seq[OrderItemVo]
   def deleteByOrderId(orderId: String)(implicit conn: Connection): Int
   def selectByProductId(productId: String)(implicit conn: Connection): Seq[OrderItemVo]
