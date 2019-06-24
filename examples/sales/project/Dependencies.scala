@@ -34,14 +34,16 @@ object Dependencies {
   lazy val mysqlDriver     = "mysql"                     %   "mysql-connector-java"                % "8.0.16"
   lazy val playJson        = "com.typesafe.play"         %%  "play-json"                           % playVersion
   lazy val lagomApi        = "com.lightbend.lagom"       %%  "lagom-scaladsl-api"                  % lagomVersion
-  lazy val macwire         = "com.softwaremill.macwire"  %%  "macros"                              % "2.3.0"
+  lazy val macwireMacros   = "com.softwaremill.macwire"  %%  "macros"                              % "2.3.0"
+  lazy val macrosakka      = "com.softwaremill.macwire"  %%  "macrosakka"                          % "2.3.0"
+  lazy val macwireUtil     = "com.softwaremill.macwire"  %%  "util"                                % "2.3.0"
+  lazy val macwireProxy    = "com.softwaremill.macwire"  %%  "proxy"                               % "2.3.0"
 
   lazy val sbRuntime       = "com.github.apuex.springbootsolution" %% "scala-runtime"              % "1.0.9"
   lazy val playEvents      = "com.github.apuex"          %%  "play-events"                         % "1.0.2"
   lazy val codegenUtil     = "com.github.apuex"          %%  "lagom-codegen-util"                  % "1.0.0"
   lazy val serializer      = "com.github.apuex.protobuf" %   "protobuf-serializer"                 % "1.0.1"
   lazy val playSocketIO    = "com.lightbend.play"        %%  "play-socket-io"                      % "1.0.0-beta-2"
-  lazy val macwireMicros   = "com.softwaremill.macwire"  %%  "macros"                              % "2.3.0"
   lazy val guava           = "com.google.guava"          %   "guava"                               % "22.0"
   lazy val slf4jApi        = "org.slf4j"                 %   "slf4j-api"                           % "1.7.25"
   lazy val slf4jSimple     = "org.slf4j"                 %   "slf4j-simple"                        % "1.7.25"

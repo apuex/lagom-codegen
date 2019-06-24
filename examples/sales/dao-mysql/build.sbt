@@ -11,6 +11,10 @@ libraryDependencies ++= {
     jdbc,
     playAnorm,
     mysqlDriver,
+    macwireMacros        % Provided,
+    macrosakka           % Provided,
+    macwireUtil,
+    macwireProxy,
     scalaTest      % Test
   )
 }

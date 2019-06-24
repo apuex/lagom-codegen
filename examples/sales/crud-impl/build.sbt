@@ -12,7 +12,10 @@ libraryDependencies ++= {
     akkaPersistence,
     akkaPersistenceQuery,
     akkaClusterSharding,
-    macwire        % Provided,
+    macwireMacros        % Provided,
+    macrosakka           % Provided,
+    macwireUtil,
+    macwireProxy,
     scalaTest      % Test
   )
 }

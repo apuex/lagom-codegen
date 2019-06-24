@@ -7,7 +7,8 @@ import com.lightbend.lagom.scaladsl.client._
 import com.lightbend.lagom.scaladsl.devmode._
 import com.lightbend.lagom.scaladsl.server._
 import com.softwaremill.macwire._
-import play.api.libs.ws.ahc.AhcWSComponents
+import play.api.db._
+import play.api.libs.ws.ahc._
 
 class SalesAppLoader extends LagomApplicationLoader {
 
@@ -23,10 +24,13 @@ class SalesAppLoader extends LagomApplicationLoader {
 object SalesAppLoader {
   abstract class SalesApp(context: LagomApplicationContext)
     extends LagomApplication(context)
-      with AhcWSComponents {
+      with AhcWSComponents
+      with DBComponents
+      with HikariCPComponents {
 
     // Bind the service that this server provides
+    lazy val db = dbApi.database("sales-db")
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
-  }
+}
 }
      
