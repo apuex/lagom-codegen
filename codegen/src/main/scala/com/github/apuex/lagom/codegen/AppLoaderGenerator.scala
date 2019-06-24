@@ -4,13 +4,13 @@ import java.io.{File, PrintWriter}
 
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 
-object ApplicationLoaderGenerator {
-  def apply(fileName: String): ApplicationLoaderGenerator = new ApplicationLoaderGenerator(ModelLoader(fileName))
+object AppLoaderGenerator {
+  def apply(fileName: String): AppLoaderGenerator = new AppLoaderGenerator(ModelLoader(fileName))
 
-  def apply(modelLoader: ModelLoader): ApplicationLoaderGenerator = new ApplicationLoaderGenerator(modelLoader)
+  def apply(modelLoader: ModelLoader): AppLoaderGenerator = new AppLoaderGenerator(modelLoader)
 }
 
-class ApplicationLoaderGenerator(modelLoader: ModelLoader) {
+class AppLoaderGenerator(modelLoader: ModelLoader) {
 
   import modelLoader._
 

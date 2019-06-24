@@ -326,7 +326,10 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val implSrcDir = s"${implProjectDir}/src/main/scala/${implSrcPackage.replace('.', '/')}"
   val appProjectName = s"${cToShell(modelName)}-${cToShell(app)}"
   val appProjectDir = s"${rootProjectDir}/${app}"
-  val applicationConfDir = s"${appProjectDir}/conf"
+  val appProjectConfDir = s"${appProjectDir}/conf"
+  val crudAppProjectName = s"${cToShell(modelName)}-${cToShell(crud)}-${cToShell(app)}"
+  val crudAppProjectDir = s"${rootProjectDir}/${crud}-${app}"
+  val crudAppProjectConfDir = s"${crudAppProjectDir}/conf"
   val hyphen = if ("microsoft" == s"${System.getProperty("symbol.naming", "microsoft")}") "" else "-"
 
   val nonEnumNames = xml.child

@@ -4,13 +4,13 @@ import java.io.{File, PrintWriter}
 
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 
-object ApplicationConfGenerator {
-  def apply(fileName: String): ApplicationConfGenerator = new ApplicationConfGenerator(ModelLoader(fileName))
+object AppConfGenerator {
+  def apply(fileName: String): AppConfGenerator = new AppConfGenerator(ModelLoader(fileName))
 
-  def apply(modelLoader: ModelLoader): ApplicationConfGenerator = new ApplicationConfGenerator(modelLoader)
+  def apply(modelLoader: ModelLoader): AppConfGenerator = new AppConfGenerator(modelLoader)
 }
 
-class ApplicationConfGenerator(modelLoader: ModelLoader) {
+class AppConfGenerator(modelLoader: ModelLoader) {
 
   import modelLoader._
 
@@ -22,8 +22,8 @@ class ApplicationConfGenerator(modelLoader: ModelLoader) {
   }
 
   def generateAppConf(): Unit = {
-    new File(applicationConfDir).mkdirs()
-    val printWriter = new PrintWriter(s"${applicationConfDir}/application.conf", "utf-8")
+    new File(appProjectConfDir).mkdirs()
+    val printWriter = new PrintWriter(s"${appProjectConfDir}/application.conf", "utf-8")
     printWriter.println(
       s"""
          |# https://www.playframework.com/documentation/latest/Configuration
@@ -148,8 +148,8 @@ class ApplicationConfGenerator(modelLoader: ModelLoader) {
   }
 
   def generateLogConf(): Unit = {
-    new File(applicationConfDir).mkdirs()
-    val printWriter = new PrintWriter(s"${applicationConfDir}/logback.xml", "utf-8")
+    new File(appProjectConfDir).mkdirs()
+    val printWriter = new PrintWriter(s"${appProjectConfDir}/logback.xml", "utf-8")
     printWriter.println(
       s"""
          |<!-- https://www.playframework.com/documentation/latest/SettingsLogger -->
@@ -195,8 +195,8 @@ class ApplicationConfGenerator(modelLoader: ModelLoader) {
   }
 
   def generateMessageConf(): Unit = {
-    new File(applicationConfDir).mkdirs()
-    val printWriter = new PrintWriter(s"${applicationConfDir}/messages", "utf-8")
+    new File(appProjectConfDir).mkdirs()
+    val printWriter = new PrintWriter(s"${appProjectConfDir}/messages", "utf-8")
     printWriter.println(
       s"""
          |# https://www.playframework.com/documentation/latest/ScalaI18N
@@ -206,8 +206,8 @@ class ApplicationConfGenerator(modelLoader: ModelLoader) {
   }
 
   def generateRoutesConf(): Unit = {
-    new File(applicationConfDir).mkdirs()
-    val printWriter = new PrintWriter(s"${applicationConfDir}/routes", "utf-8")
+    new File(appProjectConfDir).mkdirs()
+    val printWriter = new PrintWriter(s"${appProjectConfDir}/routes", "utf-8")
     printWriter.println(
       s"""
          |# Routes

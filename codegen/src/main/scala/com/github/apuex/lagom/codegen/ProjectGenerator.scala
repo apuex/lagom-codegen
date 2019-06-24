@@ -22,7 +22,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     daoProjectSettings()
     daoMysqlProjectSettings()
     implProjectSettings()
+    crudImplProjectSettings()
     appProjectSettings()
+    crudAppProjectSettings()
   }
 
   def modelProjectSettings(): Unit = {
@@ -162,7 +164,6 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     printWriter.println(
       s"""
          |import Dependencies._
-         |import sbtassembly.MergeStrategy
          |
          |name         := "${implProjectName}"
          |scalaVersion := scalaVersionNumber
@@ -185,6 +186,33 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     printWriter.close()
   }
 
+  def crudImplProjectSettings(): Unit = {
+    new File(crudImplProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${crudImplProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |import Dependencies._
+         |
+         |name         := "${crudImplProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    playEvents,
+         |    akkaPersistence,
+         |    akkaPersistenceQuery,
+         |    akkaClusterSharding,
+         |    macwire        % Provided,
+         |    scalaTest      % Test
+         |  )
+         |}
+       """.stripMargin.trim
+    )
+    printWriter.close()
+  }
 
   def appProjectSettings(): Unit = {
     new File(appProjectDir).mkdirs()
@@ -195,6 +223,60 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |import sbtassembly.MergeStrategy
          |
          |name         := "${appProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    logback,
+         |    leveldbjni,
+         |    scalaTest      % Test
+         |  )
+         |}
+         |
+         |assemblyJarName in assembly := s"$${name.value}-assembly-$${version.value}.jar"
+         |mainClass in assembly := Some("play.core.server.ProdServerStart")
+         |fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)
+         |
+         |assemblyExcludedJars in assembly := {
+         |  val cp = (fullClasspath in assembly).value
+         |  cp.filter( x =>
+         |    x.data.getName.contains("javax.activation-api")
+         |      || x.data.getName.contains("lagom-logback")
+         |  )
+         |}
+         |
+         |assemblyMergeStrategy in assembly := {
+         |  case manifest if manifest.contains("MANIFEST.MF") =>
+         |    // We don't need manifest files since sbt-assembly will create
+         |    // one with the given settings
+         |    MergeStrategy.discard
+         |  case PathList("META-INF", "io.netty.versions.properties") =>
+         |    MergeStrategy.discard
+         |  case referenceOverrides if referenceOverrides.contains("reference-overrides.conf") =>
+         |    // Keep the content for all reference-overrides.conf files
+         |    MergeStrategy.concat
+         |  case x =>
+         |    // For all the other files, use the default sbt-assembly merge strategy
+         |    val oldStrategy = (assemblyMergeStrategy in assembly).value
+         |    oldStrategy(x)
+         |}
+       """.stripMargin.trim
+    )
+    printWriter.close()
+  }
+
+  def crudAppProjectSettings(): Unit = {
+    new File(crudAppProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${crudAppProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |import Dependencies._
+         |import sbtassembly.MergeStrategy
+         |
+         |name         := "${crudAppProjectName}"
          |scalaVersion := scalaVersionNumber
          |organization := artifactGroupName
          |version      := artifactVersionNumber
@@ -366,10 +448,12 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |    `${model}`,
          |    `${message}`,
          |    `${api}`,
+         |    `${impl}`,
+         |    `${app}`,
          |    `${dao}`,
          |    `${dao}-${mysql}`,
-         |    `${impl}`,
-         |    `${app}`
+         |    `${crud}-${impl}`,
+         |    `${crud}-${app}`
          |  )
          |
          |lazy val `${model}` = (project in file("${model}"))
@@ -389,6 +473,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  .dependsOn(`${dao}-${mysql}`)
          |lazy val `${app}` = (project in file("${app}"))
          |  .dependsOn(`${impl}`)
+         |  .enablePlugins(PlayScala)
+         |lazy val `${crud}-${app}` = (project in file("${crud}-${app}"))
+         |  .dependsOn(`${crud}-${impl}`)
          |  .enablePlugins(PlayScala)
          |
          |resolvers += "Local Maven" at Path.userHome.asFile.toURI.toURL + ".m2/repository"

@@ -11,10 +11,12 @@ lazy val root = (project in file("."))
     `model`,
     `message`,
     `api`,
+    `impl`,
+    `app`,
     `dao`,
     `dao-mysql`,
-    `impl`,
-    `app`
+    `crud-impl`,
+    `crud-app`
   )
 
 lazy val `model` = (project in file("model"))
@@ -34,6 +36,9 @@ lazy val `crud-impl` = (project in file("crud-impl"))
   .dependsOn(`dao-mysql`)
 lazy val `app` = (project in file("app"))
   .dependsOn(`impl`)
+  .enablePlugins(PlayScala)
+lazy val `crud-app` = (project in file("crud-app"))
+  .dependsOn(`crud-impl`)
   .enablePlugins(PlayScala)
 
 resolvers += "Local Maven" at Path.userHome.asFile.toURI.toURL + ".m2/repository"

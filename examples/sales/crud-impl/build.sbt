@@ -1,6 +1,6 @@
 import Dependencies._
 
-name         := "sales-impl"
+name         := "sales-crud-impl"
 scalaVersion := scalaVersionNumber
 organization := artifactGroupName
 version      := artifactVersionNumber
