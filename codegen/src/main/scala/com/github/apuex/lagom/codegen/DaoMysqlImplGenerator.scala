@@ -37,6 +37,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   }
 
   def generateDaoForAggregate(aggregate: Aggregate): (String, String) = {
+    import aggregate._
     val traitName = s"${cToPascal(aggregate.name)}Dao"
     val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
@@ -44,19 +45,30 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       s"""
          |package ${daoMysqlSrcPackage}
          |
+         |
+         |import java.sql.Connection
+         |import java.util.Date
+         |
+         |import anorm.SqlParser._
+         |import anorm._
+         |import play._
+         |import anorm.ParameterValue._
          |import ${messageSrcPackage}._
          |import ${daoSrcPackage}._
-         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
+         |import com.github.apuex.springbootsolution.runtime.Parser._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
-         |import com.google.protobuf.timestamp.Timestamp
-         |import java.sql.Connection
-         |import play._
-         |import anorm.SqlParser._
-         |import anorm.ParameterValue._
-         |import anorm._
+         |import com.github.apuex.springbootsolution.runtime._
          |
          |class ${className} extends ${traitName} {
+         |  ${indent(defSelectByFks(name, fields, foreignKeys), 2)}
          |
+         |  ${indent(selectSql(name, fields), 2)}
+         |  ${indent(whereClause(), 2)}
+         |  ${indent(fieldConverter(fields), 2)}
+         |  ${indent(paramParser(fields), 2)}
+         |  ${indent(rowParser(name, fields, primaryKey.fields), 2)}
+         |  ${indent(namedParams(), 2)}
          |}
      """.stripMargin.trim
 
@@ -64,44 +76,38 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   }
 
   def generateDaoForValueObject(valueObject: ValueObject): (String, String) = {
-    val traitName = s"${cToPascal(valueObject.name)}Dao"
+    import valueObject._
+    val traitName = s"${cToPascal(name)}Dao"
     val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
-    val selectByForeignKey = valueObject.foreignKeys
-      .map(x => {
-        val fieldNames = x.fields
-          .map(_.name)
-        val by = fieldNames
-          .map(cToPascal(_))
-          .reduceOption((l, r) => s"${l}${r}")
-          .getOrElse("")
-
-        val fkFields = valueObject.fields
-          .filter(x => fieldNames.contains(x.name))
-        s"""
-           |def selectBy${by}(${defMethodParams(fkFields)}): ${cToPascal(valueObject.name)}Vo
-         """.stripMargin.trim
-      })
-      .reduceOption((l, r) => s"${l}\n${r}")
-      .getOrElse("")
 
     val content =
       s"""
          |package ${daoMysqlSrcPackage}
          |
+         |import java.sql.Connection
+         |import java.util.Date
+         |
+         |import anorm.SqlParser._
+         |import anorm._
+         |import play._
+         |import anorm.ParameterValue._
          |import ${messageSrcPackage}._
          |import ${daoSrcPackage}._
-         |import com.github.apuex.springbootsolution.runtime._
+         |import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
+         |import com.github.apuex.springbootsolution.runtime.Parser._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
-         |import com.google.protobuf.timestamp.Timestamp
-         |import java.sql.Connection
-         |import play._
-         |import anorm.SqlParser._
-         |import anorm.ParameterValue._
-         |import anorm._
+         |import com.github.apuex.springbootsolution.runtime._
          |
          |class ${className} extends ${traitName} {
-         |  ${indent(selectByForeignKey, 2)}
+         |  ${indent(defSelectByFks(name, fields, foreignKeys), 2)}
+         |
+         |  ${indent(selectSql(name, fields), 2)}
+         |  ${indent(whereClause(), 2)}
+         |  ${indent(fieldConverter(fields), 2)}
+         |  ${indent(paramParser(fields), 2)}
+         |  ${indent(rowParser(name, fields, primaryKey.fields), 2)}
+         |  ${indent(namedParams(), 2)}
          |}
      """.stripMargin.trim
 
@@ -110,23 +116,23 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def generateCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fkFields: Seq[Field]): String = {
     s"""
-       |def create(c: Create${cToPascal(name)}Cmd): Int = {
+       |def create(c: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
        |
        |}
        |
-       |def retrieve(c: Retrieve${cToPascal(name)}Cmd): ${cToPascal(name)}Vo = {
+       |def retrieve(c: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
        |
        |}
        |
-       |def update(c: Update${cToPascal(name)}Cmd): Int = {
+       |def update(c: Update${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
        |
        |}
        |
-       |def delete(c: Delete${cToPascal(name)}Cmd): Int = {
+       |def delete(c: Delete${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
        |
        |}
        |
-       |def query${cToPascal(name)}(c: QueryCommand): ${cToPascal(name)}ListVo = {
+       |def query${cToPascal(name)}(c: QueryCommand)(implicit conn: Connection): ${cToPascal(name)}ListVo = {
        |
        |}
      """.stripMargin.trim
@@ -168,6 +174,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
           s"""
              |case "${cToCamel(x.name)}" => paramName -> paramValue
          """.stripMargin.trim
+        else if ("Timestamp" == javaType)
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> DateParser.parse(paramValue)
+         """.stripMargin.trim
         else
           s"""
              |case "${cToCamel(x.name)}" => paramName -> ${javaType}Parser.parse(paramValue)
@@ -176,9 +186,38 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
 
+    val arrayCases = fields
+      .map(x => {
+        val javaType = cToPascal(toJavaType(x._type))
+        if ("String" == javaType)
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> paramValue
+         """.stripMargin.trim
+        else if ("Timestamp" == javaType)
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> paramValue.map(DateParser.parse(_))
+         """.stripMargin.trim
+        else
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> paramValue.map(${javaType}Parser.parse(_))
+         """.stripMargin.trim
+      })
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
+
     s"""
-       |def parseParam(fieldName: String, paramName:String, paramValue: String): NamedParameter = fieldName match {
+       |private def parseParam(fieldName: String, paramName:String, paramValue: scala.Any): NamedParameter = paramValue match {
+       |  case x: String => parseParam(fieldName, paramName, x)
+       |  case x: Array[String] => parseParam(fieldName, paramName, x.toSeq)
+       |  case x: scala.Any => throw new RuntimeException(x.toString)
+       |}
+       |
+       |private def parseParam(fieldName: String, paramName:String, paramValue: String): NamedParameter = fieldName match {
        |  ${indent(cases, 2)}
+       |}
+       |
+       |private def parseParam(fieldName: String, paramName:String, paramValue: Seq[String]): NamedParameter = fieldName match {
+       |  ${indent(arrayCases, 2)}
        |}
      """.stripMargin.trim
   }
@@ -207,8 +246,13 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val gets = fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x =>
-      s"""
-         |get[${cToPascal(toJdbcType(x._type))}]("${x.name}")
+      if("timestamp" == x._type)
+        s"""
+           |get[Date]("${x.name}")
+         """.stripMargin.trim
+      else
+        s"""
+           |get[${cToPascal(toJdbcType(x._type))}]("${x.name}")
          """.stripMargin.trim
     )
       .reduceOption((l, r) => s"${l} ~ \n${r}")
@@ -222,7 +266,12 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
     val constructorParam = fields
       .map(x =>
-        if (isJdbcType(x._type)) cToCamel(x.name)
+        if (isJdbcType(x._type)) {
+          if("timestamp" == x._type)
+            s"Some(toScalapbTimestamp(${cToCamel(x.name)}))"
+          else
+            cToCamel(x.name)
+        }
         else if (isEnum(x._type)) s"${cToPascal(x.name)}.fromValue(${cToCamel(x.name)})"
         else { // array, map or value object type,
           s"""
@@ -248,13 +297,33 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   def namedParams(): String = {
     s"""
        |private def namedParams(q: QueryCommand): Seq[NamedParameter] = {
-       |  whereClause.toNamedParams(q.getPredicate, toImmutableScalaMap(q.getParamsMap))
+       |  whereClause.toNamedParams(q.getPredicate, q.params)
        |    .map(x => parseParam(x._1, x._2, x._3))
        |    .asInstanceOf[Seq[NamedParameter]]
        |}
      """.stripMargin
   }
 
+
+  def defSelectByFks(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): String = {
+    foreignKeys
+      .map(x => {
+        val fieldNames = x.fields
+          .map(_.name)
+        val by = fieldNames
+          .map(cToPascal(_))
+          .reduceOption((l, r) => s"${l}${r}")
+          .getOrElse("")
+
+        val fkFields = fields
+          .filter(x => fieldNames.contains(x.name))
+        s"""
+           |def selectBy${by}(${defMethodParams(fkFields)}): ${cToPascal(name)}Vo
+         """.stripMargin.trim
+      })
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
+  }
 
   def defSelectByFk(name: String, keyFields: Seq[Field]): String = {
     val by = keyFields
