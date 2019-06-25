@@ -66,8 +66,11 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |  ${indent(selectSql(name, fields), 2)}
          |  ${indent(whereClause(), 2)}
          |  ${indent(fieldConverter(fields), 2)}
+         |
          |  ${indent(paramParser(fields), 2)}
+         |
          |  ${indent(rowParser(name, fields, primaryKey.fields), 2)}
+         |
          |  ${indent(namedParams(), 2)}
          |}
      """.stripMargin.trim
@@ -105,8 +108,11 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |  ${indent(selectSql(name, fields), 2)}
          |  ${indent(whereClause(), 2)}
          |  ${indent(fieldConverter(fields), 2)}
+         |
          |  ${indent(paramParser(fields), 2)}
+         |
          |  ${indent(rowParser(name, fields, primaryKey.fields), 2)}
+         |
          |  ${indent(namedParams(), 2)}
          |}
      """.stripMargin.trim
@@ -150,6 +156,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def fieldConverter(fields: Seq[Field]): String = {
     val cases = fields
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x =>
         s"""
            |case "${cToCamel(x.name)}" => "${x.name}"
@@ -168,9 +175,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def paramParser(fields: Seq[Field]): String = {
     val cases = fields
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x => {
         val javaType = cToPascal(toJavaType(x._type))
-        if ("String" == javaType)
+        if (isEnum(x._type))
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> EnumParser(${cToPascal(x._type)}).parse(paramValue).value
+         """.stripMargin.trim
+        else if ("String" == javaType)
           s"""
              |case "${cToCamel(x.name)}" => paramName -> paramValue
          """.stripMargin.trim
@@ -187,9 +199,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
 
     val arrayCases = fields
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x => {
         val javaType = cToPascal(toJavaType(x._type))
-        if ("String" == javaType)
+        if (isEnum(x._type))
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> paramValue.map(EnumParser(${cToPascal(x._type)}).parse(_).value)
+         """.stripMargin.trim
+        else if ("String" == javaType)
           s"""
              |case "${cToCamel(x.name)}" => paramName -> paramValue
          """.stripMargin.trim
@@ -246,7 +263,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val gets = fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x =>
-      if("timestamp" == x._type)
+      if ("timestamp" == x._type)
         s"""
            |get[Date]("${x.name}")
          """.stripMargin.trim
@@ -259,7 +276,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
 
     val pattern = fields
-      .filter(x => isJdbcType(x._type))
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x => cToCamel(x.name))
       .reduceOption((l, r) => s"${l} ~ ${r}")
       .getOrElse("")
@@ -267,16 +284,16 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val constructorParam = fields
       .map(x =>
         if (isJdbcType(x._type)) {
-          if("timestamp" == x._type)
+          if ("timestamp" == x._type)
             s"Some(toScalapbTimestamp(${cToCamel(x.name)}))"
           else
             cToCamel(x.name)
         }
-        else if (isEnum(x._type)) s"${cToPascal(x.name)}.fromValue(${cToCamel(x.name)})"
+        else if (isEnum(x._type)) s"${cToPascal(x._type)}.fromValue(${cToCamel(x.name)})"
         else { // array, map or value object type,
           s"""
              |${selectComposite(x, keyFields)}
-           """.stripMargin
+           """.stripMargin.trim
         }
       )
       .reduceOption((l, r) => s"${l},\n${r}")
@@ -291,7 +308,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |      )
        |  }
        |}
-     """.stripMargin
+     """.stripMargin.trim
   }
 
   def namedParams(): String = {
@@ -301,7 +318,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |    .map(x => parseParam(x._1, x._2, x._3))
        |    .asInstanceOf[Seq[NamedParameter]]
        |}
-     """.stripMargin
+     """.stripMargin.trim
   }
 
 
