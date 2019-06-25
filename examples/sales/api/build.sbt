@@ -11,6 +11,6 @@ libraryDependencies ++= {
     sbRuntime,
     playEvents,
     scalapbJson4s,
-    scalaTest      % Test
+    scalaTest              % Test
   )
 }

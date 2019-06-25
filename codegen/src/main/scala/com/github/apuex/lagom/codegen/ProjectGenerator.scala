@@ -42,8 +42,8 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |libraryDependencies ++= {
          |  Seq(
-         |    codegenUtil    % Test,
-         |    scalaTest      % Test
+         |    codegenUtil            % Test,
+         |    scalaTest              % Test
          |  )
          |}
        """.stripMargin.trim
@@ -67,9 +67,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |libraryDependencies ++= {
          |  Seq(
          |    sbRuntime,
-         |    scalapbRuntime % "protobuf",
+         |    scalapbRuntime         % "protobuf",
          |    scalapbJson4s,
-         |    scalaTest      % Test
+         |    scalaTest              % Test
          |  )
          |}
          |
@@ -99,7 +99,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |    sbRuntime,
          |    playEvents,
          |    scalapbJson4s,
-         |    scalaTest      % Test
+         |    scalaTest              % Test
          |  )
          |}
        """.stripMargin.trim
@@ -124,7 +124,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |libraryDependencies ++= {
          |  Seq(
          |    jdbc,
-         |    scalaTest      % Test
+         |    scalaTest              % Test
          |  )
          |}
        """.stripMargin.trim
@@ -150,7 +150,11 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |    jdbc,
          |    playAnorm,
          |    mysqlDriver,
-         |    scalaTest      % Test
+         |    macwireMacros          % Provided,
+         |    macrosakka             % Provided,
+         |    macwireUtil,
+         |    macwireProxy,
+         |    scalaTest              % Test
          |  )
          |}
        """.stripMargin.trim
@@ -178,6 +182,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |    akkaPersistenceQuery,
          |    akkaClusterSharding,
          |    macwireMacros          % Provided,
+         |    macrosakka             % Provided,
+         |    macwireUtil,
+         |    macwireProxy,
          |    scalaTest              % Test
          |  )
          |}
@@ -206,6 +213,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |    akkaPersistenceQuery,
          |    akkaClusterSharding,
          |    macwireMacros          % Provided,
+         |    macrosakka             % Provided,
+         |    macwireUtil,
+         |    macwireProxy,
          |    scalaTest              % Test
          |  )
          |}
@@ -232,7 +242,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  Seq(
          |    logback,
          |    leveldbjni,
-         |    scalaTest      % Test
+         |    scalaTest              % Test
          |  )
          |}
          |
@@ -286,7 +296,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  Seq(
          |    logback,
          |    leveldbjni,
-         |    scalaTest      % Test
+         |    scalaTest              % Test
          |  )
          |}
          |

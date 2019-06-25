@@ -9,6 +9,6 @@ maintainer   := artifactMaintainer
 libraryDependencies ++= {
   Seq(
     jdbc,
-    scalaTest      % Test
+    scalaTest              % Test
   )
 }

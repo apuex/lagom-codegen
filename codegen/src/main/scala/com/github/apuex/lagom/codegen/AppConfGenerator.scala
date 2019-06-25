@@ -217,7 +217,6 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |
          |# Map static resources from the /public folder to the /assets URL path
          |GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
-         |->      /api                        playevents.Routes
        """.stripMargin
         .trim)
     printWriter.close()

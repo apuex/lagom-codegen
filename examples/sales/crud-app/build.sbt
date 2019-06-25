@@ -11,7 +11,7 @@ libraryDependencies ++= {
   Seq(
     logback,
     leveldbjni,
-    scalaTest      % Test
+    scalaTest              % Test
   )
 }
 

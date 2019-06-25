@@ -67,11 +67,12 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |import akka.stream.scaladsl._
        |import ${messageSrcPackage}._
        |import com.lightbend.lagom.scaladsl.api._
+       |import play.api.db.Database
        |import play.api.libs.json.Json
        |
        |import scala.concurrent.Future
        |
-       |class ${cToPascal(modelName)}ServiceImpl extends ${cToPascal(modelName)}Service {
+       |class ${cToPascal(modelName)}ServiceImpl (db: Database) extends ${cToPascal(modelName)}Service {
        |
        |  def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
        |    ServiceCall { is =>

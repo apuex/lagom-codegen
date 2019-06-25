@@ -9,9 +9,9 @@ maintainer   := artifactMaintainer
 libraryDependencies ++= {
   Seq(
     sbRuntime,
-    scalapbRuntime % "protobuf",
+    scalapbRuntime         % "protobuf",
     scalapbJson4s,
-    scalaTest      % Test
+    scalaTest              % Test
   )
 }
 
