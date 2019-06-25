@@ -1,4 +1,3 @@
-
 package com.github.apuex.commerce.sales.impl
 
 import com.github.apuex.commerce.sales._
@@ -22,6 +21,7 @@ class SalesAppLoader extends LagomApplicationLoader {
 }
 
 object SalesAppLoader {
+
   abstract class SalesApp(context: LagomApplicationContext)
     extends LagomApplication(context)
       with AhcWSComponents
@@ -31,6 +31,6 @@ object SalesAppLoader {
     // Bind the service that this server provides
     lazy val db = dbApi.database("sales-db")
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
+  }
+
 }
-}
-     

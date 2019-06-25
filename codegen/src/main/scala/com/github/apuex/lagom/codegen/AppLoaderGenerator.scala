@@ -2,6 +2,7 @@ package com.github.apuex.lagom.codegen
 
 import java.io.{File, PrintWriter}
 
+import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 
 object AppLoaderGenerator {
@@ -14,30 +15,27 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
 
   import modelLoader._
 
-  val mappingName = (s"${modelName}")
-  val serviceName = (s"${mappingName}_${service}")
+  val serviceName = (s"${modelName}_${service}")
   val serviceImplName = (s"${serviceName}_${impl}")
-  val appName = (s"${mappingName}_${app}")
-  val loaderName = (s"${appName}_${loader}")
+  val appName = (s"${modelName}_${app}")
+  val appLoaderName = (s"${appName}_${loader}")
+  val crudAppName = (s"${modelName}_${app}")
+  val crudAppLoaderName = (s"${crudAppName}_${loader}")
 
   val appLoader =
     s"""
        |package ${implSrcPackage}
        |
-       |import akka.actor.Props
        |import ${apiSrcPackage}._
-       |import ${implSrcPackage}.${cToPascal(loaderName)}._
-       |import ${apiSrcPackage}.ScalapbJson._
+       |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
        |import com.lightbend.lagom.scaladsl.client._
        |import com.lightbend.lagom.scaladsl.devmode._
-       |import com.lightbend.lagom.scaladsl.playjson._
        |import com.lightbend.lagom.scaladsl.server._
        |import com.softwaremill.macwire._
-       |import play.api.libs.ws.ahc.AhcWSComponents
+       |import play.api.db._
+       |import play.api.libs.ws.ahc._
        |
-       |import scala.collection.immutable.Seq
-       |
-       |class ${cToPascal(loaderName)} extends LagomApplicationLoader {
+       |class ${cToPascal(appLoaderName)} extends LagomApplicationLoader {
        |
        |  override def load(context: LagomApplicationContext): LagomApplication =
        |    new ${cToPascal(appName)}(context) with ConfigurationServiceLocatorComponents
@@ -48,21 +46,72 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |  override def describeService = Some(readDescriptor[${cToPascal(serviceName)}])
        |}
        |
-       |object ${cToPascal(loaderName)} {
+       |object ${cToPascal(appLoaderName)} {
+       |
        |  abstract class ${cToPascal(appName)}(context: LagomApplicationContext)
        |    extends LagomApplication(context)
-       |      with AhcWSComponents {
+       |      with AhcWSComponents
+       |      with DBComponents
+       |      with HikariCPComponents {
        |
        |    // Bind the service that this server provides
+       |    lazy val db = dbApi.database("${cToShell(modelName)}-db")
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
+       |
        |}
-     """.stripMargin
+     """.stripMargin.trim
+
+  val crudAppLoader =
+    s"""
+       |package ${implSrcPackage}
+       |
+       |import ${apiSrcPackage}._
+       |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
+       |import com.lightbend.lagom.scaladsl.client._
+       |import com.lightbend.lagom.scaladsl.devmode._
+       |import com.lightbend.lagom.scaladsl.server._
+       |import com.softwaremill.macwire._
+       |import play.api.db._
+       |import play.api.libs.ws.ahc._
+       |
+       |class ${cToPascal(crudAppLoaderName)} extends LagomApplicationLoader {
+       |
+       |  override def load(context: LagomApplicationContext): LagomApplication =
+       |    new ${cToPascal(crudAppName)}(context) with ConfigurationServiceLocatorComponents
+       |
+       |  override def loadDevMode(context: LagomApplicationContext): LagomApplication =
+       |    new ${cToPascal(crudAppName)}(context) with LagomDevModeComponents
+       |
+       |  override def describeService = Some(readDescriptor[${cToPascal(serviceName)}])
+       |}
+       |
+       |object ${cToPascal(crudAppLoaderName)} {
+       |
+       |  abstract class ${cToPascal(crudAppName)}(context: LagomApplicationContext)
+       |    extends LagomApplication(context)
+       |      with AhcWSComponents
+       |      with DBComponents
+       |      with HikariCPComponents {
+       |
+       |    // Bind the service that this server provides
+       |    lazy val db = dbApi.database("${cToShell(modelName)}-db")
+       |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
+       |  }
+       |
+       |}
+     """.stripMargin.trim
 
   def generate(): Unit = {
-    new File(implSrcDir).mkdirs()
-    val printWriter = new PrintWriter(s"${implSrcDir}/${cToPascal(loaderName)}.scala", "utf-8")
-    printWriter.println(appLoader)
-    printWriter.close()
+    save(
+      s"${cToPascal(appLoaderName)}.scala",
+      appLoader,
+      implSrcDir
+    )
+    save(
+      s"${cToPascal(crudAppLoaderName)}.scala",
+      crudAppLoader,
+      crudImplSrcDir
+    )
   }
 }

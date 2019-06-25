@@ -480,6 +480,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  .dependsOn(`${dao}`)
          |lazy val `${impl}` = (project in file("${impl}"))
          |  .dependsOn(`${api}`)
+         |  .dependsOn(`${dao}-${mysql}`)
          |lazy val `${crud}-${impl}` = (project in file("${crud}-${impl}"))
          |  .dependsOn(`${api}`)
          |  .dependsOn(`${dao}-${mysql}`)
