@@ -2,7 +2,7 @@ package com.github.apuex.lagom.codegen
 
 import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
-import com.github.apuex.springbootsolution.runtime.TextUtils.indent
+import com.github.apuex.springbootsolution.runtime.TextUtils._
 import com.github.apuex.springbootsolution.runtime.TypeConverters._
 
 import scala.xml.Node
@@ -63,8 +63,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |class ${className} extends ${traitName} {
          |  ${indent(defSelectByFks(name, fields, foreignKeys), 2)}
          |
-         |  ${indent(selectSql(name, fields), 2)}
+         |  ${indentWithLeftMargin(selectSql(name, fields), 2)}
+         |
          |  ${indent(whereClause(), 2)}
+         |
          |  ${indent(fieldConverter(fields), 2)}
          |
          |  ${indent(paramParser(fields), 2)}
@@ -105,8 +107,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |class ${className} extends ${traitName} {
          |  ${indent(defSelectByFks(name, fields, foreignKeys), 2)}
          |
-         |  ${indent(selectSql(name, fields), 2)}
+         |  ${indentWithLeftMargin(selectSql(name, fields), 2)}
+         |
          |  ${indent(whereClause(), 2)}
+         |
          |  ${indent(fieldConverter(fields), 2)}
          |
          |  ${indent(paramParser(fields), 2)}
@@ -120,53 +124,65 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     (fileName, content)
   }
 
-  def generateCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fkFields: Seq[Field]): String = {
+  def defCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fks: Seq[ForeignKey]): Seq[String] = Seq(
     s"""
-       |def create(c: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
-       |
-       |}
-       |
-       |def retrieve(c: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
-       |
-       |}
-       |
-       |def update(c: Update${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
-       |
-       |}
-       |
-       |def delete(c: Delete${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
-       |
-       |}
-       |
-       |def query${cToPascal(name)}(c: QueryCommand)(implicit conn: Connection): ${cToPascal(name)}ListVo = {
-       |
-       |}
+       |def create${cToPascal(name)}(cmd: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int
+     """.stripMargin.trim,
+    s"""
+       |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo
+     """.stripMargin.trim,
+    s"""
+       |def update${cToPascal(name)}(cmd: Update${cToPascal(name)}Cmd)(implicit conn: Connection): Int
+     """.stripMargin.trim,
+    s"""
+       |def delete${cToPascal(name)}(cmd: Delete${cToPascal(name)}Cmd)(implicit conn: Connection): Int
+     """.stripMargin.trim,
+    s"""
+       |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
+     """.stripMargin.trim,
+    s"""
+       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
      """.stripMargin.trim
+  )
+
+  def columnNames(fields: Seq[Field], alias: String = ""): String = {
+    val t = if ("" == alias) "" else s"${alias}."
+    fields
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
+      .map(x => s"${t}${x.name}")
+      .reduceOption((l, r) => s"${l}, ${r}")
+      .getOrElse("")
   }
 
   def selectSql(name: String, fields: Seq[Field]): String = {
+    val sql = s"""
+       |SELECT
+       |  ${indent(columnNames(fields, "t"), 2)}
+       |FROM ${modelDbSchema}.${name} t
+       """.stripMargin.trim
     s"""
-       |
-     """.stripMargin.trim
+       |private val sql =
+       |  ${indentWithLeftMargin(blockQuote(sql, 2), 2)}
+       |""".stripMargin.trim
   }
 
   def whereClause(): String = {
-    "val whereClause = WhereClauseWithNamedParams(fieldConverter)"
+    "private val whereClause = WhereClauseWithNamedParams(fieldConverter)"
   }
 
   def fieldConverter(fields: Seq[Field]): String = {
     val cases = fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x =>
-        s"""
-           |case "${cToCamel(x.name)}" => "${x.name}"
+      s"""
+         |case "${cToCamel(x.name)}" => "${x.name}"
          """.stripMargin.trim
-      )
+    )
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
 
     s"""
-       |val fieldConverter: SymbolConverter = {
+       |private val fieldConverter: SymbolConverter = {
        |  ${indent(cases, 2)}
        |  case x: String => camelToC(x)
        |}
@@ -177,48 +193,48 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val cases = fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x => {
-        val javaType = cToPascal(toJavaType(x._type))
-        if (isEnum(x._type))
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> EnumParser(${cToPascal(x._type)}).parse(paramValue).value
+      val javaType = cToPascal(toJavaType(x._type))
+      if (isEnum(x._type))
+        s"""
+           |case "${cToCamel(x.name)}" => paramName -> EnumParser(${cToPascal(x._type)}).parse(paramValue).value
          """.stripMargin.trim
-        else if ("String" == javaType)
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> paramValue
+      else if ("String" == javaType)
+        s"""
+           |case "${cToCamel(x.name)}" => paramName -> paramValue
          """.stripMargin.trim
-        else if ("Timestamp" == javaType)
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> DateParser.parse(paramValue)
+      else if ("Timestamp" == javaType)
+        s"""
+           |case "${cToCamel(x.name)}" => paramName -> DateParser.parse(paramValue)
          """.stripMargin.trim
-        else
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> ${javaType}Parser.parse(paramValue)
+      else
+        s"""
+           |case "${cToCamel(x.name)}" => paramName -> ${javaType}Parser.parse(paramValue)
          """.stripMargin.trim
-      })
+    })
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
 
     val arrayCases = fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x => {
-        val javaType = cToPascal(toJavaType(x._type))
-        if (isEnum(x._type))
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> paramValue.map(EnumParser(${cToPascal(x._type)}).parse(_).value)
+      val javaType = cToPascal(toJavaType(x._type))
+      if (isEnum(x._type))
+        s"""
+           |case "${cToCamel(x.name)}" => paramName -> paramValue.map(EnumParser(${cToPascal(x._type)}).parse(_).value)
          """.stripMargin.trim
-        else if ("String" == javaType)
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> paramValue
+      else if ("String" == javaType)
+        s"""
+           |case "${cToCamel(x.name)}" => paramName -> paramValue
          """.stripMargin.trim
-        else if ("Timestamp" == javaType)
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> paramValue.map(DateParser.parse(_))
+      else if ("Timestamp" == javaType)
+        s"""
+           |case "${cToCamel(x.name)}" => paramName -> paramValue.map(DateParser.parse(_))
          """.stripMargin.trim
-        else
-          s"""
-             |case "${cToCamel(x.name)}" => paramName -> paramValue.map(${javaType}Parser.parse(_))
+      else
+        s"""
+           |case "${cToCamel(x.name)}" => paramName -> paramValue.map(${javaType}Parser.parse(_))
          """.stripMargin.trim
-      })
+    })
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
 
