@@ -150,7 +150,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x => s"${t}${x.name}")
-      .reduceOption((l, r) => s"${l}, ${r}")
+      .reduceOption((l, r) => s"${l},\n${r}")
       .getOrElse("")
   }
 
