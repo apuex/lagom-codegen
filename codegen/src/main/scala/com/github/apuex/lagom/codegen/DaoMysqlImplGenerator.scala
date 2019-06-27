@@ -41,6 +41,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val traitName = s"${cToPascal(aggregate.name)}Dao"
     val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
+    val calls = (
+      defCrud(name, fields, primaryKey.fields, foreignKeys) ++
+        defSelectByFks(name, fields, foreignKeys) ++
+        defMessages(aggregate.messages) ++
+        defEmbeddedAggregateMessages(aggregate.aggregates)
+      )
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
 
     val content =
       s"""
@@ -62,7 +70,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import com.github.apuex.springbootsolution.runtime._
          |
          |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
-         |  ${indent(defSelectByFks(name, fields, foreignKeys), 2)}
+         |  ${indent(calls, 2)}
          |
          |  ${indentWithLeftMargin(selectSql(name, fields), 2)}
          |
@@ -86,6 +94,12 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val traitName = s"${cToPascal(name)}Dao"
     val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
+    val calls = (
+      defCrud(name, fields, primaryKey.fields, foreignKeys) ++
+        defSelectByFks(name, fields, foreignKeys)
+      )
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
 
     val content =
       s"""
@@ -106,7 +120,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import com.github.apuex.springbootsolution.runtime._
          |
          |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
-         |  ${indent(defSelectByFks(name, fields, foreignKeys), 2)}
+         |  ${indent(calls, 2)}
          |
          |  ${indentWithLeftMargin(selectSql(name, fields), 2)}
          |
@@ -124,40 +138,6 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
     (fileName, content)
   }
-
-  def defDaoDependencies(fields: Seq[Field]): String = {
-    fields
-      .filter(x => ("array" == x._type && isEntity(x.valueType)) || ("map" == x._type && isEntity(x.entity)))
-      .map(x => if("array" == x._type) x.valueType else x.entity)
-      .map(x => {
-        s"""
-           |${cToCamel(x)}Dao: ${cToPascal(x)}Dao
-         """.stripMargin.trim
-      })
-      .reduceOption((l, r) => s"$l, $r")
-      .getOrElse("")
-  }
-
-  def defCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fks: Seq[ForeignKey]): Seq[String] = Seq(
-    s"""
-       |def create${cToPascal(name)}(cmd: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int
-     """.stripMargin.trim,
-    s"""
-       |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo
-     """.stripMargin.trim,
-    s"""
-       |def update${cToPascal(name)}(cmd: Update${cToPascal(name)}Cmd)(implicit conn: Connection): Int
-     """.stripMargin.trim,
-    s"""
-       |def delete${cToPascal(name)}(cmd: Delete${cToPascal(name)}Cmd)(implicit conn: Connection): Int
-     """.stripMargin.trim,
-    s"""
-       |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
-     """.stripMargin.trim,
-    s"""
-       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
-     """.stripMargin.trim
-  )
 
   def columnNames(fields: Seq[Field], alias: String = ""): String = {
     val t = if ("" == alias) "" else s"${alias}."
@@ -352,8 +332,112 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
+  def defDaoDependencies(fields: Seq[Field]): String = {
+    fields
+      .filter(x => ("array" == x._type && isEntity(x.valueType)) || ("map" == x._type && isEntity(x.entity)))
+      .map(x => if("array" == x._type) x.valueType else x.entity)
+      .map(x => {
+        s"""
+           |${cToCamel(x)}Dao: ${cToPascal(x)}Dao
+         """.stripMargin.trim
+      })
+      .reduceOption((l, r) => s"$l, $r")
+      .getOrElse("")
+  }
 
-  def defSelectByFks(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): String = {
+  def defCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fks: Seq[ForeignKey]): Seq[String] = Seq(
+    s"""
+       |def create${cToPascal(name)}(cmd: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
+       |}
+     """.stripMargin.trim,
+    s"""
+       |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
+       |}
+     """.stripMargin.trim,
+    s"""
+       |def update${cToPascal(name)}(cmd: Update${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
+       |}
+     """.stripMargin.trim,
+    s"""
+       |def delete${cToPascal(name)}(cmd: Delete${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
+       |}
+     """.stripMargin.trim,
+    s"""
+       |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo] = {
+       |}
+     """.stripMargin.trim,
+    s"""
+       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[${cToPascal(name)}Vo] = {
+       |}
+     """.stripMargin.trim
+  )
+
+  def defMessage(message: Message): String = {
+    val returnType = if ("" == message.returnType) "Int"
+    else {
+      val baseName = message.returnType.replace("*", "")
+      val multiple = message.returnType.endsWith("*")
+      if (multiple) {
+        if (isAggregateEntity(baseName)) s"Seq[${cToPascal(baseName)}Vo]" else s"${cToPascal(baseName)}Vo"
+      } else {
+        cToPascal(toJavaType(baseName))
+      }
+    }
+    s"""
+       |def ${cToCamel(message.name)}(cmd: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType} = {
+       |}
+     """.stripMargin.trim
+  }
+
+  def defMessages(messages: Seq[Message]): Seq[String] = {
+    messages.map(defMessage(_))
+  }
+
+  def defEmbeddedAggregateMessage(aggregate: Aggregate): String = {
+    val nonKeyFieldCount = aggregate.fields.length - aggregate.primaryKey.fields.length
+    val keyFieldNames = aggregate.primaryKey.fields.map(_.name).toSet
+    val nonKeyFields = aggregate.fields.filter(x => !keyFieldNames.contains(x.name))
+    if (nonKeyFieldCount > 1)
+      s"""
+         |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
+         |}
+         |
+         |def update${cToPascal(aggregate.name)}(cmd: Update${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+         |}
+     """.stripMargin.trim
+    else if (nonKeyFieldCount == 1) {
+      val field = nonKeyFields.head
+      if ("array" == field._type || "map" == field._type)
+        s"""
+           |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
+           |}
+           |
+           |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+           |}
+           |
+           |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+           |}
+     """.stripMargin.trim
+      else
+        s"""
+           |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
+           |}
+           |
+           |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+           |}
+     """.stripMargin.trim
+    } else { // this cannot be happen.
+      s"""
+         |
+     """.stripMargin.trim
+    }
+  }
+
+  def defEmbeddedAggregateMessages(aggregates: Seq[Aggregate]): Seq[String] = {
+    aggregates.map(defEmbeddedAggregateMessage(_))
+  }
+
+  def defSelectByFks(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
     foreignKeys
       .map(x => {
         val fieldNames = x.fields
@@ -366,11 +450,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         val fkFields = fields
           .filter(x => fieldNames.contains(x.name))
         s"""
-           |def selectBy${by}(${defMethodParams(fkFields)}): ${cToPascal(name)}Vo
+           |def selectBy${by}(${defMethodParams(fkFields)})(implicit conn: Connection): ${cToPascal(name)}Vo = {
+           |}
          """.stripMargin.trim
       })
-      .reduceOption((l, r) => s"${l}\n${r}")
-      .getOrElse("")
   }
 
   def defSelectByFk(name: String, keyFields: Seq[Field]): String = {
@@ -380,7 +463,8 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
 
     s"""
-       |def selectBy${by}(${defMethodParams(keyFields)}): ${cToPascal(name)}ListVo")
+       |def selectBy${by}(${defMethodParams(keyFields)})(implicit conn: Connection): ${cToPascal(name)}ListVo") = {
+       |}
      """.stripMargin.trim
   }
 
