@@ -319,9 +319,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
   def generateField(field: Field, no: Int): String = {
     import field._
 
-    val protobufType = if ("array" == _type) s"repeated ${toProtobufType(valueType)}${if (isEntity(valueType)) "Vo" else ""}"
-    else if ("map" == _type) s"map <${toProtobufType(keyType)}${if (isEntity(keyType)) "Vo" else ""}, ${toProtobufType(valueType)}${if (isEntity(valueType)) "Vo" else ""}>"
-    else s"${toProtobufType(_type)}${if (isEntity(_type)) "Vo" else ""}"
+    val protobufType = if ("array" == _type) s"repeated ${toProtobufType(valueType)}${if (isAggregateEntity(valueType)) "Vo" else ""}"
+    else if ("map" == _type) s"map <${toProtobufType(keyType)}${if (isAggregateEntity(keyType)) "Vo" else ""}, ${toProtobufType(valueType)}${if (isAggregateEntity(valueType)) "Vo" else ""}>"
+    else s"${toProtobufType(_type)}${if (isAggregateEntity(_type)) "Vo" else ""}"
 
     s"""
        |${protobufType} ${cToCamel(name)} = ${no}; // ${comment}

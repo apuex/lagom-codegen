@@ -131,7 +131,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
       val baseName = message.returnType.replace("*", "")
       val multiple = message.returnType.endsWith("*")
       if (multiple) {
-        if (isEntity(baseName)) s"Seq[${cToPascal(baseName)}Vo]" else s"${cToPascal(baseName)}Vo"
+        if (isAggregateEntity(baseName)) s"Seq[${cToPascal(baseName)}Vo]" else s"${cToPascal(baseName)}Vo"
       } else {
         cToPascal(toJavaType(baseName))
       }

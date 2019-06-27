@@ -41,6 +41,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val traitName = s"${cToPascal(aggregate.name)}Dao"
     val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
+
     val content =
       s"""
          |package ${daoMysqlSrcPackage}
@@ -60,14 +61,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.github.apuex.springbootsolution.runtime._
          |
-         |class ${className} extends ${traitName} {
+         |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
          |  ${indent(defSelectByFks(name, fields, foreignKeys), 2)}
          |
          |  ${indentWithLeftMargin(selectSql(name, fields), 2)}
          |
-         |  ${indent(whereClause(), 2)}
-         |
          |  ${indent(fieldConverter(fields), 2)}
+         |
+         |  ${indent(whereClause(), 2)}
          |
          |  ${indent(paramParser(fields), 2)}
          |
@@ -104,14 +105,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.github.apuex.springbootsolution.runtime._
          |
-         |class ${className} extends ${traitName} {
+         |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
          |  ${indent(defSelectByFks(name, fields, foreignKeys), 2)}
          |
          |  ${indentWithLeftMargin(selectSql(name, fields), 2)}
          |
-         |  ${indent(whereClause(), 2)}
-         |
          |  ${indent(fieldConverter(fields), 2)}
+         |
+         |  ${indent(whereClause(), 2)}
          |
          |  ${indent(paramParser(fields), 2)}
          |
@@ -122,6 +123,19 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
 
     (fileName, content)
+  }
+
+  def defDaoDependencies(fields: Seq[Field]): String = {
+    fields
+      .filter(x => ("array" == x._type && isEntity(x.valueType)) || ("map" == x._type && isEntity(x.entity)))
+      .map(x => if("array" == x._type) x.valueType else x.entity)
+      .map(x => {
+        s"""
+           |${cToCamel(x)}Dao: ${cToPascal(x)}Dao
+         """.stripMargin.trim
+      })
+      .reduceOption((l, r) => s"$l, $r")
+      .getOrElse("")
   }
 
   def defCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fks: Seq[ForeignKey]): Seq[String] = Seq(
@@ -155,10 +169,11 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   }
 
   def selectSql(name: String, fields: Seq[Field]): String = {
-    val sql = s"""
-       |SELECT
-       |  ${indent(columnNames(fields, "t"), 2)}
-       |FROM ${modelDbSchema}.${name} t
+    val sql =
+      s"""
+         |SELECT
+         |  ${indent(columnNames(fields, "t"), 2)}
+         |FROM ${modelDbSchema}.${name} t
        """.stripMargin.trim
     s"""
        |private val sql =

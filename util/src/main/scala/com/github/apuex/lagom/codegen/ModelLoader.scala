@@ -332,6 +332,11 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val crudAppProjectConfDir = s"${crudAppProjectDir}/conf"
   val hyphen = if ("microsoft" == s"${System.getProperty("symbol.naming", "microsoft")}") "" else "-"
 
+  val entityNames = xml.child
+    .filter(x => x.label == "entity" && "true" != x.\@("enum"))
+    .map(_.\@("name"))
+    .toSet
+
   val nonEnumNames = xml.child
     .filter(x => x.label == "entity" && "true" != x.\@("enum"))
     .map(x => x.\@("name") +:
@@ -347,12 +352,13 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
     .map(_.\@("name"))
     .toSet
 
-  def isEntity(name: String): Boolean = nonEnumNames.contains(name)
+  def isAggregateEntity(name: String): Boolean = nonEnumNames.contains(name)
+  def isEntity(name: String): Boolean = entityNames.contains(name)
 
   def isEnum(name: String): Boolean = !nonEnumNames.contains(name) && enumNames.contains(name)
 
   def defFieldType(name: String): String = {
-    if (isEntity(name)) s"${cToPascal(name)}Vo"
+    if (isAggregateEntity(name)) s"${cToPascal(name)}Vo"
     else cToPascal(toJavaType(name))
   }
 
