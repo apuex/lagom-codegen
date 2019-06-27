@@ -14,5 +14,6 @@ tmp/
 
 **/*.protobin
 **/*.log
+**/*.swp
 
 log/

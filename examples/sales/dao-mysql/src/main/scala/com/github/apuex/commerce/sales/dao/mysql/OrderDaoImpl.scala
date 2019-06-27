@@ -19,15 +19,15 @@ import com.github.apuex.springbootsolution.runtime._
 class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   def createOrder(cmd: CreateOrderCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-      INSERT INTO sales.order(
-        order.order_id,
-        order.order_time,
-        order.order_payment_type
-      ) VALUES (
-        {orderId},
-        {orderTime},
-        {orderPaymentType}
-      )
+       |INSERT INTO sales.order(
+       |    order.order_id,
+       |    order.order_time,
+       |    order.order_payment_type
+       |  ) VALUES (
+       |    {orderId},
+       |    {orderTime},
+       |    {orderPaymentType}
+       |  )
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId,
@@ -38,13 +38,13 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
 
   def retrieveOrder(cmd: RetrieveOrderCmd)(implicit conn: Connection): OrderVo = {
     SQL(s"""
-      SELECT
-        order.order_id,
-        order.order_time,
-        order.order_payment_type
-      FROM sales.order
-      WHERE
-        order.order_id = {orderId}
+       |SELECT
+       |    order.order_id,
+       |    order.order_time,
+       |    order.order_payment_type
+       |  FROM sales.order
+       |  WHERE
+       |    order.order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId
@@ -53,16 +53,16 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
 
   def updateOrder(cmd: UpdateOrderCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-      UPDATE sales.order
-        order.order_id,
-        order.order_time,
-        order.order_payment_type
-      SET
-        order.order_id = {orderId},
-        order.order_time = {orderTime},
-        order.order_payment_type = {orderPaymentType}
-      WHERE
-        order.order_id = {orderId}
+       |UPDATE sales.order
+       |    order.order_id,
+       |    order.order_time,
+       |    order.order_payment_type
+       |  SET
+       |    order.order_id = {orderId},
+       |    order.order_time = {orderTime},
+       |    order.order_payment_type = {orderPaymentType}
+       |  WHERE
+       |    order.order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId,
@@ -73,10 +73,10 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
 
   def deleteOrder(cmd: DeleteOrderCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-      DELETE
-      FROM sales.order
-      WHERE
-        order.order_id = {orderId}
+       |DELETE
+       |  FROM sales.order
+       |  WHERE
+       |    order.order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId
@@ -89,13 +89,13 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
 
   def retrieveOrderByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): OrderVo = {
     SQL(s"""
-      SELECT
-        order.order_id,
-        order.order_time,
-        order.order_payment_type
-      FROM sales.order
-      WHERE
-        order.rowid = {rowid}
+       |SELECT
+       |    order.order_id,
+       |    order.order_time,
+       |    order.order_payment_type
+       |  FROM sales.order
+       |  WHERE
+       |    order.rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> cmd.rowid
@@ -105,11 +105,11 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   def getOrderLines(cmd: GetOrderLinesCmd)(implicit conn: Connection): OrderLinesVo = {
     null
   }
-
+  
   def addOrderLines(cmd: AddOrderLinesCmd)(implicit conn: Connection): Int = {
     0
   }
-
+  
   def removeOrderLines(cmd: RemoveOrderLinesCmd)(implicit conn: Connection): Int = {
     0
   }
@@ -117,7 +117,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   def getOrderPaymentType(cmd: GetOrderPaymentTypeCmd)(implicit conn: Connection): OrderPaymentTypeVo = {
     null
   }
-
+  
   def changeOrderPaymentType(cmd: ChangeOrderPaymentTypeCmd)(implicit conn: Connection): Int = {
     0
   }

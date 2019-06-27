@@ -19,17 +19,17 @@ import com.github.apuex.springbootsolution.runtime._
 class AlarmDaoImpl() extends AlarmDao {
   def createAlarm(cmd: CreateAlarmCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-      INSERT INTO sales.alarm(
-        alarm.alarm_id,
-        alarm.alarm_begin,
-        alarm.alarm_end,
-        alarm.alarm_desc
-      ) VALUES (
-        {alarmId},
-        {alarmBegin},
-        {alarmEnd},
-        {alarmDesc}
-      )
+       |INSERT INTO sales.alarm(
+       |    alarm.alarm_id,
+       |    alarm.alarm_begin,
+       |    alarm.alarm_end,
+       |    alarm.alarm_desc
+       |  ) VALUES (
+       |    {alarmId},
+       |    {alarmBegin},
+       |    {alarmEnd},
+       |    {alarmDesc}
+       |  )
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -41,15 +41,15 @@ class AlarmDaoImpl() extends AlarmDao {
 
   def retrieveAlarm(cmd: RetrieveAlarmCmd)(implicit conn: Connection): AlarmVo = {
     SQL(s"""
-      SELECT
-        alarm.alarm_id,
-        alarm.alarm_begin,
-        alarm.alarm_end,
-        alarm.alarm_desc
-      FROM sales.alarm
-      WHERE
-        alarm.alarm_id = {alarmId},
-        alarm.alarm_begin = {alarmBegin}
+       |SELECT
+       |    alarm.alarm_id,
+       |    alarm.alarm_begin,
+       |    alarm.alarm_end,
+       |    alarm.alarm_desc
+       |  FROM sales.alarm
+       |  WHERE
+       |    alarm.alarm_id = {alarmId},
+       |    alarm.alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -59,19 +59,19 @@ class AlarmDaoImpl() extends AlarmDao {
 
   def updateAlarm(cmd: UpdateAlarmCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-      UPDATE sales.alarm
-        alarm.alarm_id,
-        alarm.alarm_begin,
-        alarm.alarm_end,
-        alarm.alarm_desc
-      SET
-        alarm.alarm_id = {alarmId},
-        alarm.alarm_begin = {alarmBegin},
-        alarm.alarm_end = {alarmEnd},
-        alarm.alarm_desc = {alarmDesc}
-      WHERE
-        alarm.alarm_id = {alarmId},
-        alarm.alarm_begin = {alarmBegin}
+       |UPDATE sales.alarm
+       |    alarm.alarm_id,
+       |    alarm.alarm_begin,
+       |    alarm.alarm_end,
+       |    alarm.alarm_desc
+       |  SET
+       |    alarm.alarm_id = {alarmId},
+       |    alarm.alarm_begin = {alarmBegin},
+       |    alarm.alarm_end = {alarmEnd},
+       |    alarm.alarm_desc = {alarmDesc}
+       |  WHERE
+       |    alarm.alarm_id = {alarmId},
+       |    alarm.alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -83,11 +83,11 @@ class AlarmDaoImpl() extends AlarmDao {
 
   def deleteAlarm(cmd: DeleteAlarmCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-      DELETE
-      FROM sales.alarm
-      WHERE
-        alarm.alarm_id = {alarmId},
-        alarm.alarm_begin = {alarmBegin}
+       |DELETE
+       |  FROM sales.alarm
+       |  WHERE
+       |    alarm.alarm_id = {alarmId},
+       |    alarm.alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -101,14 +101,14 @@ class AlarmDaoImpl() extends AlarmDao {
 
   def retrieveAlarmByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): AlarmVo = {
     SQL(s"""
-      SELECT
-        alarm.alarm_id,
-        alarm.alarm_begin,
-        alarm.alarm_end,
-        alarm.alarm_desc
-      FROM sales.alarm
-      WHERE
-        alarm.rowid = {rowid}
+       |SELECT
+       |    alarm.alarm_id,
+       |    alarm.alarm_begin,
+       |    alarm.alarm_end,
+       |    alarm.alarm_desc
+       |  FROM sales.alarm
+       |  WHERE
+       |    alarm.rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> cmd.rowid

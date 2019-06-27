@@ -18,15 +18,15 @@ import com.github.apuex.springbootsolution.runtime._
 class PaymentTypeDaoImpl() extends PaymentTypeDao {
   def createPaymentType(cmd: CreatePaymentTypeCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-      INSERT INTO sales.payment_type(
-        payment_type.payment_type_id,
-        payment_type.payment_type_name,
-        payment_type.payment_type_label
-      ) VALUES (
-        {paymentTypeId},
-        {paymentTypeName},
-        {paymentTypeLabel}
-      )
+       |INSERT INTO sales.payment_type(
+       |    payment_type.payment_type_id,
+       |    payment_type.payment_type_name,
+       |    payment_type.payment_type_label
+       |  ) VALUES (
+       |    {paymentTypeId},
+       |    {paymentTypeName},
+       |    {paymentTypeLabel}
+       |  )
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId,
@@ -37,13 +37,13 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
 
   def retrievePaymentType(cmd: RetrievePaymentTypeCmd)(implicit conn: Connection): PaymentTypeVo = {
     SQL(s"""
-      SELECT
-        payment_type.payment_type_id,
-        payment_type.payment_type_name,
-        payment_type.payment_type_label
-      FROM sales.payment_type
-      WHERE
-        payment_type.payment_type_id = {paymentTypeId}
+       |SELECT
+       |    payment_type.payment_type_id,
+       |    payment_type.payment_type_name,
+       |    payment_type.payment_type_label
+       |  FROM sales.payment_type
+       |  WHERE
+       |    payment_type.payment_type_id = {paymentTypeId}
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId
@@ -52,16 +52,16 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
 
   def updatePaymentType(cmd: UpdatePaymentTypeCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-      UPDATE sales.payment_type
-        payment_type.payment_type_id,
-        payment_type.payment_type_name,
-        payment_type.payment_type_label
-      SET
-        payment_type.payment_type_id = {paymentTypeId},
-        payment_type.payment_type_name = {paymentTypeName},
-        payment_type.payment_type_label = {paymentTypeLabel}
-      WHERE
-        payment_type.payment_type_id = {paymentTypeId}
+       |UPDATE sales.payment_type
+       |    payment_type.payment_type_id,
+       |    payment_type.payment_type_name,
+       |    payment_type.payment_type_label
+       |  SET
+       |    payment_type.payment_type_id = {paymentTypeId},
+       |    payment_type.payment_type_name = {paymentTypeName},
+       |    payment_type.payment_type_label = {paymentTypeLabel}
+       |  WHERE
+       |    payment_type.payment_type_id = {paymentTypeId}
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId,
@@ -72,10 +72,10 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
 
   def deletePaymentType(cmd: DeletePaymentTypeCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-      DELETE
-      FROM sales.payment_type
-      WHERE
-        payment_type.payment_type_id = {paymentTypeId}
+       |DELETE
+       |  FROM sales.payment_type
+       |  WHERE
+       |    payment_type.payment_type_id = {paymentTypeId}
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId
@@ -88,13 +88,13 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
 
   def retrievePaymentTypeByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): PaymentTypeVo = {
     SQL(s"""
-      SELECT
-        payment_type.payment_type_id,
-        payment_type.payment_type_name,
-        payment_type.payment_type_label
-      FROM sales.payment_type
-      WHERE
-        payment_type.rowid = {rowid}
+       |SELECT
+       |    payment_type.payment_type_id,
+       |    payment_type.payment_type_name,
+       |    payment_type.payment_type_label
+       |  FROM sales.payment_type
+       |  WHERE
+       |    payment_type.rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> cmd.rowid
