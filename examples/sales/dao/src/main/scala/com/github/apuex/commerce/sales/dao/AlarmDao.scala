@@ -7,11 +7,18 @@ import java.sql.Connection
 
 trait AlarmDao {
   def createAlarm(cmd: CreateAlarmCmd)(implicit conn: Connection): Int
+
   def retrieveAlarm(cmd: RetrieveAlarmCmd)(implicit conn: Connection): AlarmVo
+
   def updateAlarm(cmd: UpdateAlarmCmd)(implicit conn: Connection): Int
+
   def deleteAlarm(cmd: DeleteAlarmCmd)(implicit conn: Connection): Int
+
   def queryAlarm(cmd: QueryCommand)(implicit conn: Connection): Seq[AlarmVo]
-  def retrieveAlarmByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[AlarmVo]
+
+  def retrieveAlarmByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): AlarmVo
+
   def beginAlarm(cmd: BeginAlarmCmd)(implicit conn: Connection): Int
+
   def endAlarm(cmd: EndAlarmCmd)(implicit conn: Connection): Int
 }

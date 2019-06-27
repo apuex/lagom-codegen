@@ -9,21 +9,99 @@ import play._
 import anorm.ParameterValue._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
+import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime._
 
 class PaymentTypeDaoImpl() extends PaymentTypeDao {
-  def createPaymentType(cmc: CreatePaymentTypeCmd)(implicit conn: Connection): Int = ???
-  def retrievePaymentType(cmd: RetrievePaymentTypeCmd)(implicit conn: Connection): PaymentTypeVo = ???
-  def updatePaymentType(cmd: UpdatePaymentTypeCmd)(implicit conn: Connection): Int = ???
-  def deletePaymentType(cmd: DeletePaymentTypeCmd)(implicit conn: Connection): Int = ???
-  def queryPaymentType(cmd: QueryCommand)(implicit conn: Connection): Seq[PaymentTypeVo] = ???
-  def retrievePaymentTypeByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[PaymentTypeVo] = ???
+  def createPaymentType(cmd: CreatePaymentTypeCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      INSERT INTO sales.payment_type(
+        payment_type.payment_type_id,
+        payment_type.payment_type_name,
+        payment_type.payment_type_label
+      ) VALUES (
+        {paymentTypeId},
+        {paymentTypeName},
+        {paymentTypeLabel}
+      )
+     """.stripMargin.trim)
+    .on(
+      "paymentTypeId" -> cmd.paymentTypeId,
+      "paymentTypeName" -> cmd.paymentTypeName,
+      "paymentTypeLabel" -> cmd.paymentTypeLabel
+    ).executeUpdate()
+  }
 
+  def retrievePaymentType(cmd: RetrievePaymentTypeCmd)(implicit conn: Connection): PaymentTypeVo = {
+    SQL(s"""
+      SELECT
+        payment_type.payment_type_id,
+        payment_type.payment_type_name,
+        payment_type.payment_type_label
+      FROM sales.payment_type
+      WHERE
+        payment_type.payment_type_id = {paymentTypeId}
+     """.stripMargin.trim)
+    .on(
+      "paymentTypeId" -> cmd.paymentTypeId
+    ).as(rowParser.single)
+  }
 
-  private val sql =
+  def updatePaymentType(cmd: UpdatePaymentTypeCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      UPDATE sales.payment_type
+        payment_type.payment_type_id,
+        payment_type.payment_type_name,
+        payment_type.payment_type_label
+      SET
+        payment_type.payment_type_id = {paymentTypeId},
+        payment_type.payment_type_name = {paymentTypeName},
+        payment_type.payment_type_label = {paymentTypeLabel}
+      WHERE
+        payment_type.payment_type_id = {paymentTypeId}
+     """.stripMargin.trim)
+    .on(
+      "paymentTypeId" -> cmd.paymentTypeId,
+      "paymentTypeName" -> cmd.paymentTypeName,
+      "paymentTypeLabel" -> cmd.paymentTypeLabel
+    ).executeUpdate()
+  }
+
+  def deletePaymentType(cmd: DeletePaymentTypeCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      DELETE
+      FROM sales.payment_type
+      WHERE
+        payment_type.payment_type_id = {paymentTypeId}
+     """.stripMargin.trim)
+    .on(
+      "paymentTypeId" -> cmd.paymentTypeId
+    ).executeUpdate()
+  }
+
+  def queryPaymentType(cmd: QueryCommand)(implicit conn: Connection): Seq[PaymentTypeVo] = {
+    Seq()
+  }
+
+  def retrievePaymentTypeByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): PaymentTypeVo = {
+    SQL(s"""
+      SELECT
+        payment_type.payment_type_id,
+        payment_type.payment_type_name,
+        payment_type.payment_type_label
+      FROM sales.payment_type
+      WHERE
+        payment_type.rowid = {rowid}
+     """.stripMargin.trim)
+    .on(
+      "rowid" -> cmd.rowid
+    ).as(rowParser.single)
+  }
+
+  private val selectPaymentTypeSql =
     s"""
        |SELECT
        |    t.payment_type_id,

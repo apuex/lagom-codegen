@@ -42,6 +42,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
     if (nonKeyFieldCount > 1)
       s"""
          |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo
+         |
          |def update${cToPascal(aggregate.name)}(cmd: Update${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
      """.stripMargin.trim
     else if (nonKeyFieldCount == 1) {
@@ -49,12 +50,15 @@ class DaoGenerator(modelLoader: ModelLoader) {
       if ("array" == field._type || "map" == field._type)
         s"""
            |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo
+           |
            |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
+           |
            |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
      """.stripMargin.trim
       else
         s"""
            |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo
+           |
            |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
      """.stripMargin.trim
     } else { // this cannot be happen.
@@ -78,7 +82,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
         defMessages(aggregate.messages) ++
         defEmbeddedAggregateMessages(aggregate.aggregates)
       )
-      .reduceOption((l, r) => s"${l}\n${r}")
+      .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
 
     val content =
@@ -106,7 +110,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
       defCrud(name) ++
         defByForeignKeys(name, fields, foreignKeys)
       )
-      .reduceOption((l, r) => s"${l}\n${r}")
+      .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
     val content =
       s"""
@@ -162,7 +166,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
        |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
      """.stripMargin.trim,
     s"""
-       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
+       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): ${cToPascal(name)}Vo
      """.stripMargin.trim
   )
 
@@ -187,6 +191,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
 
     s"""
        |def selectBy${by}(${defMethodParams(keyFields)})(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
+       |
        |def deleteBy${by}(${defMethodParams(keyFields)})(implicit conn: Connection): Int
      """.stripMargin.trim
   }

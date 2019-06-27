@@ -10,29 +10,155 @@ import play._
 import anorm.ParameterValue._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
+import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime._
 
 class ProductDaoImpl() extends ProductDao {
-  def createProduct(cmc: CreateProductCmd)(implicit conn: Connection): Int = ???
-  def retrieveProduct(cmd: RetrieveProductCmd)(implicit conn: Connection): ProductVo = ???
-  def updateProduct(cmd: UpdateProductCmd)(implicit conn: Connection): Int = ???
-  def deleteProduct(cmd: DeleteProductCmd)(implicit conn: Connection): Int = ???
-  def queryProduct(cmd: QueryCommand)(implicit conn: Connection): Seq[ProductVo] = ???
-  def retrieveProductByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[ProductVo] = ???
-  def getProductSales(cmd: GetProductSalesCmd)(implicit conn: Connection): ProductSalesVo = ???
-  def updateProductSales(cmd: UpdateProductSalesCmd)(implicit conn: Connection): Int = ???
-  def getProductName(cmd: GetProductNameCmd)(implicit conn: Connection): ProductNameVo = ???
-  def changeProductName(cmd: ChangeProductNameCmd)(implicit conn: Connection): Int = ???
-  def getProductUnit(cmd: GetProductUnitCmd)(implicit conn: Connection): ProductUnitVo = ???
-  def changeProductUnit(cmd: ChangeProductUnitCmd)(implicit conn: Connection): Int = ???
-  def getUnitPrice(cmd: GetUnitPriceCmd)(implicit conn: Connection): UnitPriceVo = ???
-  def changeUnitPrice(cmd: ChangeUnitPriceCmd)(implicit conn: Connection): Int = ???
+  def createProduct(cmd: CreateProductCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      INSERT INTO sales.product(
+        product.product_id,
+        product.product_name,
+        product.product_unit,
+        product.unit_price,
+        product.record_time,
+        product.quantity_sold
+      ) VALUES (
+        {productId},
+        {productName},
+        {productUnit},
+        {unitPrice},
+        {recordTime},
+        {quantitySold}
+      )
+     """.stripMargin.trim)
+    .on(
+      "productId" -> cmd.productId,
+      "productName" -> cmd.productName,
+      "productUnit" -> cmd.productUnit,
+      "unitPrice" -> cmd.unitPrice,
+      "recordTime" -> scalapbToDate(cmd.recordTime),
+      "quantitySold" -> cmd.quantitySold
+    ).executeUpdate()
+  }
 
+  def retrieveProduct(cmd: RetrieveProductCmd)(implicit conn: Connection): ProductVo = {
+    SQL(s"""
+      SELECT
+        product.product_id,
+        product.product_name,
+        product.product_unit,
+        product.unit_price,
+        product.record_time,
+        product.quantity_sold
+      FROM sales.product
+      WHERE
+        product.product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "productId" -> cmd.productId
+    ).as(rowParser.single)
+  }
 
-  private val sql =
+  def updateProduct(cmd: UpdateProductCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      UPDATE sales.product
+        product.product_id,
+        product.product_name,
+        product.product_unit,
+        product.unit_price,
+        product.record_time,
+        product.quantity_sold
+      SET
+        product.product_id = {productId},
+        product.product_name = {productName},
+        product.product_unit = {productUnit},
+        product.unit_price = {unitPrice},
+        product.record_time = {recordTime},
+        product.quantity_sold = {quantitySold}
+      WHERE
+        product.product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "productId" -> cmd.productId,
+      "productName" -> cmd.productName,
+      "productUnit" -> cmd.productUnit,
+      "unitPrice" -> cmd.unitPrice,
+      "recordTime" -> scalapbToDate(cmd.recordTime),
+      "quantitySold" -> cmd.quantitySold
+    ).executeUpdate()
+  }
+
+  def deleteProduct(cmd: DeleteProductCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      DELETE
+      FROM sales.product
+      WHERE
+        product.product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "productId" -> cmd.productId
+    ).executeUpdate()
+  }
+
+  def queryProduct(cmd: QueryCommand)(implicit conn: Connection): Seq[ProductVo] = {
+    Seq()
+  }
+
+  def retrieveProductByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): ProductVo = {
+    SQL(s"""
+      SELECT
+        product.product_id,
+        product.product_name,
+        product.product_unit,
+        product.unit_price,
+        product.record_time,
+        product.quantity_sold
+      FROM sales.product
+      WHERE
+        product.rowid = {rowid}
+     """.stripMargin.trim)
+    .on(
+      "rowid" -> cmd.rowid
+    ).as(rowParser.single)
+  }
+
+  def getProductSales(cmd: GetProductSalesCmd)(implicit conn: Connection): ProductSalesVo = {
+    null
+  }
+
+  def updateProductSales(cmd: UpdateProductSalesCmd)(implicit conn: Connection): Int = {
+    0
+  }
+
+  def getProductName(cmd: GetProductNameCmd)(implicit conn: Connection): ProductNameVo = {
+    null
+  }
+
+  def changeProductName(cmd: ChangeProductNameCmd)(implicit conn: Connection): Int = {
+    0
+  }
+
+  def getProductUnit(cmd: GetProductUnitCmd)(implicit conn: Connection): ProductUnitVo = {
+    null
+  }
+
+  def changeProductUnit(cmd: ChangeProductUnitCmd)(implicit conn: Connection): Int = {
+    0
+  }
+
+  def getUnitPrice(cmd: GetUnitPriceCmd)(implicit conn: Connection): UnitPriceVo = {
+    null
+  }
+
+  def changeUnitPrice(cmd: ChangeUnitPriceCmd)(implicit conn: Connection): Int = {
+    0
+  }
+
+  private val selectProductSql =
     s"""
        |SELECT
        |    t.product_id,

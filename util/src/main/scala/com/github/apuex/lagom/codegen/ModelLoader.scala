@@ -42,6 +42,7 @@ object ModelLoader {
   case class Enumeration(name: String, options: Seq[EnumOption])
 
   val userField = Field("user_id", "string", 64, false, "", "", "", "", "", false, false, "用户ID")
+  val rowidField = Field("rowid", "string", 64, false, "", "", "", "", "", false, false, "数据行ID")
 
   def importPackagesForService(model: Node, service: Node): String = {
     s"""

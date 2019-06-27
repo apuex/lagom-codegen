@@ -10,26 +10,119 @@ import play._
 import anorm.ParameterValue._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
+import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime._
 
 class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
-  def createOrder(cmc: CreateOrderCmd)(implicit conn: Connection): Int = ???
-  def retrieveOrder(cmd: RetrieveOrderCmd)(implicit conn: Connection): OrderVo = ???
-  def updateOrder(cmd: UpdateOrderCmd)(implicit conn: Connection): Int = ???
-  def deleteOrder(cmd: DeleteOrderCmd)(implicit conn: Connection): Int = ???
-  def queryOrder(cmd: QueryCommand)(implicit conn: Connection): Seq[OrderVo] = ???
-  def retrieveOrderByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[OrderVo] = ???
-  def getOrderLines(cmd: GetOrderLinesCmd)(implicit conn: Connection): OrderLinesVo = ???
-  def addOrderLines(cmd: AddOrderLinesCmd)(implicit conn: Connection): Int = ???
-  def removeOrderLines(cmd: RemoveOrderLinesCmd)(implicit conn: Connection): Int = ???
-  def getOrderPaymentType(cmd: GetOrderPaymentTypeCmd)(implicit conn: Connection): OrderPaymentTypeVo = ???
-  def changeOrderPaymentType(cmd: ChangeOrderPaymentTypeCmd)(implicit conn: Connection): Int = ???
+  def createOrder(cmd: CreateOrderCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      INSERT INTO sales.order(
+        order.order_id,
+        order.order_time,
+        order.order_payment_type
+      ) VALUES (
+        {orderId},
+        {orderTime},
+        {orderPaymentType}
+      )
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId,
+      "orderTime" -> scalapbToDate(cmd.orderTime),
+      "orderPaymentType" -> toValue(cmd.orderPaymentType)
+    ).executeUpdate()
+  }
 
+  def retrieveOrder(cmd: RetrieveOrderCmd)(implicit conn: Connection): OrderVo = {
+    SQL(s"""
+      SELECT
+        order.order_id,
+        order.order_time,
+        order.order_payment_type
+      FROM sales.order
+      WHERE
+        order.order_id = {orderId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId
+    ).as(rowParser.single)
+  }
 
-  private val sql =
+  def updateOrder(cmd: UpdateOrderCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      UPDATE sales.order
+        order.order_id,
+        order.order_time,
+        order.order_payment_type
+      SET
+        order.order_id = {orderId},
+        order.order_time = {orderTime},
+        order.order_payment_type = {orderPaymentType}
+      WHERE
+        order.order_id = {orderId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId,
+      "orderTime" -> scalapbToDate(cmd.orderTime),
+      "orderPaymentType" -> toValue(cmd.orderPaymentType)
+    ).executeUpdate()
+  }
+
+  def deleteOrder(cmd: DeleteOrderCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      DELETE
+      FROM sales.order
+      WHERE
+        order.order_id = {orderId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId
+    ).executeUpdate()
+  }
+
+  def queryOrder(cmd: QueryCommand)(implicit conn: Connection): Seq[OrderVo] = {
+    Seq()
+  }
+
+  def retrieveOrderByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): OrderVo = {
+    SQL(s"""
+      SELECT
+        order.order_id,
+        order.order_time,
+        order.order_payment_type
+      FROM sales.order
+      WHERE
+        order.rowid = {rowid}
+     """.stripMargin.trim)
+    .on(
+      "rowid" -> cmd.rowid
+    ).as(rowParser.single)
+  }
+
+  def getOrderLines(cmd: GetOrderLinesCmd)(implicit conn: Connection): OrderLinesVo = {
+    null
+  }
+
+  def addOrderLines(cmd: AddOrderLinesCmd)(implicit conn: Connection): Int = {
+    0
+  }
+
+  def removeOrderLines(cmd: RemoveOrderLinesCmd)(implicit conn: Connection): Int = {
+    0
+  }
+
+  def getOrderPaymentType(cmd: GetOrderPaymentTypeCmd)(implicit conn: Connection): OrderPaymentTypeVo = {
+    null
+  }
+
+  def changeOrderPaymentType(cmd: ChangeOrderPaymentTypeCmd)(implicit conn: Connection): Int = {
+    0
+  }
+
+  private val selectOrderSql =
     s"""
        |SELECT
        |    t.order_id,

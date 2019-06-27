@@ -10,23 +10,120 @@ import play._
 import anorm.ParameterValue._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
+import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime._
 
 class AlarmDaoImpl() extends AlarmDao {
-  def createAlarm(cmc: CreateAlarmCmd)(implicit conn: Connection): Int = ???
-  def retrieveAlarm(cmd: RetrieveAlarmCmd)(implicit conn: Connection): AlarmVo = ???
-  def updateAlarm(cmd: UpdateAlarmCmd)(implicit conn: Connection): Int = ???
-  def deleteAlarm(cmd: DeleteAlarmCmd)(implicit conn: Connection): Int = ???
-  def queryAlarm(cmd: QueryCommand)(implicit conn: Connection): Seq[AlarmVo] = ???
-  def retrieveAlarmByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[AlarmVo] = ???
-  def beginAlarm(cmc: BeginAlarmCmd)(implicit conn: Connection): Int = ???
-  def endAlarm(cmc: EndAlarmCmd)(implicit conn: Connection): Int = ???
+  def createAlarm(cmd: CreateAlarmCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      INSERT INTO sales.alarm(
+        alarm.alarm_id,
+        alarm.alarm_begin,
+        alarm.alarm_end,
+        alarm.alarm_desc
+      ) VALUES (
+        {alarmId},
+        {alarmBegin},
+        {alarmEnd},
+        {alarmDesc}
+      )
+     """.stripMargin.trim)
+    .on(
+      "alarmId" -> cmd.alarmId,
+      "alarmBegin" -> scalapbToDate(cmd.alarmBegin),
+      "alarmEnd" -> scalapbToDate(cmd.alarmEnd),
+      "alarmDesc" -> cmd.alarmDesc
+    ).executeUpdate()
+  }
 
+  def retrieveAlarm(cmd: RetrieveAlarmCmd)(implicit conn: Connection): AlarmVo = {
+    SQL(s"""
+      SELECT
+        alarm.alarm_id,
+        alarm.alarm_begin,
+        alarm.alarm_end,
+        alarm.alarm_desc
+      FROM sales.alarm
+      WHERE
+        alarm.alarm_id = {alarmId},
+        alarm.alarm_begin = {alarmBegin}
+     """.stripMargin.trim)
+    .on(
+      "alarmId" -> cmd.alarmId,
+      "alarmBegin" -> scalapbToDate(cmd.alarmBegin)
+    ).as(rowParser.single)
+  }
 
-  private val sql =
+  def updateAlarm(cmd: UpdateAlarmCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      UPDATE sales.alarm
+        alarm.alarm_id,
+        alarm.alarm_begin,
+        alarm.alarm_end,
+        alarm.alarm_desc
+      SET
+        alarm.alarm_id = {alarmId},
+        alarm.alarm_begin = {alarmBegin},
+        alarm.alarm_end = {alarmEnd},
+        alarm.alarm_desc = {alarmDesc}
+      WHERE
+        alarm.alarm_id = {alarmId},
+        alarm.alarm_begin = {alarmBegin}
+     """.stripMargin.trim)
+    .on(
+      "alarmId" -> cmd.alarmId,
+      "alarmBegin" -> scalapbToDate(cmd.alarmBegin),
+      "alarmEnd" -> scalapbToDate(cmd.alarmEnd),
+      "alarmDesc" -> cmd.alarmDesc
+    ).executeUpdate()
+  }
+
+  def deleteAlarm(cmd: DeleteAlarmCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      DELETE
+      FROM sales.alarm
+      WHERE
+        alarm.alarm_id = {alarmId},
+        alarm.alarm_begin = {alarmBegin}
+     """.stripMargin.trim)
+    .on(
+      "alarmId" -> cmd.alarmId,
+      "alarmBegin" -> scalapbToDate(cmd.alarmBegin)
+    ).executeUpdate()
+  }
+
+  def queryAlarm(cmd: QueryCommand)(implicit conn: Connection): Seq[AlarmVo] = {
+    Seq()
+  }
+
+  def retrieveAlarmByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): AlarmVo = {
+    SQL(s"""
+      SELECT
+        alarm.alarm_id,
+        alarm.alarm_begin,
+        alarm.alarm_end,
+        alarm.alarm_desc
+      FROM sales.alarm
+      WHERE
+        alarm.rowid = {rowid}
+     """.stripMargin.trim)
+    .on(
+      "rowid" -> cmd.rowid
+    ).as(rowParser.single)
+  }
+
+  def beginAlarm(cmd: BeginAlarmCmd)(implicit conn: Connection): Int = {
+    0
+  }
+
+  def endAlarm(cmd: EndAlarmCmd)(implicit conn: Connection): Int = {
+    0
+  }
+
+  private val selectAlarmSql =
     s"""
        |SELECT
        |    t.alarm_id,

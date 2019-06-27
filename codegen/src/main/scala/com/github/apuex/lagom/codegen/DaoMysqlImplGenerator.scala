@@ -44,6 +44,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val calls = (
       defCrud(name, fields, primaryKey.fields, foreignKeys) ++
         defSelectByFks(name, fields, foreignKeys) ++
+        defDeleteByFks(name, fields, foreignKeys) ++
         defMessages(aggregate.messages) ++
         defEmbeddedAggregateMessages(aggregate.aggregates)
       )
@@ -64,7 +65,8 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import anorm.ParameterValue._
          |import ${messageSrcPackage}._
          |import ${daoSrcPackage}._
-         |import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
+         |import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+         |import com.github.apuex.springbootsolution.runtime.EnumConvert._
          |import com.github.apuex.springbootsolution.runtime.Parser._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.github.apuex.springbootsolution.runtime._
@@ -72,7 +74,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
          |  ${indent(calls, 2)}
          |
-         |  ${indentWithLeftMargin(selectSql(name, fields), 2)}
+         |  ${indentWithLeftMargin(defSelectSql(name, fields), 2)}
          |
          |  ${indent(fieldConverter(fields), 2)}
          |
@@ -96,7 +98,8 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val fileName = s"${className}.scala"
     val calls = (
       defCrud(name, fields, primaryKey.fields, foreignKeys) ++
-        defSelectByFks(name, fields, foreignKeys)
+        defSelectByFks(name, fields, foreignKeys) ++
+        defDeleteByFks(name, fields, foreignKeys)
       )
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
@@ -114,7 +117,8 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import anorm.ParameterValue._
          |import ${messageSrcPackage}._
          |import ${daoSrcPackage}._
-         |import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
+         |import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+         |import com.github.apuex.springbootsolution.runtime.EnumConvert._
          |import com.github.apuex.springbootsolution.runtime.Parser._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.github.apuex.springbootsolution.runtime._
@@ -122,7 +126,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
          |  ${indent(calls, 2)}
          |
-         |  ${indentWithLeftMargin(selectSql(name, fields), 2)}
+         |  ${indentWithLeftMargin(defSelectSql(name, fields), 2)}
          |
          |  ${indent(fieldConverter(fields), 2)}
          |
@@ -146,19 +150,6 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .map(x => s"${t}${x.name}")
       .reduceOption((l, r) => s"${l},\n${r}")
       .getOrElse("")
-  }
-
-  def selectSql(name: String, fields: Seq[Field]): String = {
-    val sql =
-      s"""
-         |SELECT
-         |  ${indent(columnNames(fields, "t"), 2)}
-         |FROM ${modelDbSchema}.${name} t
-       """.stripMargin.trim
-    s"""
-       |private val sql =
-       |  ${indentWithLeftMargin(blockQuote(sql, 2), 2)}
-       |""".stripMargin.trim
   }
 
   def whereClause(): String = {
@@ -335,7 +326,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   def defDaoDependencies(fields: Seq[Field]): String = {
     fields
       .filter(x => ("array" == x._type && isEntity(x.valueType)) || ("map" == x._type && isEntity(x.entity)))
-      .map(x => if("array" == x._type) x.valueType else x.entity)
+      .map(x => if ("array" == x._type) x.valueType else x.entity)
       .map(x => {
         s"""
            |${cToCamel(x)}Dao: ${cToPascal(x)}Dao
@@ -345,29 +336,150 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
   }
 
+  def defSelectSql(name: String, fields: Seq[Field]): String = {
+    val sql =
+      s"""
+         |SELECT
+         |  ${indent(columnNames(fields, "t"), 2)}
+         |FROM ${modelDbSchema}.${name} t
+       """.stripMargin.trim
+    s"""
+       |private val select${cToPascal(name)}Sql =
+       |  ${indentWithLeftMargin(blockQuote(sql, 2), 2)}
+       |""".stripMargin.trim
+  }
+
+  def defSqlFields(name: String, fields: Seq[Field]): String = {
+    fields
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
+      .map(x => s"${name}.${x.name}")
+      .reduceOption((l, r) => s"$l,\n$r")
+      .getOrElse("")
+
+  }
+
+  def defInsetValues(fields: Seq[Field]): String = {
+    fields
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
+      .map(x => s"{${cToCamel(x.name)}}")
+      .reduceOption((l, r) => s"$l,\n$r")
+      .getOrElse("")
+
+  }
+
+  def defFieldSubstitution(name: String, fields: Seq[Field], alias: String): String = {
+    val t = if ("" == alias) "" else s"${alias}."
+    fields
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
+      .map(x =>
+      if(isEnum(x._type))
+        s"""
+           |"${cToCamel(x.name)}" -> toValue(${t}${cToCamel(x.name)})
+           |""".stripMargin.trim
+      else if("timestamp" == x._type)
+        s"""
+           |"${cToCamel(x.name)}" -> scalapbToDate(${t}${cToCamel(x.name)})
+           |""".stripMargin.trim
+      else
+        s"""
+           |"${cToCamel(x.name)}" -> ${t}${cToCamel(x.name)}
+           |""".stripMargin.trim)
+      .reduceOption((l, r) => s"$l,\n$r")
+      .getOrElse("")
+  }
+
+  def insertSql(name: String, fields: Seq[Field]): String = {
+    s"""
+       |INSERT INTO ${modelDbSchema}.${name}(
+       |  ${indent(defSqlFields(name, fields), 2)}
+       |) VALUES (
+       |  ${indent(defInsetValues(fields), 2)}
+       |)
+     """.stripMargin.trim
+  }
+
+  def defSetFieldValues(name: String, fields: Seq[Field]): String = {
+    fields
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
+      .map(x => s"${name}.${x.name} = {${cToCamel(x.name)}}")
+      .reduceOption((l, r) => s"$l,\n$r")
+      .getOrElse("")
+  }
+
+  def updateSql(name: String, fields: Seq[Field], pkFields: Seq[Field]): String = {
+    s"""
+       |UPDATE ${modelDbSchema}.${name}
+       |  ${indent(defSqlFields(name, fields), 2)}
+       |SET
+       |  ${indent(defSetFieldValues(name, fields), 2)}
+       |WHERE
+       |  ${indent(defSetFieldValues(name, pkFields), 2)}
+     """.stripMargin.trim
+  }
+
+  def deleteSql(name: String, pkFields: Seq[Field]): String = {
+    s"""
+       |DELETE
+       |FROM ${modelDbSchema}.${name}
+       |WHERE
+       |  ${indent(defSetFieldValues(name, pkFields), 2)}
+     """.stripMargin.trim
+  }
+
+  def retrieveSql(name: String, fields: Seq[Field], pkFields: Seq[Field]): String = {
+    s"""
+       |SELECT
+       |  ${indent(defSqlFields(name, fields), 2)}
+       |FROM ${modelDbSchema}.${name}
+       |WHERE
+       |  ${indent(defSetFieldValues(name, pkFields), 2)}
+     """.stripMargin.trim
+  }
+
   def defCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fks: Seq[ForeignKey]): Seq[String] = Seq(
     s"""
        |def create${cToPascal(name)}(cmd: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
+       |  SQL(${indentWithLeftMargin(blockQuote(insertSql(name, fields), 6, true), 2)})
+       |  .on(
+       |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+       |  ).executeUpdate()
        |}
      """.stripMargin.trim,
     s"""
        |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
+       |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, pkFields), 6, true), 2)})
+       |  .on(
+       |    ${indent(defFieldSubstitution(name, pkFields, "cmd"), 4)}
+       |  ).as(rowParser.single)
        |}
      """.stripMargin.trim,
     s"""
        |def update${cToPascal(name)}(cmd: Update${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
+       |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, pkFields), 6, true), 2)})
+       |  .on(
+       |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+       |  ).executeUpdate()
        |}
      """.stripMargin.trim,
     s"""
        |def delete${cToPascal(name)}(cmd: Delete${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
+       |  SQL(${indentWithLeftMargin(blockQuote(deleteSql(name, pkFields), 6, true), 2)})
+       |  .on(
+       |    ${indent(defFieldSubstitution(name, pkFields, "cmd"), 4)}
+       |  ).executeUpdate()
        |}
      """.stripMargin.trim,
     s"""
        |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo] = {
+       |  Seq()
        |}
      """.stripMargin.trim,
     s"""
-       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[${cToPascal(name)}Vo] = {
+       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
+       |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, Seq(rowidField)), 6, true), 2)})
+       |  .on(
+       |    ${indent(defFieldSubstitution(name, Seq(rowidField), "cmd"), 4)}
+       |  ).as(rowParser.single)
        |}
      """.stripMargin.trim
   )
@@ -385,6 +497,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     }
     s"""
        |def ${cToCamel(message.name)}(cmd: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType} = {
+       |  0
        |}
      """.stripMargin.trim
   }
@@ -400,9 +513,11 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     if (nonKeyFieldCount > 1)
       s"""
          |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
+         |  null
          |}
          |
          |def update${cToPascal(aggregate.name)}(cmd: Update${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+         |  0
          |}
      """.stripMargin.trim
     else if (nonKeyFieldCount == 1) {
@@ -410,20 +525,25 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       if ("array" == field._type || "map" == field._type)
         s"""
            |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
+           |  null
            |}
            |
            |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+           |  0
            |}
            |
            |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+           |  0
            |}
      """.stripMargin.trim
       else
         s"""
            |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
+           |  null
            |}
            |
            |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+           |  0
            |}
      """.stripMargin.trim
     } else { // this cannot be happen.
@@ -442,28 +562,53 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .map(x => {
         val fieldNames = x.fields
           .map(_.name)
-        val by = fieldNames
-          .map(cToPascal(_))
-          .reduceOption((l, r) => s"${l}${r}")
-          .getOrElse("")
 
         val fkFields = fields
           .filter(x => fieldNames.contains(x.name))
-        s"""
-           |def selectBy${by}(${defMethodParams(fkFields)})(implicit conn: Connection): ${cToPascal(name)}Vo = {
-           |}
-         """.stripMargin.trim
+        defSelectByFk(name, fields, fkFields)
       })
   }
 
-  def defSelectByFk(name: String, keyFields: Seq[Field]): String = {
+  def defSelectByFk(name: String, fields: Seq[Field], keyFields: Seq[Field]): String = {
     val by = keyFields
       .map(x => cToPascal(x.name))
       .reduceOption((x, y) => s"${x}${y}")
       .getOrElse("")
 
     s"""
-       |def selectBy${by}(${defMethodParams(keyFields)})(implicit conn: Connection): ${cToPascal(name)}ListVo") = {
+       |def selectBy${by}(${defMethodParams(keyFields)})(implicit conn: Connection): Seq[${cToPascal(name)}Vo] = {
+       |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, keyFields), 6, true), 2)})
+       |  .on(
+       |    ${indent(defFieldSubstitution(name, keyFields, ""), 4)}
+       |  ).as(rowParser.*)
+       |}
+     """.stripMargin.trim
+  }
+
+  def defDeleteByFks(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
+    foreignKeys
+      .map(x => {
+        val fieldNames = x.fields
+          .map(_.name)
+
+        val fkFields = fields
+          .filter(x => fieldNames.contains(x.name))
+        defDeleteByFk(name, fields, fkFields)
+      })
+  }
+
+  def defDeleteByFk(name: String, fields: Seq[Field], keyFields: Seq[Field]): String = {
+    val by = keyFields
+      .map(x => cToPascal(x.name))
+      .reduceOption((x, y) => s"${x}${y}")
+      .getOrElse("")
+
+    s"""
+       |def deleteBy${by}(${defMethodParams(keyFields)})(implicit conn: Connection): Int = {
+       |  SQL(${indentWithLeftMargin(blockQuote(deleteSql(name, keyFields), 6, true), 2)})
+       |  .on(
+       |    ${indent(defFieldSubstitution(name, keyFields, ""), 4)}
+       |  ).executeUpdate()
        |}
      """.stripMargin.trim
   }

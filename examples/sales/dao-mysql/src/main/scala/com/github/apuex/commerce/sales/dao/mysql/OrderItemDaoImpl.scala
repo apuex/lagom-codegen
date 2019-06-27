@@ -9,26 +9,188 @@ import play._
 import anorm.ParameterValue._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
+import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime._
 
 class OrderItemDaoImpl() extends OrderItemDao {
-  def createOrderItem(cmc: CreateOrderItemCmd)(implicit conn: Connection): Int = ???
-  def retrieveOrderItem(cmd: RetrieveOrderItemCmd)(implicit conn: Connection): OrderItemVo = ???
-  def updateOrderItem(cmd: UpdateOrderItemCmd)(implicit conn: Connection): Int = ???
-  def deleteOrderItem(cmd: DeleteOrderItemCmd)(implicit conn: Connection): Int = ???
-  def queryOrderItem(cmd: QueryCommand)(implicit conn: Connection): Seq[OrderItemVo] = ???
-  def retrieveOrderItemByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): Seq[OrderItemVo] = ???
-  def selectByOrderId(orderId: String)(implicit conn: Connection): Seq[OrderItemVo] = ???
-  def deleteByOrderId(orderId: String)(implicit conn: Connection): Int = ???
-  def selectByProductId(productId: String)(implicit conn: Connection): Seq[OrderItemVo] = ???
-  def deleteByProductId(productId: String)(implicit conn: Connection): Int = ???
-  def selectByOrderId(orderId: String): OrderItemVo = ???
-  def selectByProductId(productId: String): OrderItemVo = ???
+  def createOrderItem(cmd: CreateOrderItemCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      INSERT INTO sales.order_item(
+        order_item.order_id,
+        order_item.product_id,
+        order_item.product_name,
+        order_item.item_unit,
+        order_item.unit_price,
+        order_item.order_quantity
+      ) VALUES (
+        {orderId},
+        {productId},
+        {productName},
+        {itemUnit},
+        {unitPrice},
+        {orderQuantity}
+      )
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId,
+      "productId" -> cmd.productId,
+      "productName" -> cmd.productName,
+      "itemUnit" -> cmd.itemUnit,
+      "unitPrice" -> cmd.unitPrice,
+      "orderQuantity" -> cmd.orderQuantity
+    ).executeUpdate()
+  }
 
-  private val sql =
+  def retrieveOrderItem(cmd: RetrieveOrderItemCmd)(implicit conn: Connection): OrderItemVo = {
+    SQL(s"""
+      SELECT
+        order_item.order_id,
+        order_item.product_id,
+        order_item.product_name,
+        order_item.item_unit,
+        order_item.unit_price,
+        order_item.order_quantity
+      FROM sales.order_item
+      WHERE
+        order_item.order_id = {orderId},
+        order_item.product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId,
+      "productId" -> cmd.productId
+    ).as(rowParser.single)
+  }
+
+  def updateOrderItem(cmd: UpdateOrderItemCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      UPDATE sales.order_item
+        order_item.order_id,
+        order_item.product_id,
+        order_item.product_name,
+        order_item.item_unit,
+        order_item.unit_price,
+        order_item.order_quantity
+      SET
+        order_item.order_id = {orderId},
+        order_item.product_id = {productId},
+        order_item.product_name = {productName},
+        order_item.item_unit = {itemUnit},
+        order_item.unit_price = {unitPrice},
+        order_item.order_quantity = {orderQuantity}
+      WHERE
+        order_item.order_id = {orderId},
+        order_item.product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId,
+      "productId" -> cmd.productId,
+      "productName" -> cmd.productName,
+      "itemUnit" -> cmd.itemUnit,
+      "unitPrice" -> cmd.unitPrice,
+      "orderQuantity" -> cmd.orderQuantity
+    ).executeUpdate()
+  }
+
+  def deleteOrderItem(cmd: DeleteOrderItemCmd)(implicit conn: Connection): Int = {
+    SQL(s"""
+      DELETE
+      FROM sales.order_item
+      WHERE
+        order_item.order_id = {orderId},
+        order_item.product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId,
+      "productId" -> cmd.productId
+    ).executeUpdate()
+  }
+
+  def queryOrderItem(cmd: QueryCommand)(implicit conn: Connection): Seq[OrderItemVo] = {
+    Seq()
+  }
+
+  def retrieveOrderItemByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): OrderItemVo = {
+    SQL(s"""
+      SELECT
+        order_item.order_id,
+        order_item.product_id,
+        order_item.product_name,
+        order_item.item_unit,
+        order_item.unit_price,
+        order_item.order_quantity
+      FROM sales.order_item
+      WHERE
+        order_item.rowid = {rowid}
+     """.stripMargin.trim)
+    .on(
+      "rowid" -> cmd.rowid
+    ).as(rowParser.single)
+  }
+
+  def selectByOrderId(orderId: String)(implicit conn: Connection): Seq[OrderItemVo] = {
+    SQL(s"""
+      SELECT
+        order_item.order_id,
+        order_item.product_id,
+        order_item.product_name,
+        order_item.item_unit,
+        order_item.unit_price,
+        order_item.order_quantity
+      FROM sales.order_item
+      WHERE
+        order_item.order_id = {orderId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> orderId
+    ).as(rowParser.*)
+  }
+
+  def selectByProductId(productId: String)(implicit conn: Connection): Seq[OrderItemVo] = {
+    SQL(s"""
+      SELECT
+        order_item.order_id,
+        order_item.product_id,
+        order_item.product_name,
+        order_item.item_unit,
+        order_item.unit_price,
+        order_item.order_quantity
+      FROM sales.order_item
+      WHERE
+        order_item.product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "productId" -> productId
+    ).as(rowParser.*)
+  }
+
+  def deleteByOrderId(orderId: String)(implicit conn: Connection): Int = {
+    SQL(s"""
+      DELETE
+      FROM sales.order_item
+      WHERE
+        order_item.order_id = {orderId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> orderId
+    ).executeUpdate()
+  }
+
+  def deleteByProductId(productId: String)(implicit conn: Connection): Int = {
+    SQL(s"""
+      DELETE
+      FROM sales.order_item
+      WHERE
+        order_item.product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "productId" -> productId
+    ).executeUpdate()
+  }
+
+  private val selectOrderItemSql =
     s"""
        |SELECT
        |    t.order_id,
