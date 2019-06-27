@@ -18,18 +18,20 @@ import com.github.apuex.springbootsolution.runtime._
 
 class AlarmDaoImpl() extends AlarmDao {
   def createAlarm(cmd: CreateAlarmCmd)(implicit conn: Connection): Int = {
-    SQL(s"""
-       |INSERT INTO sales.alarm(
+    val rowsAffected = SQL(s"""
+       |UPDATE sales.alarm
        |    alarm.alarm_id,
        |    alarm.alarm_begin,
        |    alarm.alarm_end,
        |    alarm.alarm_desc
-       |  ) VALUES (
-       |    {alarmId},
-       |    {alarmBegin},
-       |    {alarmEnd},
-       |    {alarmDesc}
-       |  )
+       |  SET
+       |    alarm.alarm_id = {alarmId},
+       |    alarm.alarm_begin = {alarmBegin},
+       |    alarm.alarm_end = {alarmEnd},
+       |    alarm.alarm_desc = {alarmDesc}
+       |  WHERE
+       |    alarm.alarm_id = {alarmId},
+       |    alarm.alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -37,6 +39,28 @@ class AlarmDaoImpl() extends AlarmDao {
       "alarmEnd" -> scalapbToDate(cmd.alarmEnd),
       "alarmDesc" -> cmd.alarmDesc
     ).executeUpdate()
+  
+    if(rowsAffected == 0)
+      SQL(s"""
+         |INSERT INTO sales.alarm(
+         |    alarm.alarm_id,
+         |    alarm.alarm_begin,
+         |    alarm.alarm_end,
+         |    alarm.alarm_desc
+         |  ) VALUES (
+         |    {alarmId},
+         |    {alarmBegin},
+         |    {alarmEnd},
+         |    {alarmDesc}
+         |  )
+       """.stripMargin.trim)
+      .on(
+        "alarmId" -> cmd.alarmId,
+        "alarmBegin" -> scalapbToDate(cmd.alarmBegin),
+        "alarmEnd" -> scalapbToDate(cmd.alarmEnd),
+        "alarmDesc" -> cmd.alarmDesc
+      ).executeUpdate()
+    else rowsAffected
   }
 
   def retrieveAlarm(cmd: RetrieveAlarmCmd)(implicit conn: Connection): AlarmVo = {
@@ -54,7 +78,7 @@ class AlarmDaoImpl() extends AlarmDao {
     .on(
       "alarmId" -> cmd.alarmId,
       "alarmBegin" -> scalapbToDate(cmd.alarmBegin)
-    ).as(rowParser.single)
+    ).as(alarmParser.single)
   }
 
   def updateAlarm(cmd: UpdateAlarmCmd)(implicit conn: Connection): Int = {
@@ -112,15 +136,93 @@ class AlarmDaoImpl() extends AlarmDao {
      """.stripMargin.trim)
     .on(
       "rowid" -> cmd.rowid
-    ).as(rowParser.single)
+    ).as(alarmParser.single)
   }
 
   def beginAlarm(cmd: BeginAlarmCmd)(implicit conn: Connection): Int = {
-    0
+    val rowsAffected = SQL(s"""
+       |UPDATE sales.begin_alarm
+       |    begin_alarm.alarm_id,
+       |    begin_alarm.alarm_begin,
+       |    begin_alarm.alarm_desc
+       |  SET
+       |    begin_alarm.alarm_id = {alarmId},
+       |    begin_alarm.alarm_begin = {alarmBegin},
+       |    begin_alarm.alarm_desc = {alarmDesc}
+       |  WHERE
+       |    begin_alarm.alarm_id = {alarmId},
+       |    begin_alarm.alarm_begin = {alarmBegin}
+     """.stripMargin.trim)
+    .on(
+      "alarmId" -> cmd.alarmId,
+      "alarmBegin" -> scalapbToDate(cmd.alarmBegin),
+      "alarmDesc" -> cmd.alarmDesc
+    ).executeUpdate()
+  
+    if(rowsAffected == 0)
+      SQL(s"""
+         |INSERT INTO sales.begin_alarm(
+         |    begin_alarm.alarm_id,
+         |    begin_alarm.alarm_begin,
+         |    begin_alarm.alarm_desc
+         |  ) VALUES (
+         |    {alarmId},
+         |    {alarmBegin},
+         |    {alarmDesc}
+         |  )
+       """.stripMargin.trim)
+      .on(
+        "alarmId" -> cmd.alarmId,
+        "alarmBegin" -> scalapbToDate(cmd.alarmBegin),
+        "alarmDesc" -> cmd.alarmDesc
+      ).executeUpdate()
+    else rowsAffected
   }
 
   def endAlarm(cmd: EndAlarmCmd)(implicit conn: Connection): Int = {
-    0
+    val rowsAffected = SQL(s"""
+       |UPDATE sales.end_alarm
+       |    end_alarm.alarm_id,
+       |    end_alarm.alarm_begin,
+       |    end_alarm.alarm_end,
+       |    end_alarm.alarm_desc
+       |  SET
+       |    end_alarm.alarm_id = {alarmId},
+       |    end_alarm.alarm_begin = {alarmBegin},
+       |    end_alarm.alarm_end = {alarmEnd},
+       |    end_alarm.alarm_desc = {alarmDesc}
+       |  WHERE
+       |    end_alarm.alarm_id = {alarmId},
+       |    end_alarm.alarm_begin = {alarmBegin}
+     """.stripMargin.trim)
+    .on(
+      "alarmId" -> cmd.alarmId,
+      "alarmBegin" -> scalapbToDate(cmd.alarmBegin),
+      "alarmEnd" -> scalapbToDate(cmd.alarmEnd),
+      "alarmDesc" -> cmd.alarmDesc
+    ).executeUpdate()
+  
+    if(rowsAffected == 0)
+      SQL(s"""
+         |INSERT INTO sales.end_alarm(
+         |    end_alarm.alarm_id,
+         |    end_alarm.alarm_begin,
+         |    end_alarm.alarm_end,
+         |    end_alarm.alarm_desc
+         |  ) VALUES (
+         |    {alarmId},
+         |    {alarmBegin},
+         |    {alarmEnd},
+         |    {alarmDesc}
+         |  )
+       """.stripMargin.trim)
+      .on(
+        "alarmId" -> cmd.alarmId,
+        "alarmBegin" -> scalapbToDate(cmd.alarmBegin),
+        "alarmEnd" -> scalapbToDate(cmd.alarmEnd),
+        "alarmDesc" -> cmd.alarmDesc
+      ).executeUpdate()
+    else rowsAffected
   }
 
   private val selectAlarmSql =
@@ -163,7 +265,7 @@ class AlarmDaoImpl() extends AlarmDao {
     case "alarmDesc" => paramName -> paramValue
   }
 
-  private def rowParser(implicit c: Connection): RowParser[AlarmVo] = {
+  private def alarmParser(implicit c: Connection): RowParser[AlarmVo] = {
     get[String]("alarm_id") ~ 
     get[Date]("alarm_begin") ~ 
     get[Date]("alarm_end") ~ 

@@ -18,22 +18,42 @@ import com.github.apuex.springbootsolution.runtime._
 
 class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   def createOrder(cmd: CreateOrderCmd)(implicit conn: Connection): Int = {
-    SQL(s"""
-       |INSERT INTO sales.order(
+    val rowsAffected = SQL(s"""
+       |UPDATE sales.order
        |    order.order_id,
        |    order.order_time,
        |    order.order_payment_type
-       |  ) VALUES (
-       |    {orderId},
-       |    {orderTime},
-       |    {orderPaymentType}
-       |  )
+       |  SET
+       |    order.order_id = {orderId},
+       |    order.order_time = {orderTime},
+       |    order.order_payment_type = {orderPaymentType}
+       |  WHERE
+       |    order.order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId,
       "orderTime" -> scalapbToDate(cmd.orderTime),
       "orderPaymentType" -> toValue(cmd.orderPaymentType)
     ).executeUpdate()
+  
+    if(rowsAffected == 0)
+      SQL(s"""
+         |INSERT INTO sales.order(
+         |    order.order_id,
+         |    order.order_time,
+         |    order.order_payment_type
+         |  ) VALUES (
+         |    {orderId},
+         |    {orderTime},
+         |    {orderPaymentType}
+         |  )
+       """.stripMargin.trim)
+      .on(
+        "orderId" -> cmd.orderId,
+        "orderTime" -> scalapbToDate(cmd.orderTime),
+        "orderPaymentType" -> toValue(cmd.orderPaymentType)
+      ).executeUpdate()
+    else rowsAffected
   }
 
   def retrieveOrder(cmd: RetrieveOrderCmd)(implicit conn: Connection): OrderVo = {
@@ -48,7 +68,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId
-    ).as(rowParser.single)
+    ).as(orderParser.single)
   }
 
   def updateOrder(cmd: UpdateOrderCmd)(implicit conn: Connection): Int = {
@@ -99,11 +119,30 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
      """.stripMargin.trim)
     .on(
       "rowid" -> cmd.rowid
-    ).as(rowParser.single)
+    ).as(orderParser.single)
   }
 
+  private def orderLinesParser(implicit c: Connection): RowParser[OrderLinesVo] = {
+    get[String]("order_id") map {
+      case orderId =>
+        OrderLinesVo(
+          orderId,
+          orderItemDao.selectByOrderId(orderId)
+        )
+    }
+  }
+  
   def getOrderLines(cmd: GetOrderLinesCmd)(implicit conn: Connection): OrderLinesVo = {
-    null
+    SQL(s"""
+       |SELECT
+       |    order_lines.order_id
+       |  FROM sales.order_lines
+       |  WHERE
+       |    order_lines.order_id = {orderId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId
+    ).as(orderLinesParser.single)
   }
   
   def addOrderLines(cmd: AddOrderLinesCmd)(implicit conn: Connection): Int = {
@@ -114,12 +153,46 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
     0
   }
 
+  private def orderPaymentTypeParser(implicit c: Connection): RowParser[OrderPaymentTypeVo] = {
+    get[String]("order_id") ~ 
+    get[Int]("order_payment_type") map {
+      case orderId ~ orderPaymentType =>
+        OrderPaymentTypeVo(
+          orderId,
+          PaymentType.fromValue(orderPaymentType)
+        )
+    }
+  }
+  
   def getOrderPaymentType(cmd: GetOrderPaymentTypeCmd)(implicit conn: Connection): OrderPaymentTypeVo = {
-    null
+    SQL(s"""
+       |SELECT
+       |    order_payment_type.order_id,
+       |    order_payment_type.order_payment_type
+       |  FROM sales.order_payment_type
+       |  WHERE
+       |    order_payment_type.order_id = {orderId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId
+    ).as(orderPaymentTypeParser.single)
   }
   
   def changeOrderPaymentType(cmd: ChangeOrderPaymentTypeCmd)(implicit conn: Connection): Int = {
-    0
+    SQL(s"""
+       |UPDATE sales.order_payment_type
+       |    order_payment_type.order_id,
+       |    order_payment_type.order_payment_type
+       |  SET
+       |    order_payment_type.order_id = {orderId},
+       |    order_payment_type.order_payment_type = {orderPaymentType}
+       |  WHERE
+       |    order_payment_type.order_id = {orderId}
+     """.stripMargin.trim)
+    .on(
+      "orderId" -> cmd.orderId,
+      "orderPaymentType" -> toValue(cmd.orderPaymentType)
+    ).executeUpdate()
   }
 
   private val selectOrderSql =
@@ -158,7 +231,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
     case "orderPaymentType" => paramName -> paramValue.map(EnumParser(PaymentType).parse(_).value)
   }
 
-  private def rowParser(implicit c: Connection): RowParser[OrderVo] = {
+  private def orderParser(implicit c: Connection): RowParser[OrderVo] = {
     get[String]("order_id") ~ 
     get[Date]("order_time") ~ 
     get[Int]("order_payment_type") map {

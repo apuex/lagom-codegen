@@ -304,7 +304,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
 
     s"""
-       |private def rowParser(implicit c: Connection): RowParser[${cToPascal(name)}Vo] = {
+       |private def ${cToCamel(name)}Parser(implicit c: Connection): RowParser[${cToPascal(name)}Vo] = {
        |  ${indent(gets, 2)} map {
        |    case ${pattern} =>
        |      ${cToPascal(name)}Vo(
@@ -441,10 +441,17 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   def defCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fks: Seq[ForeignKey]): Seq[String] = Seq(
     s"""
        |def create${cToPascal(name)}(cmd: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
-       |  SQL(${indentWithLeftMargin(blockQuote(insertSql(name, fields), 2), 2)})
+       |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, pkFields), 2), 2)})
        |  .on(
        |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
        |  ).executeUpdate()
+       |
+       |  if(rowsAffected == 0)
+       |    SQL(${indentWithLeftMargin(blockQuote(insertSql(name, fields), 2), 4)})
+       |    .on(
+       |      ${indent(defFieldSubstitution(name, fields, "cmd"), 6)}
+       |    ).executeUpdate()
+       |  else rowsAffected
        |}
      """.stripMargin.trim,
     s"""
@@ -452,7 +459,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, pkFields), 2), 2)})
        |  .on(
        |    ${indent(defFieldSubstitution(name, pkFields, "cmd"), 4)}
-       |  ).as(rowParser.single)
+       |  ).as(${cToCamel(name)}Parser.single)
        |}
      """.stripMargin.trim,
     s"""
@@ -481,7 +488,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, Seq(rowidField)), 2), 2)})
        |  .on(
        |    ${indent(defFieldSubstitution(name, Seq(rowidField), "cmd"), 4)}
-       |  ).as(rowParser.single)
+       |  ).as(${cToCamel(name)}Parser.single)
        |}
      """.stripMargin.trim
   )
@@ -497,9 +504,21 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         cToPascal(toJavaType(baseName))
       }
     }
+
+    import message._
     s"""
        |def ${cToCamel(message.name)}(cmd: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType} = {
-       |  0
+       |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
+       |  .on(
+       |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+       |  ).executeUpdate()
+       |
+       |  if(rowsAffected == 0)
+       |    SQL(${indentWithLeftMargin(blockQuote(insertSql(name, fields), 2), 4)})
+       |    .on(
+       |      ${indent(defFieldSubstitution(name, fields, "cmd"), 6)}
+       |    ).executeUpdate()
+       |  else rowsAffected
        |}
      """.stripMargin.trim
   }
@@ -512,24 +531,31 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val nonKeyFieldCount = aggregate.fields.length - aggregate.primaryKey.fields.length
     val keyFieldNames = aggregate.primaryKey.fields.map(_.name).toSet
     val nonKeyFields = aggregate.fields.filter(x => !keyFieldNames.contains(x.name))
-    if (nonKeyFieldCount > 1)
+
+    import aggregate._
+    val parser = rowParser(name, fields, primaryKey.fields)
+    val get =
       s"""
          |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
-         |  null
+         |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, primaryKey.fields), 2), 2)})
+         |  .on(
+         |    ${indent(defFieldSubstitution(name, primaryKey.fields, "cmd"), 4)}
+         |  ).as(${cToCamel(name)}Parser.single)
          |}
-         |
+     """.stripMargin.trim
+    val update = if (nonKeyFieldCount > 1)
+      s"""
          |def update${cToPascal(aggregate.name)}(cmd: Update${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-         |  0
+         |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
+         |  .on(
+         |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+         |  ).executeUpdate()
          |}
      """.stripMargin.trim
     else if (nonKeyFieldCount == 1) {
       val field = nonKeyFields.head
       if ("array" == field._type || "map" == field._type)
         s"""
-           |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
-           |  null
-           |}
-           |
            |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
            |  0
            |}
@@ -540,12 +566,11 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
       else
         s"""
-           |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
-           |  null
-           |}
-           |
            |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-           |  0
+           |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
+           |  .on(
+           |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+           |  ).executeUpdate()
            |}
      """.stripMargin.trim
     } else { // this cannot be happen.
@@ -553,6 +578,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |
      """.stripMargin.trim
     }
+
+    s"""
+       |${indentWithLeftMargin(parser, 0)}
+       |
+       |${indentWithLeftMargin(get, 0)}
+       |
+       |${indentWithLeftMargin(update, 0)}
+     """.stripMargin.trim
   }
 
   def defEmbeddedAggregateMessages(aggregates: Seq[Aggregate]): Seq[String] = {
@@ -582,7 +615,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, keyFields), 2), 2)})
        |  .on(
        |    ${indent(defFieldSubstitution(name, keyFields, ""), 4)}
-       |  ).as(rowParser.*)
+       |  ).as(${cToCamel(name)}Parser.*)
        |}
      """.stripMargin.trim
   }

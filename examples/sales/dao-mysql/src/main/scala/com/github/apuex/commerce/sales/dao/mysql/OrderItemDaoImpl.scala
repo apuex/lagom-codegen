@@ -17,22 +17,24 @@ import com.github.apuex.springbootsolution.runtime._
 
 class OrderItemDaoImpl() extends OrderItemDao {
   def createOrderItem(cmd: CreateOrderItemCmd)(implicit conn: Connection): Int = {
-    SQL(s"""
-       |INSERT INTO sales.order_item(
+    val rowsAffected = SQL(s"""
+       |UPDATE sales.order_item
        |    order_item.order_id,
        |    order_item.product_id,
        |    order_item.product_name,
        |    order_item.item_unit,
        |    order_item.unit_price,
        |    order_item.order_quantity
-       |  ) VALUES (
-       |    {orderId},
-       |    {productId},
-       |    {productName},
-       |    {itemUnit},
-       |    {unitPrice},
-       |    {orderQuantity}
-       |  )
+       |  SET
+       |    order_item.order_id = {orderId},
+       |    order_item.product_id = {productId},
+       |    order_item.product_name = {productName},
+       |    order_item.item_unit = {itemUnit},
+       |    order_item.unit_price = {unitPrice},
+       |    order_item.order_quantity = {orderQuantity}
+       |  WHERE
+       |    order_item.order_id = {orderId},
+       |    order_item.product_id = {productId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId,
@@ -42,6 +44,34 @@ class OrderItemDaoImpl() extends OrderItemDao {
       "unitPrice" -> cmd.unitPrice,
       "orderQuantity" -> cmd.orderQuantity
     ).executeUpdate()
+  
+    if(rowsAffected == 0)
+      SQL(s"""
+         |INSERT INTO sales.order_item(
+         |    order_item.order_id,
+         |    order_item.product_id,
+         |    order_item.product_name,
+         |    order_item.item_unit,
+         |    order_item.unit_price,
+         |    order_item.order_quantity
+         |  ) VALUES (
+         |    {orderId},
+         |    {productId},
+         |    {productName},
+         |    {itemUnit},
+         |    {unitPrice},
+         |    {orderQuantity}
+         |  )
+       """.stripMargin.trim)
+      .on(
+        "orderId" -> cmd.orderId,
+        "productId" -> cmd.productId,
+        "productName" -> cmd.productName,
+        "itemUnit" -> cmd.itemUnit,
+        "unitPrice" -> cmd.unitPrice,
+        "orderQuantity" -> cmd.orderQuantity
+      ).executeUpdate()
+    else rowsAffected
   }
 
   def retrieveOrderItem(cmd: RetrieveOrderItemCmd)(implicit conn: Connection): OrderItemVo = {
@@ -61,7 +91,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
     .on(
       "orderId" -> cmd.orderId,
       "productId" -> cmd.productId
-    ).as(rowParser.single)
+    ).as(orderItemParser.single)
   }
 
   def updateOrderItem(cmd: UpdateOrderItemCmd)(implicit conn: Connection): Int = {
@@ -127,7 +157,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
      """.stripMargin.trim)
     .on(
       "rowid" -> cmd.rowid
-    ).as(rowParser.single)
+    ).as(orderItemParser.single)
   }
 
   def selectByOrderId(orderId: String)(implicit conn: Connection): Seq[OrderItemVo] = {
@@ -145,7 +175,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
      """.stripMargin.trim)
     .on(
       "orderId" -> orderId
-    ).as(rowParser.*)
+    ).as(orderItemParser.*)
   }
 
   def selectByProductId(productId: String)(implicit conn: Connection): Seq[OrderItemVo] = {
@@ -163,7 +193,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
      """.stripMargin.trim)
     .on(
       "productId" -> productId
-    ).as(rowParser.*)
+    ).as(orderItemParser.*)
   }
 
   def deleteByOrderId(orderId: String)(implicit conn: Connection): Int = {
@@ -238,7 +268,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
     case "orderQuantity" => paramName -> paramValue.map(DoubleParser.parse(_))
   }
 
-  private def rowParser(implicit c: Connection): RowParser[OrderItemVo] = {
+  private def orderItemParser(implicit c: Connection): RowParser[OrderItemVo] = {
     get[String]("order_id") ~ 
     get[String]("product_id") ~ 
     get[String]("product_name") ~ 

@@ -17,22 +17,42 @@ import com.github.apuex.springbootsolution.runtime._
 
 class PaymentTypeDaoImpl() extends PaymentTypeDao {
   def createPaymentType(cmd: CreatePaymentTypeCmd)(implicit conn: Connection): Int = {
-    SQL(s"""
-       |INSERT INTO sales.payment_type(
+    val rowsAffected = SQL(s"""
+       |UPDATE sales.payment_type
        |    payment_type.payment_type_id,
        |    payment_type.payment_type_name,
        |    payment_type.payment_type_label
-       |  ) VALUES (
-       |    {paymentTypeId},
-       |    {paymentTypeName},
-       |    {paymentTypeLabel}
-       |  )
+       |  SET
+       |    payment_type.payment_type_id = {paymentTypeId},
+       |    payment_type.payment_type_name = {paymentTypeName},
+       |    payment_type.payment_type_label = {paymentTypeLabel}
+       |  WHERE
+       |    payment_type.payment_type_id = {paymentTypeId}
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId,
       "paymentTypeName" -> cmd.paymentTypeName,
       "paymentTypeLabel" -> cmd.paymentTypeLabel
     ).executeUpdate()
+  
+    if(rowsAffected == 0)
+      SQL(s"""
+         |INSERT INTO sales.payment_type(
+         |    payment_type.payment_type_id,
+         |    payment_type.payment_type_name,
+         |    payment_type.payment_type_label
+         |  ) VALUES (
+         |    {paymentTypeId},
+         |    {paymentTypeName},
+         |    {paymentTypeLabel}
+         |  )
+       """.stripMargin.trim)
+      .on(
+        "paymentTypeId" -> cmd.paymentTypeId,
+        "paymentTypeName" -> cmd.paymentTypeName,
+        "paymentTypeLabel" -> cmd.paymentTypeLabel
+      ).executeUpdate()
+    else rowsAffected
   }
 
   def retrievePaymentType(cmd: RetrievePaymentTypeCmd)(implicit conn: Connection): PaymentTypeVo = {
@@ -47,7 +67,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId
-    ).as(rowParser.single)
+    ).as(paymentTypeParser.single)
   }
 
   def updatePaymentType(cmd: UpdatePaymentTypeCmd)(implicit conn: Connection): Int = {
@@ -98,7 +118,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
      """.stripMargin.trim)
     .on(
       "rowid" -> cmd.rowid
-    ).as(rowParser.single)
+    ).as(paymentTypeParser.single)
   }
 
   private val selectPaymentTypeSql =
@@ -137,7 +157,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
     case "paymentTypeLabel" => paramName -> paramValue
   }
 
-  private def rowParser(implicit c: Connection): RowParser[PaymentTypeVo] = {
+  private def paymentTypeParser(implicit c: Connection): RowParser[PaymentTypeVo] = {
     get[Int]("payment_type_id") ~ 
     get[String]("payment_type_name") ~ 
     get[String]("payment_type_label") map {
