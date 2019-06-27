@@ -554,16 +554,30 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
     else if (nonKeyFieldCount == 1) {
       val field = nonKeyFields.head
-      if ("array" == field._type || "map" == field._type)
+      if ("array" == field._type)
         s"""
            |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-           |  0
+           |  cmd.${cToCamel(aggregate.name)}
+           |    .map(x => Create${cToPascal(field.valueType)}Cmd(
+           |      )
+           |     )
+           |    .map(orderItemDao.create${cToPascal(field.valueType)}(_))
+           |    .foldLeft(0)((t, u) => t + u)
            |}
            |
            |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-           |  0
+           |  cmd.${cToCamel(aggregate.name)}
+           |    .map(x => Delete${cToPascal(field.valueType)}Cmd(
+           |      )
+           |     )
+           |    .map(orderItemDao.delete${cToPascal(field.valueType)}(_))
+           |    .foldLeft(0)((t, u) => t + u)
            |}
      """.stripMargin.trim
+      else if ("map" == field._type)
+        s"""
+           |
+         """.stripMargin.trim
       else
         s"""
            |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
