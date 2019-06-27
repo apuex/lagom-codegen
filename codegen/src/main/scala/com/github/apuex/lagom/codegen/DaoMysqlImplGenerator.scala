@@ -47,7 +47,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         defMessages(aggregate.messages) ++
         defEmbeddedAggregateMessages(aggregate.aggregates)
       )
-      .reduceOption((l, r) => s"${l}\n${r}")
+      .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
 
     val content =
@@ -98,7 +98,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       defCrud(name, fields, primaryKey.fields, foreignKeys) ++
         defSelectByFks(name, fields, foreignKeys)
       )
-      .reduceOption((l, r) => s"${l}\n${r}")
+      .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
 
     val content =
