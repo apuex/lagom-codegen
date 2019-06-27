@@ -154,8 +154,8 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   
   def removeOrderLines(cmd: RemoveOrderLinesCmd)(implicit conn: Connection): Int = {
     cmd.orderLines
-      .map(x => DeleteOrderItemCmd(cmd.userId, cmd.orderId, x.productId, x.productName, x.itemUnit, x.unitPrice, x.orderQuantity))
-      .map(orderItemDao.createOrderItem(_))
+      .map(x => DeleteOrderItemCmd(cmd.userId, cmd.orderId, x.productId))
+      .map(orderItemDao.deleteOrderItem(_))
       .foldLeft(0)((t, u) => t + u)
   }
 
