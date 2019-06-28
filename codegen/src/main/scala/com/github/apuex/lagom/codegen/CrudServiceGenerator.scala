@@ -29,6 +29,9 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
 
   def generateService(): String = {
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${apiSrcPackage}
        |
        |import ${messageSrcPackage}._
@@ -61,6 +64,9 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
 
   def generateServiceImpl(): String = {
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${crudImplSrcPackage}
        |
        |import akka._

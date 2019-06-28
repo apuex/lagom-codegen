@@ -32,6 +32,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${modelProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |
          |name         := "${modelProjectName}"
@@ -56,6 +59,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${messageProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |
          |name         := "${messageProjectName}"
@@ -86,6 +92,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${apiProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |
          |name         := "${apiProjectName}"
@@ -113,6 +122,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${daoProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |
          |name         := "${daoProjectName}"
@@ -137,6 +149,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${daoMysqlProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |
          |name         := "${daoMysqlProjectName}"
@@ -167,6 +182,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${implProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |
          |name         := "${implProjectName}"
@@ -198,6 +216,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${crudImplProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |
          |name         := "${crudImplProjectName}"
@@ -229,6 +250,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${appProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |import sbtassembly.MergeStrategy
          |
@@ -283,6 +307,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${crudAppProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |import sbtassembly.MergeStrategy
          |
@@ -347,6 +374,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${rootProjectDir}/project/Dependencies.scala", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import sbt._
          |import scalapb.compiler.Version.scalapbVersion
          |
@@ -422,6 +452,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${rootProjectDir}/project/plugin.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |addSbtPlugin("com.lightbend.lagom" % "lagom-sbt-plugin" % "1.5.0")
          |addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.2")
          |addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.5")
@@ -447,6 +480,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${rootProjectDir}/build.sbt", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |import Dependencies._
          |
          |name         := "${cToShell(modelName)}"

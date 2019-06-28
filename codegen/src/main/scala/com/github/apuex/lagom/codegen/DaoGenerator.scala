@@ -87,6 +87,9 @@ class DaoGenerator(modelLoader: ModelLoader) {
 
     val content =
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |package ${daoSrcPackage}
          |
          |import ${messageSrcPackage}._
@@ -114,6 +117,9 @@ class DaoGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
     val content =
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |package ${daoSrcPackage}
          |
          |import ${messageSrcPackage}._

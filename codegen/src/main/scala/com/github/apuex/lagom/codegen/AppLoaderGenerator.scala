@@ -24,6 +24,9 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
 
   val appLoader =
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${implSrcPackage}
        |
        |import ${apiSrcPackage}._
@@ -64,6 +67,9 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
 
   val crudAppLoader =
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${implSrcPackage}
        |
        |import ${apiSrcPackage}._

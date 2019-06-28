@@ -14,6 +14,9 @@ class JsonSerializerGenerator(modelLoader: ModelLoader) {
 
   val scalapbJson =
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${apiSrcPackage}
        |
        |import ${messageSrcPackage}._

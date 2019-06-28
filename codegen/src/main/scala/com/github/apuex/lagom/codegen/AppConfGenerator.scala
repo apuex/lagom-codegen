@@ -26,6 +26,9 @@ class AppConfGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${appProjectConfDir}/application.conf", "utf-8")
     printWriter.println(
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |# https://www.playframework.com/documentation/latest/Configuration
          |
          |play {
@@ -152,6 +155,11 @@ class AppConfGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${appProjectConfDir}/logback.xml", "utf-8")
     printWriter.println(
       s"""
+         |<!--
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
+         | -->
          |<!-- https://www.playframework.com/documentation/latest/SettingsLogger -->
          |<configuration>
          |
@@ -210,6 +218,10 @@ class AppConfGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${appProjectConfDir}/routes", "utf-8")
     printWriter.println(
       s"""
+         |#######################################################
+         |##  This file is 100% ***GENERATED***, DO NOT EDIT!  ##
+         |#######################################################
+         |
          |# Routes
          |# This file defines all application routes (Higher priority routes first)
          |# https://www.playframework.com/documentation/latest/ScalaRouting

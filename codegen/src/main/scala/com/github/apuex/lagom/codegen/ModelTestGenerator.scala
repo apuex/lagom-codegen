@@ -15,6 +15,9 @@ class ModelTestGenerator(modelLoader: ModelLoader) {
 
   def modelAttributeSpec(): String =
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${modelPackage}
        |
        |import com.github.apuex.lagom.codegen.ModelLoader._

@@ -67,6 +67,9 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def generateService(): String = {
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${apiSrcPackage}
        |
        |import ${messageSrcPackage}._
@@ -99,6 +102,9 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def generateServiceImpl(): String = {
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${implSrcPackage}
        |
        |import akka._

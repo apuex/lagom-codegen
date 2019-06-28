@@ -54,8 +54,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
     val content =
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |package ${daoMysqlSrcPackage}
-         |
          |
          |import java.sql.Connection
          |import java.util.Date
@@ -108,6 +110,9 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
     val content =
       s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
          |package ${daoMysqlSrcPackage}
          |
          |import java.sql.Connection
