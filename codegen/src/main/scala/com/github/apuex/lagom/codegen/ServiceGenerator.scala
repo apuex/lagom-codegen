@@ -51,7 +51,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
        |    import Service._
        |    import ScalapbJson._
        |
-       |    ${indent(callJsonFormats(), 4)}
+       |    ${indent(jsonFormats(), 4)}
        |
        |    named("${cToShell(modelName)}")
        |      .withCalls(
@@ -67,7 +67,9 @@ class ServiceGenerator(modelLoader: ModelLoader) {
     .reduceOption((l, r) => s"${l}\n\n${r}")
     .getOrElse("")
 
-  def callJsonFormats(): String = ""
+  def jsonFormats(): String = jsonFormats(xml)
+    .reduceOption((l, r) => s"${l}\n${r}")
+    .getOrElse("")
 
   def callDescs(): String = callDescs(xml)
     .reduceOption((l, r) => s"${l},\n${r}")
@@ -253,12 +255,14 @@ class ServiceGenerator(modelLoader: ModelLoader) {
              |pathCall("/api/${cToShell(aggregate.name)}/remove-${cToShell(aggregate.name)}", remove${cToPascal(aggregate.name)} _)
      """.stripMargin.trim)
       else
-        Seq(s"""
-           |pathCall("/api/${cToShell(aggregate.name)}/change-${cToShell(aggregate.name)}", change${cToPascal(aggregate.name)} _)
+        Seq(
+          s"""
+             |pathCall("/api/${cToShell(aggregate.name)}/change-${cToShell(aggregate.name)}", change${cToPascal(aggregate.name)} _)
      """.stripMargin.trim)
     } else { // this cannot be happen.
-      Seq(s"""
-         |
+      Seq(
+        s"""
+           |
      """.stripMargin.trim)
     }
     get ++ update
@@ -359,6 +363,116 @@ class ServiceGenerator(modelLoader: ModelLoader) {
       .reduceOption((x, y) => s"${x}&${y}")
       .getOrElse("")
   }
+
+  def jsonFormats(root: Node): Seq[String] = {
+    root.child.filter(_.label == "entity")
+      .map(x => {
+        val aggregatesTo = x.\@("aggregatesTo")
+        val enum = if ("true" == x.\@("enum")) true else false
+        if (!enum && "" == aggregatesTo) generateFormatsForAggregate(toAggregate(x, root))
+        else {
+          val valueObject = toValueObject(x, aggregatesTo, root)
+          generateFormatsForValueObject(valueObject)
+        }
+      })
+      .flatMap(x => x)
+  }
+
+  def generateFormatForValueObject(name: String): Seq[String] = Seq(
+    s"""
+       |implicit val ${cToCamel(name)}VoFormat = jsonFormat[${cToPascal(name)}Vo]
+       |implicit val ${cToCamel(name)}VoFormat = jsonFormat[${cToPascal(name)}ListVo]
+     """.stripMargin.trim
+  )
+
+  def defFormatsForEmbeddedAggregateMessage(aggregate: Aggregate): Seq[String] = {
+    val nonKeyFieldCount = aggregate.fields.length - aggregate.primaryKey.fields.length
+    val keyFieldNames = aggregate.primaryKey.fields.map(_.name).toSet
+    val nonKeyFields = aggregate.fields.filter(x => !keyFieldNames.contains(x.name))
+    val get =
+      Seq(
+        s"""
+           |implicit val get${cToPascal(aggregate.name)}CmdFormat = jsonFormat[Get${cToPascal(aggregate.name)}Cmd]
+     """.stripMargin.trim)
+    val update = if (nonKeyFieldCount > 1)
+      Seq(
+        s"""
+           |implicit val update${cToPascal(aggregate.name)}CmdFormat = jsonFormat[Update${cToPascal(aggregate.name)}Cmd]
+     """.stripMargin.trim)
+    else if (nonKeyFieldCount == 1) {
+      val field = nonKeyFields.head
+      if ("array" == field._type || "map" == field._type)
+        Seq(
+          s"""
+             |implicit val add${cToPascal(aggregate.name)}CmdFormat = jsonFormat[Add${cToPascal(aggregate.name)}Cmd]
+     """.stripMargin.trim,
+          s"""
+             |implicit val remove${cToPascal(aggregate.name)}CmdFormat = jsonFormat[Remove${cToPascal(aggregate.name)}Cmd]
+     """.stripMargin.trim)
+      else
+        Seq(
+          s"""
+             |implicit val change${cToPascal(aggregate.name)}CmdFormat = jsonFormat[Change${cToPascal(aggregate.name)}Cmd]
+     """.stripMargin.trim)
+    } else { // this cannot be happen.
+      Seq(
+        s"""
+           |
+     """.stripMargin.trim)
+    }
+
+    get ++ update
+  }
+
+  def defFormatsForEmbeddedAggregateMessages(aggregates: Seq[Aggregate]): Seq[String] = {
+    aggregates.map(defFormatsForEmbeddedAggregateMessage(_))
+      .flatMap(x => x)
+  }
+
+  def generateFormatsForAggregate(aggregate: Aggregate): Seq[String] = {
+    import aggregate._
+    defCrudFormats(name) ++
+      defMessageFormats(aggregate.messages) ++
+      defFormatsForEmbeddedAggregateMessages(aggregate.aggregates)
+  }
+
+  def generateFormatsForValueObject(valueObject: ValueObject): Seq[String] = {
+    import valueObject._
+    defCrudFormats(name)
+  }
+
+  def defMessageFormat(message: Message): Seq[String] = {
+    Seq(
+      s"""
+         |implicit val ${cToCamel(message.name)}CmdFormat = jsonFormat[${cToPascal(message.name)}Cmd]
+     """.stripMargin.trim
+    )
+  }
+
+  def defMessageFormats(messages: Seq[Message]): Seq[String] = {
+    messages.map(defMessageFormat(_))
+      .flatMap(x => x)
+  }
+
+  def defCrudFormats(name: String): Seq[String] = Seq(
+    s"""
+       |implicit val create${cToPascal(name)}CmdFormat = jsonFormat[Create${cToPascal(name)}Cmd]
+     """.stripMargin.trim,
+    s"""
+       |implicit val retrieve${cToPascal(name)}CmdFormat = jsonFormat[Retrieve${cToPascal(name)}Cmd]
+     """.stripMargin.trim,
+    s"""
+       |implicit val update${cToPascal(name)}CmdFormat = jsonFormat[Update${cToPascal(name)}Cmd]
+     """.stripMargin.trim,
+    s"""
+       |implicit val delete${cToPascal(name)}CmdFormat = jsonFormat[Delete${cToPascal(name)}Cmd]
+     """.stripMargin.trim,
+    s"""
+       |implicit val queryCommandFormat = jsonFormat[QueryCommand]
+     """.stripMargin.trim
+  )
+
+
 }
 
 
