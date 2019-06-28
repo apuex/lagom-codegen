@@ -109,7 +109,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
     Seq()
   }
 
-  def retrievePaymentTypeByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): PaymentTypeVo = {
+  def retrievePaymentTypeByRowid(rowid: String)(implicit conn: Connection): PaymentTypeVo = {
     SQL(s"""
        |SELECT
        |    payment_type.payment_type_id,
@@ -120,7 +120,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
        |    payment_type.rowid = {rowid}
      """.stripMargin.trim)
     .on(
-      "rowid" -> cmd.rowid
+      "rowid" -> rowid
     ).as(paymentTypeParser.single)
   }
 

@@ -19,7 +19,7 @@ trait ProductDao {
 
   def queryProduct(cmd: QueryCommand)(implicit conn: Connection): Seq[ProductVo]
 
-  def retrieveProductByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): ProductVo
+  def retrieveProductByRowid(rowid: String)(implicit conn: Connection): ProductVo
 
   def getProductSales(cmd: GetProductSalesCmd)(implicit conn: Connection): ProductSalesVo
 

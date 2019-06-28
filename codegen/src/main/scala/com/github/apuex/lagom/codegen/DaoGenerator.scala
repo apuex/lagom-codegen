@@ -172,7 +172,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
        |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
      """.stripMargin.trim,
     s"""
-       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): ${cToPascal(name)}Vo
+       |def retrieve${cToPascal(name)}ByRowid(rowid: String)(implicit conn: Connection): ${cToPascal(name)}Vo
      """.stripMargin.trim
   )
 

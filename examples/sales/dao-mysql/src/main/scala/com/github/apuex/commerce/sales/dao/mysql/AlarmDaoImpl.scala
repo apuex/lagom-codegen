@@ -125,7 +125,7 @@ class AlarmDaoImpl() extends AlarmDao {
     Seq()
   }
 
-  def retrieveAlarmByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): AlarmVo = {
+  def retrieveAlarmByRowid(rowid: String)(implicit conn: Connection): AlarmVo = {
     SQL(s"""
        |SELECT
        |    alarm.alarm_id,
@@ -137,7 +137,7 @@ class AlarmDaoImpl() extends AlarmDao {
        |    alarm.rowid = {rowid}
      """.stripMargin.trim)
     .on(
-      "rowid" -> cmd.rowid
+      "rowid" -> rowid
     ).as(alarmParser.single)
   }
 

@@ -489,10 +489,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |}
      """.stripMargin.trim,
     s"""
-       |def retrieve${cToPascal(name)}ByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
+       |def retrieve${cToPascal(name)}ByRowid(rowid: String)(implicit conn: Connection): ${cToPascal(name)}Vo = {
        |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, Seq(rowidField)), 2), 2)})
        |  .on(
-       |    ${indent(defFieldSubstitution(name, Seq(rowidField), "cmd"), 4)}
+       |    ${indent(defFieldSubstitution(name, Seq(rowidField), ""), 4)}
        |  ).as(${cToCamel(name)}Parser.single)
        |}
      """.stripMargin.trim

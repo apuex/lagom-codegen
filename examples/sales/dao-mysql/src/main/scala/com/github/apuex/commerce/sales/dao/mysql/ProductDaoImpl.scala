@@ -139,7 +139,7 @@ class ProductDaoImpl() extends ProductDao {
     Seq()
   }
 
-  def retrieveProductByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): ProductVo = {
+  def retrieveProductByRowid(rowid: String)(implicit conn: Connection): ProductVo = {
     SQL(s"""
        |SELECT
        |    product.product_id,
@@ -153,7 +153,7 @@ class ProductDaoImpl() extends ProductDao {
        |    product.rowid = {rowid}
      """.stripMargin.trim)
     .on(
-      "rowid" -> cmd.rowid
+      "rowid" -> rowid
     ).as(productParser.single)
   }
 

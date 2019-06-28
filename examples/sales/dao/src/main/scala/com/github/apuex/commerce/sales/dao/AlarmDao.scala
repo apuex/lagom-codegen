@@ -19,7 +19,7 @@ trait AlarmDao {
 
   def queryAlarm(cmd: QueryCommand)(implicit conn: Connection): Seq[AlarmVo]
 
-  def retrieveAlarmByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): AlarmVo
+  def retrieveAlarmByRowid(rowid: String)(implicit conn: Connection): AlarmVo
 
   def beginAlarm(cmd: BeginAlarmCmd)(implicit conn: Connection): Int
 

@@ -19,5 +19,5 @@ trait PaymentTypeDao {
 
   def queryPaymentType(cmd: QueryCommand)(implicit conn: Connection): Seq[PaymentTypeVo]
 
-  def retrievePaymentTypeByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): PaymentTypeVo
+  def retrievePaymentTypeByRowid(rowid: String)(implicit conn: Connection): PaymentTypeVo
 }

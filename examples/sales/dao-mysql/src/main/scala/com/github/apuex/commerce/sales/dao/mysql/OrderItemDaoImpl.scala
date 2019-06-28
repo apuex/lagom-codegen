@@ -145,7 +145,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
     Seq()
   }
 
-  def retrieveOrderItemByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): OrderItemVo = {
+  def retrieveOrderItemByRowid(rowid: String)(implicit conn: Connection): OrderItemVo = {
     SQL(s"""
        |SELECT
        |    order_item.order_id,
@@ -159,7 +159,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
        |    order_item.rowid = {rowid}
      """.stripMargin.trim)
     .on(
-      "rowid" -> cmd.rowid
+      "rowid" -> rowid
     ).as(orderItemParser.single)
   }
 

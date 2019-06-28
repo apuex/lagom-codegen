@@ -19,7 +19,7 @@ trait OrderItemDao {
 
   def queryOrderItem(cmd: QueryCommand)(implicit conn: Connection): Seq[OrderItemVo]
 
-  def retrieveOrderItemByRowid(cmd: RetrieveByRowidCmd)(implicit conn: Connection): OrderItemVo
+  def retrieveOrderItemByRowid(rowid: String)(implicit conn: Connection): OrderItemVo
 
   def selectByOrderId(orderId: String)(implicit conn: Connection): Seq[OrderItemVo]
 
