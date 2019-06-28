@@ -471,7 +471,14 @@ class ProjectGenerator(modelLoader: ModelLoader) {
   def rootProjectBuildProperties(): Unit = {
     makeRootProjectDir()
     val printWriter = new PrintWriter(s"${rootProjectDir}/project/build.properties", "utf-8")
-    printWriter.println("sbt.version=1.2.8")
+    printWriter.println(
+      s"""
+         |#######################################################
+         |##  This file is 100% ***GENERATED***, DO NOT EDIT!  ##
+         |#######################################################
+         |
+         |sbt.version=1.2.8
+         |""".stripMargin.trim)
     printWriter.close()
   }
 

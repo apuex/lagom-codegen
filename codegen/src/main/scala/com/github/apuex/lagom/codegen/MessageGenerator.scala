@@ -343,6 +343,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
 
   def generateValueObject(messageSrcPackage: String): String = {
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${messageSrcPackage}
        |
        |trait ValueObject
@@ -351,6 +354,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
 
   def generateCommand(messageSrcPackage: String): String = {
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${messageSrcPackage}
        |
        |trait Command {
@@ -413,6 +419,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
   def generateShardingEntityCommand(name: String, keyFields: Seq[Field], messageSrcPackage: String): String = {
     val (dependencies, entityId) = generateEntityId(name, keyFields)
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${messageSrcPackage}
        |${dependencies}
        |
@@ -428,6 +437,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
   def generateShardingEntityEvent(name: String, keyFields: Seq[Field], messageSrcPackage: String): String = {
     val (dependencies, entityIdFields) = generateEntityIdFields(name, keyFields)
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${messageSrcPackage}
        |${dependencies}
        |
@@ -439,6 +451,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
 
   def generateShardingEntityCommand(messageSrcPackage: String): String = {
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${messageSrcPackage}
        |
        |trait ShardingEntityCommand extends Command {
@@ -449,6 +464,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
 
   def generateEvent(messageSrcPackage: String): String = {
     s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
        |package ${messageSrcPackage}
        |
        |trait Event {

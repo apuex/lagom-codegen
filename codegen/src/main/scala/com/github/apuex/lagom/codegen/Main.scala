@@ -7,8 +7,9 @@ object Main extends App {
       "\tjava -jar <this jar> <arg list>")
   } else {
     args(0) match {
-      case "generate-application-conf" => AppConfGenerator(args.drop(1)(0)).generate()
-      case "generate-application-loader" => AppLoaderGenerator(args.drop(1)(0)).generate()
+      case "generate-app-conf" => AppConfGenerator(args.drop(1)(0)).generate()
+      case "generate-crud-app-conf" => CrudAppConfGenerator(args.drop(1)(0)).generate()
+      case "generate-app-loader" => AppLoaderGenerator(args.drop(1)(0)).generate()
       case "generate-model-test" => ModelTestGenerator(args.drop(1)(0)).generate()
       case "generate-message" => MessageGenerator(args.drop(1)(0)).generate()
       case "generate-entity" => EntityGenerator(args.drop(1)(0)).generate()
@@ -27,6 +28,7 @@ object Main extends App {
   def generateAll(fileName: String): Unit = {
     val modelLoader = ModelLoader(fileName)
     AppConfGenerator(modelLoader).generate()
+    CrudAppConfGenerator(modelLoader).generate()
     AppLoaderGenerator(modelLoader).generate()
     ModelTestGenerator(modelLoader).generate()
     MessageGenerator(modelLoader).generate()
