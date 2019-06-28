@@ -374,11 +374,11 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x =>
-      if(isEnum(x._type))
+      if (isEnum(x._type))
         s"""
            |"${cToCamel(x.name)}" -> toValue(${t}${cToCamel(x.name)})
            |""".stripMargin.trim
-      else if("timestamp" == x._type)
+      else if ("timestamp" == x._type)
         s"""
            |"${cToCamel(x.name)}" -> scalapbToDate(${t}${cToCamel(x.name)})
            |""".stripMargin.trim
@@ -579,11 +579,32 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
            |    .foldLeft(0)((t, u) => t + u)
            |}
      """.stripMargin.trim
-      } else if ("map" == field._type)
+      } else if ("map" == field._type) {
+        // FIXME: not properly implemented
         s"""
+           |// FIXME: not properly implemented
+           |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+           |  cmd.${cToCamel(aggregate.name)}
+           |    .map(x => Create${cToPascal(field.valueType)}Cmd(
+           |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, x._1, x._2
+           |      )
+           |     )
+           |    .map(orderItemDao.create${cToPascal(field.valueType)}(_))
+           |    .foldLeft(0)((t, u) => t + u)
+           |}
            |
-         """.stripMargin.trim
-      else // one-to-one relationship is not supported. simple JDBC fields only.
+           |// FIXME: not properly implemented
+           |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+           |  cmd.${cToCamel(aggregate.name)}
+           |    .map(x => Delete${cToPascal(field.valueType)}Cmd(
+           |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, x._1
+           |      )
+           |     )
+           |    .map(orderItemDao.delete${cToPascal(field.valueType)}(_))
+           |    .foldLeft(0)((t, u) => t + u)
+           |}
+     """.stripMargin.trim
+      } else // one-to-one relationship is not supported. simple JDBC fields only.
         s"""
            |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
            |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
