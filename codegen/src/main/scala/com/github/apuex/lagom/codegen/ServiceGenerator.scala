@@ -67,9 +67,17 @@ class ServiceGenerator(modelLoader: ModelLoader) {
     .reduceOption((l, r) => s"${l}\n\n${r}")
     .getOrElse("")
 
-  def jsonFormats(): String = jsonFormats(xml)
-    .reduceOption((l, r) => s"${l}\n${r}")
-    .getOrElse("")
+  def jsonFormats(): String = {
+    var existing: Set[String] = Set()
+    jsonFormats(xml)
+      .filter(x => {
+        val exists = existing.contains(x)
+        if(!exists) existing += x
+        !exists
+      })
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
+  }
 
   def callDescs(): String = callDescs(xml)
     .reduceOption((l, r) => s"${l},\n${r}")
@@ -381,7 +389,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   def generateFormatForValueObject(name: String): Seq[String] = Seq(
     s"""
        |implicit val ${cToCamel(name)}VoFormat = jsonFormat[${cToPascal(name)}Vo]
-       |implicit val ${cToCamel(name)}VoFormat = jsonFormat[${cToPascal(name)}ListVo]
+       |implicit val ${cToCamel(name)}ListVoFormat = jsonFormat[${cToPascal(name)}ListVo]
      """.stripMargin.trim
   )
 
@@ -421,7 +429,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim)
     }
 
-    get ++ update
+    generateFormatForValueObject(aggregate.name) ++ get ++ update
   }
 
   def defFormatsForEmbeddedAggregateMessages(aggregates: Seq[Aggregate]): Seq[String] = {
@@ -431,14 +439,15 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def generateFormatsForAggregate(aggregate: Aggregate): Seq[String] = {
     import aggregate._
-    defCrudFormats(name) ++
+    generateFormatForValueObject(name) ++
+      defCrudFormats(name) ++
       defMessageFormats(aggregate.messages) ++
       defFormatsForEmbeddedAggregateMessages(aggregate.aggregates)
   }
 
   def generateFormatsForValueObject(valueObject: ValueObject): Seq[String] = {
     import valueObject._
-    defCrudFormats(name)
+    generateFormatForValueObject(name) ++ defCrudFormats(name)
   }
 
   def defMessageFormat(message: Message): Seq[String] = {

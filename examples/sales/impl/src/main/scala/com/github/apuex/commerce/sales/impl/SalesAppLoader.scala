@@ -4,6 +4,7 @@
 package com.github.apuex.commerce.sales.impl
 
 import com.github.apuex.commerce.sales._
+import com.github.apuex.commerce.sales.dao.mysql._
 import com.github.apuex.commerce.sales.impl.SalesAppLoader._
 import com.lightbend.lagom.scaladsl.client._
 import com.lightbend.lagom.scaladsl.devmode._
@@ -33,6 +34,8 @@ object SalesAppLoader {
 
     // Bind the service that this server provides
     lazy val db = dbApi.database("sales-db")
+    lazy val daoModule = wire[DaoModule]
+    import daoModule._
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
   }
 

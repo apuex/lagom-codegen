@@ -28,6 +28,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |package ${implSrcPackage}
        |
        |import ${apiSrcPackage}._
+       |import ${apiSrcPackage}.dao.mysql._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
        |import com.lightbend.lagom.scaladsl.client._
        |import com.lightbend.lagom.scaladsl.devmode._
@@ -57,6 +58,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelName)}-db")
+       |    lazy val daoModule = wire[DaoModule]
+       |    import daoModule._
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
        |
@@ -71,6 +74,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |package ${implSrcPackage}
        |
        |import ${apiSrcPackage}._
+       |import ${apiSrcPackage}.dao.mysql._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
        |import com.lightbend.lagom.scaladsl.client._
        |import com.lightbend.lagom.scaladsl.devmode._
@@ -100,6 +104,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelName)}-db")
+       |    lazy val daoModule = wire[DaoModule]
+       |    import daoModule._
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
        |
