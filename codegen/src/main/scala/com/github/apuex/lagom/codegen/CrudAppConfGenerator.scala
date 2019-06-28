@@ -62,87 +62,16 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |      port = 9000
          |    }
          |  }
-         |  akka {
-         |    actor-system = "${cToShell(modelName)}"
-         |  }
          |}
          |
-         |akka {
-         |  loggers = ["akka.event.slf4j.Slf4jLogger"]
-         |  loglevel = "INFO"
-         |  log-config-on-start = off
-         |  log-dead-letters = 0
-         |  log-dead-letters-during-shutdown = off
-         |
-         |  actor {
-         |    provider = "akka.cluster.ClusterActorRefProvider"
-         |
-         |    serializers {
-         |      ${cToShell(modelName)}-protobuf = "akka.remote.serialization.ProtobufSerializer"
-         |    }
-         |
-         |    serialization-bindings {
-         |      "java.io.Serializable" = none
-         |      // scalapb 0.8.4
-         |      "scalapb.GeneratedMessage" = ${cToShell(modelName)}-protobuf
-         |      // google protobuf-java 3.6.1
-         |      "com.google.protobuf.GeneratedMessageV3" = ${cToShell(modelName)}-protobuf
-         |    }
-         |  }
-         |
-         |//  remote {
-         |//    netty.tcp {
-         |//      hostname = "localhost" // default to the first seed node
-         |//      port = 2553               // default port
-         |//      hostname = $${? HOSTNAME}   // override with -DHOSTNAME
-         |//      port = $${? PORT}           // override with -DPORT
-         |//    }
-         |//  }
-         |//
-         |//  cluster {
-         |//    seed-nodes = [
-         |//      "akka.tcp://${cToShell(modelName)}@localhost:2553",
-         |//    ]
-         |//  }
-         |
-         |  // leveldb persistence plugin for development environment.
-         |  // TODO: replace it with cassandra plugins for production unless you known what you are doing.
-         |  persistence {
-         |    journal {
-         |      plugin = "akka.persistence.journal.leveldb"
-         |      auto-start-journals = ["akka.persistence.journal.leveldb"]
-         |      leveldb {
-         |        dir = "${cToShell(modelName)}/journal"
-         |        native = on
-         |        fsync = off
-         |      }
-         |    }
-         |    snapshot-store {
-         |      plugin = "akka.persistence.snapshot-store.local"
-         |      auto-start-snapshot-stores = ["akka.persistence.snapshot-store.local"]
-         |      local {
-         |        dir = "${cToShell(modelName)}/snapshots"
-         |        native = on
-         |        fsync = off
-         |      }
-         |    }
-         |    query {
-         |      journal {
-         |        leveldb {
-         |          class = "akka.persistence.query.journal.leveldb.LeveldbReadJournalProvider"
-         |          write-plugin="akka.persistence.journal.leveldb"
-         |          dir = "${cToShell(modelName)}/journal"
-         |          native = on
-         |          // switch off fsync would not survive process crashes.
-         |          fsync = off
-         |          # Verify checksum on read.
-         |          checksum = on
-         |          // the max-buffer-size requires fine adjustments
-         |          // to balance between performance and system load.
-         |          max-buffer-size = 100000
-         |        }
-         |      }
-         |    }
+         |db {
+         |  sales-db {
+         |    driver = com.mysql.cj.jdbc.Driver
+         |    dbhost = "localhost"
+         |    dbhost = $${? DBHOST}
+         |    url = "jdbc:mysql://"$${db.${modelDbSchema}-db.dbhost}"/${modelDbSchema}?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&verifyServerCertificate=false"
+         |    username = ${modelDbSchema}
+         |    password = password
          |  }
          |}
          |
