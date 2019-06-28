@@ -4,13 +4,14 @@ import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime.TextUtils.indent
 
-object CrudServiceGenerator {
-  def apply(fileName: String): CrudServiceGenerator = new CrudServiceGenerator(ModelLoader(fileName))
 
-  def apply(modelLoader: ModelLoader): CrudServiceGenerator = new CrudServiceGenerator(modelLoader)
+object CqrsServiceGenerator {
+  def apply(fileName: String): CqrsServiceGenerator = new CqrsServiceGenerator(ModelLoader(fileName))
+
+  def apply(modelLoader: ModelLoader): CqrsServiceGenerator = new CqrsServiceGenerator(modelLoader)
 }
 
-class CrudServiceGenerator(modelLoader: ModelLoader) {
+class CqrsServiceGenerator(modelLoader: ModelLoader) {
 
   import modelLoader._
 
@@ -18,7 +19,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
     save(
       s"${cToPascal(s"${modelName}_${service}_${impl}")}.scala",
       generateServiceImpl(),
-      crudImplSrcDir
+      implSrcDir
     )
   }
 
@@ -27,18 +28,17 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |/*****************************************************
        | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
        | *****************************************************/
-       |package ${crudImplSrcPackage}
+       |package ${implSrcPackage}
        |
        |import akka._
        |import akka.stream.scaladsl._
        |import ${messageSrcPackage}._
        |import com.lightbend.lagom.scaladsl.api._
-       |import play.api.db.Database
        |import play.api.libs.json.Json
        |
        |import scala.concurrent.Future
        |
-       |class ${cToPascal(modelName)}ServiceImpl (db: Database) extends ${cToPascal(modelName)}Service {
+       |class ${cToPascal(modelName)}ServiceImpl extends ${cToPascal(modelName)}Service {
        |
        |  def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
        |    ServiceCall { is =>
