@@ -35,6 +35,11 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  double quantitySold = 3; // 销量
          |}
          |
+         |message ProductSalesListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated ProductSalesVo items = 1;
+         |}
+         |
          |message GetProductSalesCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
@@ -63,6 +68,11 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productName = 2; // 商品名称
          |}
          |
+         |message ProductNameListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated ProductNameVo items = 1;
+         |}
+         |
          |message GetProductNameCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
@@ -89,6 +99,11 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productUnit = 2; // 计价单位
          |}
          |
+         |message ProductUnitListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated ProductUnitVo items = 1;
+         |}
+         |
          |message GetProductUnitCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
@@ -113,6 +128,11 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
          |  string productId = 1; // 商品编号
          |  double unitPrice = 2; // 单价
+         |}
+         |
+         |message UnitPriceListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated UnitPriceVo items = 1;
          |}
          |
          |message GetUnitPriceCmd {
@@ -161,6 +181,11 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  double quantitySold = 3; // 销量
          |}
          |
+         |message ProductSalesListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated ProductSalesVo items = 1;
+         |}
+         |
          |message GetProductSalesCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
@@ -189,6 +214,11 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productName = 2; // 商品名称
          |}
          |
+         |message ProductNameListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated ProductNameVo items = 1;
+         |}
+         |
          |message GetProductNameCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
@@ -215,6 +245,11 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productUnit = 2; // 计价单位
          |}
          |
+         |message ProductUnitListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated ProductUnitVo items = 1;
+         |}
+         |
          |message GetProductUnitCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
          |  string userId = 1; // 用户ID
@@ -239,6 +274,11 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
          |  string productId = 1; // 商品编号
          |  double unitPrice = 2; // 单价
+         |}
+         |
+         |message UnitPriceListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated UnitPriceVo items = 1;
          |}
          |
          |message GetUnitPriceCmd {

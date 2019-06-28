@@ -23,7 +23,7 @@ object ModelLoader {
 
   def apply(xml: Node, modelFileName: String): ModelLoader = new ModelLoader(xml, modelFileName)
 
-  case class Field(name: String, _type: String, length: Int, required: Boolean, entity:String, keyField: String, valueField: String, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
+  case class Field(name: String, _type: String, length: Int, required: Boolean, entity: String, keyField: String, valueField: String, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
 
   case class PrimaryKey(name: String, fields: Seq[Field])
 
@@ -273,8 +273,8 @@ object ModelLoader {
     )
   }
 
-  def substituteMethodParams(fields: Seq[Field], alias: String): String = {
-    val t = if("" == alias) "" else s"${alias}."
+  def substituteMethodParams(fields: Seq[Field], alias: String = ""): String = {
+    val t = if ("" == alias) "" else s"${alias}."
     fields
       .map(x => s"${t}${cToCamel(x.name)}")
       .reduceOption((l, r) => s"${l}, ${r}")
@@ -366,6 +366,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
     .toSet
 
   def isAggregateEntity(name: String): Boolean = nonEnumNames.contains(name)
+
   def isEntity(name: String): Boolean = entityNames.contains(name)
 
   def isEnum(name: String): Boolean = !nonEnumNames.contains(name) && enumNames.contains(name)

@@ -198,7 +198,6 @@ class MessageGenerator(modelLoader: ModelLoader) {
   def generateMessagesForAggregate(entity: Aggregate, messageSrcPackage: String): Seq[String] = {
     entity.aggregates.map(generateMessagesForEmbeddedAggregate(_, entity.name, messageSrcPackage)).flatMap(x => x) ++
       generateValueObject(entity.name, entity.fields, messageSrcPackage) ++
-      generateValueObjectList(entity.name, entity.fields, messageSrcPackage) ++
       generateCrudCmd(entity.name, entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage) ++
       (if (entity.transient) Seq() else generateCrudEvt(entity.name, entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage)) ++
       generateMessages(entity.messages, entity.name, messageSrcPackage) ++
@@ -288,11 +287,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
        |  option (scalapb.message).extends = "${messageSrcPackage}.ValueObject";
        |  ${indent(generateFields(fields), 2)}
        |}
-     """.stripMargin.trim
-  )
-
-  def generateValueObjectList(name: String, fields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
-    s"""
+       |
        |message ${cToPascal(name)}ListVo {
        |  option (scalapb.message).extends = "${messageSrcPackage}.ValueObject";
        |  repeated ${cToPascal(name)}Vo items = 1;
