@@ -284,7 +284,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
 
     s"""
-       |def selectBy${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, ${cToPascal(name)}ListVo] = ServiceCall { _ =>
+       |def select${cToPascal(name)}By${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, ${cToPascal(name)}ListVo] = ServiceCall { _ =>
        |  Future.successful(
        |    db.withTransaction { implicit c =>
        |       ${cToPascal(name)}ListVo(${cToCamel(name)}Dao.selectBy${by}(${substituteMethodParams(keyFields)}))
@@ -292,7 +292,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |  )
        |}
        |
-       |def deleteBy${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, Int] = ServiceCall { _ =>
+       |def delete${cToPascal(name)}By${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, Int] = ServiceCall { _ =>
        |  Future.successful(
        |    db.withTransaction { implicit c =>
        |       ${cToCamel(name)}Dao.deleteBy${by}(${substituteMethodParams(keyFields)})

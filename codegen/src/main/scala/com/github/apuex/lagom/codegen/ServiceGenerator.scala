@@ -55,8 +55,8 @@ class ServiceGenerator(modelLoader: ModelLoader) {
        |
        |    named("${cToShell(modelName)}")
        |      .withCalls(
+       |        pathCall("/api/events?offset", events _),
        |        ${indent(callDescs(), 8)}
-       |        pathCall("/api/events?offset", events _)
        |      ).withAutoAcl(true)
        |  }
        |}
@@ -69,7 +69,9 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def callJsonFormats(): String = ""
 
-  def callDescs(): String = ""
+  def callDescs(): String = callDescs(xml)
+    .reduceOption((l, r) => s"${l},\n${r}")
+    .getOrElse("")
 
   def calls(root: Node): Seq[String] = {
     root.child.filter(_.label == "entity")
@@ -207,10 +209,155 @@ class ServiceGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
 
     s"""
-       |def selectBy${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, ${cToPascal(name)}ListVo]
+       |def select${cToPascal(name)}By${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, ${cToPascal(name)}ListVo]
        |
-       |def deleteBy${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, Int]
+       |def delete${cToPascal(name)}By${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, Int]
      """.stripMargin.trim
+  }
+
+  def callDescs(root: Node): Seq[String] = {
+    root.child.filter(_.label == "entity")
+      .map(x => {
+        val aggregatesTo = x.\@("aggregatesTo")
+        val enum = if ("true" == x.\@("enum")) true else false
+        if (!enum && "" == aggregatesTo) generateCallDescsForAggregate(toAggregate(x, root))
+        else {
+          val valueObject = toValueObject(x, aggregatesTo, root)
+          generateCallDescsForValueObject(valueObject)
+        }
+      })
+      .flatMap(x => x)
+  }
+
+  def defCallDescsForEmbeddedAggregateMessage(aggregate: Aggregate): Seq[String] = {
+    val nonKeyFieldCount = aggregate.fields.length - aggregate.primaryKey.fields.length
+    val keyFieldNames = aggregate.primaryKey.fields.map(_.name).toSet
+    val nonKeyFields = aggregate.fields.filter(x => !keyFieldNames.contains(x.name))
+    val get = Seq(
+      s"""
+         |pathCall("/api/get-${cToShell(aggregate.name)}", get${cToPascal(aggregate.name)} _)
+     """.stripMargin.trim)
+    val update = if (nonKeyFieldCount > 1)
+      Seq(
+        s"""
+           |pathCall("/api/update-${cToShell(aggregate.name)}", update${cToPascal(aggregate.name)} _)
+     """.stripMargin.trim)
+    else if (nonKeyFieldCount == 1) {
+      val field = nonKeyFields.head
+      if ("array" == field._type || "map" == field._type)
+        Seq(
+          s"""
+             |pathCall("/api/add-${cToShell(aggregate.name)}", add${cToPascal(aggregate.name)} _)
+     """.stripMargin.trim,
+          s"""
+             |pathCall("/api/remove-${cToShell(aggregate.name)}", remove${cToPascal(aggregate.name)} _)
+     """.stripMargin.trim)
+      else
+        Seq(s"""
+           |pathCall("/api/change-${cToShell(aggregate.name)}", change${cToPascal(aggregate.name)} _)
+     """.stripMargin.trim)
+    } else { // this cannot be happen.
+      Seq(s"""
+         |
+     """.stripMargin.trim)
+    }
+    get ++ update
+  }
+
+  def defCallDescsForEmbeddedAggregateMessages(aggregates: Seq[Aggregate]): Seq[String] = {
+    aggregates
+      .map(defCallDescsForEmbeddedAggregateMessage(_))
+      .flatMap(x => x)
+  }
+
+  def generateCallDescsForAggregate(aggregate: Aggregate): Seq[String] = {
+    import aggregate._
+    (
+      defCrudCallDescs(name) ++
+        defByForeignKeyCallDescs(name, fields, foreignKeys) ++
+        defMessageCallDescs(aggregate.messages) ++
+        defCallDescsForEmbeddedAggregateMessages(aggregate.aggregates)
+      )
+  }
+
+  def generateCallDescsForValueObject(valueObject: ValueObject): Seq[String] = {
+    import valueObject._
+    (
+      defCrudCallDescs(name) ++
+        defByForeignKeyCallDescs(name, fields, foreignKeys)
+      )
+  }
+
+  def defMessageCallDesc(message: Message): String = {
+    s"""
+       |pathCall("/api/${cToShell(message.name)}", ${cToCamel(message.name)} _)
+     """.stripMargin.trim
+  }
+
+  def defMessageCallDescs(messages: Seq[Message]): Seq[String] = {
+    messages.map(defMessageCallDesc(_))
+  }
+
+  def defCrudCallDescs(name: String): Seq[String] = Seq(
+    s"""
+       |pathCall("/api/create-${cToShell(name)}", create${cToPascal(name)} _)
+     """.stripMargin.trim,
+    s"""
+       |pathCall("/api/retrieve-${cToShell(name)}", retrieve${cToPascal(name)} _)
+     """.stripMargin.trim,
+    s"""
+       |pathCall("/api/update-${cToShell(name)}", update${cToPascal(name)} _)
+     """.stripMargin.trim,
+    s"""
+       |pathCall("/api/delete-${cToShell(name)}", delete${cToPascal(name)} _)
+     """.stripMargin.trim,
+    s"""
+       |pathCall("/api/query-${cToShell(name)}", query${cToPascal(name)} _)
+     """.stripMargin.trim,
+    s"""
+       |pathCall("/api/retrieve-${cToShell(name)}-by-rowid/:rowid", retrieve${cToPascal(name)}ByRowid _)
+     """.stripMargin.trim
+  )
+
+  def defByForeignKeyCallDescs(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
+    foreignKeys
+      .map(x => {
+        val fieldNames = x.fields
+          .map(_.name)
+          .toSet
+
+        val fkFields = fields
+          .filter(x => fieldNames.contains(x.name))
+        defByForeignKeyCallDesc(name, fkFields)
+      })
+      .flatMap(x => x)
+  }
+
+  def defByForeignKeyCallDesc(name: String, keyFields: Seq[Field]): Seq[String] = {
+    val byMethod = keyFields
+      .map(x => cToPascal(x.name))
+      .reduceOption((x, y) => s"${x}-${y}")
+      .getOrElse("")
+
+    val byPath = keyFields
+      .map(x => cToShell(x.name))
+      .reduceOption((x, y) => s"${x}-${y}")
+      .getOrElse("")
+
+    Seq(
+      s"""
+         |pathCall("/api/select-${cToShell(name)}-by-${byPath}?${defQueryParams(keyFields)}", select${cToPascal(name)}By${byMethod} _)
+     """.stripMargin.trim,
+      s"""
+         |pathCall("/api/delete-${cToShell(name)}-by-${byPath}?${defQueryParams(keyFields)}", delete${cToPascal(name)}By${byMethod} _)
+     """.stripMargin.trim,
+    )
+  }
+
+  def defQueryParams(fields: Seq[Field]): String = {
+    fields.map(x => cToCamel(x.name))
+      .reduceOption((x, y) => s"${x}&${y}")
+      .getOrElse("")
   }
 }
 

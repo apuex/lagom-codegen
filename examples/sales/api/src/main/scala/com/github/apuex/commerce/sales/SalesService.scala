@@ -103,13 +103,13 @@ trait SalesService extends Service {
 
   def retrieveOrderItemByRowid(rowid: String): ServiceCall[NotUsed, OrderItemVo]
 
-  def selectByOrderId(orderId: String): ServiceCall[NotUsed, OrderItemListVo]
+  def selectOrderItemByOrderId(orderId: String): ServiceCall[NotUsed, OrderItemListVo]
 
-  def deleteByOrderId(orderId: String): ServiceCall[NotUsed, Int]
+  def deleteOrderItemByOrderId(orderId: String): ServiceCall[NotUsed, Int]
 
-  def selectByProductId(productId: String): ServiceCall[NotUsed, OrderItemListVo]
+  def selectOrderItemByProductId(productId: String): ServiceCall[NotUsed, OrderItemListVo]
 
-  def deleteByProductId(productId: String): ServiceCall[NotUsed, Int]
+  def deleteOrderItemByProductId(productId: String): ServiceCall[NotUsed, Int]
 
   def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]]
 
@@ -121,8 +121,56 @@ trait SalesService extends Service {
 
     named("sales")
       .withCalls(
-        
-        pathCall("/api/events?offset", events _)
+        pathCall("/api/events?offset", events _),
+        pathCall("/api/create-alarm", createAlarm _),
+        pathCall("/api/retrieve-alarm", retrieveAlarm _),
+        pathCall("/api/update-alarm", updateAlarm _),
+        pathCall("/api/delete-alarm", deleteAlarm _),
+        pathCall("/api/query-alarm", queryAlarm _),
+        pathCall("/api/retrieve-alarm-by-rowid/:rowid", retrieveAlarmByRowid _),
+        pathCall("/api/begin-alarm", beginAlarm _),
+        pathCall("/api/end-alarm", endAlarm _),
+        pathCall("/api/create-payment-type", createPaymentType _),
+        pathCall("/api/retrieve-payment-type", retrievePaymentType _),
+        pathCall("/api/update-payment-type", updatePaymentType _),
+        pathCall("/api/delete-payment-type", deletePaymentType _),
+        pathCall("/api/query-payment-type", queryPaymentType _),
+        pathCall("/api/retrieve-payment-type-by-rowid/:rowid", retrievePaymentTypeByRowid _),
+        pathCall("/api/create-product", createProduct _),
+        pathCall("/api/retrieve-product", retrieveProduct _),
+        pathCall("/api/update-product", updateProduct _),
+        pathCall("/api/delete-product", deleteProduct _),
+        pathCall("/api/query-product", queryProduct _),
+        pathCall("/api/retrieve-product-by-rowid/:rowid", retrieveProductByRowid _),
+        pathCall("/api/get-product-sales", getProductSales _),
+        pathCall("/api/update-product-sales", updateProductSales _),
+        pathCall("/api/get-product-name", getProductName _),
+        pathCall("/api/change-product-name", changeProductName _),
+        pathCall("/api/get-product-unit", getProductUnit _),
+        pathCall("/api/change-product-unit", changeProductUnit _),
+        pathCall("/api/get-unit-price", getUnitPrice _),
+        pathCall("/api/change-unit-price", changeUnitPrice _),
+        pathCall("/api/create-order", createOrder _),
+        pathCall("/api/retrieve-order", retrieveOrder _),
+        pathCall("/api/update-order", updateOrder _),
+        pathCall("/api/delete-order", deleteOrder _),
+        pathCall("/api/query-order", queryOrder _),
+        pathCall("/api/retrieve-order-by-rowid/:rowid", retrieveOrderByRowid _),
+        pathCall("/api/get-order-lines", getOrderLines _),
+        pathCall("/api/add-order-lines", addOrderLines _),
+        pathCall("/api/remove-order-lines", removeOrderLines _),
+        pathCall("/api/get-order-payment-type", getOrderPaymentType _),
+        pathCall("/api/change-order-payment-type", changeOrderPaymentType _),
+        pathCall("/api/create-order-item", createOrderItem _),
+        pathCall("/api/retrieve-order-item", retrieveOrderItem _),
+        pathCall("/api/update-order-item", updateOrderItem _),
+        pathCall("/api/delete-order-item", deleteOrderItem _),
+        pathCall("/api/query-order-item", queryOrderItem _),
+        pathCall("/api/retrieve-order-item-by-rowid/:rowid", retrieveOrderItemByRowid _),
+        pathCall("/api/select-order-item-by-order-id?orderId", selectOrderItemByOrderId _),
+        pathCall("/api/delete-order-item-by-order-id?orderId", deleteOrderItemByOrderId _),
+        pathCall("/api/select-order-item-by-product-id?productId", selectOrderItemByProductId _),
+        pathCall("/api/delete-order-item-by-product-id?productId", deleteOrderItemByProductId _)
       ).withAutoAcl(true)
   }
 }

@@ -383,7 +383,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     )
   }
 
-  def selectByOrderId(orderId: String): ServiceCall[NotUsed, OrderItemListVo] = ServiceCall { _ =>
+  def selectOrderItemByOrderId(orderId: String): ServiceCall[NotUsed, OrderItemListVo] = ServiceCall { _ =>
     Future.successful(
       db.withTransaction { implicit c =>
          OrderItemListVo(orderItemDao.selectByOrderId(orderId))
@@ -391,7 +391,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     )
   }
 
-  def deleteByOrderId(orderId: String): ServiceCall[NotUsed, Int] = ServiceCall { _ =>
+  def deleteOrderItemByOrderId(orderId: String): ServiceCall[NotUsed, Int] = ServiceCall { _ =>
     Future.successful(
       db.withTransaction { implicit c =>
          orderItemDao.deleteByOrderId(orderId)
@@ -399,7 +399,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     )
   }
 
-  def selectByProductId(productId: String): ServiceCall[NotUsed, OrderItemListVo] = ServiceCall { _ =>
+  def selectOrderItemByProductId(productId: String): ServiceCall[NotUsed, OrderItemListVo] = ServiceCall { _ =>
     Future.successful(
       db.withTransaction { implicit c =>
          OrderItemListVo(orderItemDao.selectByProductId(productId))
@@ -407,7 +407,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     )
   }
 
-  def deleteByProductId(productId: String): ServiceCall[NotUsed, Int] = ServiceCall { _ =>
+  def deleteOrderItemByProductId(productId: String): ServiceCall[NotUsed, Int] = ServiceCall { _ =>
     Future.successful(
       db.withTransaction { implicit c =>
          orderItemDao.deleteByProductId(productId)
