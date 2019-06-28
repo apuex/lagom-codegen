@@ -554,11 +554,15 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
     else if (nonKeyFieldCount == 1) {
       val field = nonKeyFields.head
-      if ("array" == field._type)
+      if ("array" == field._type) {
+        val embedded = toValueObject(getEntity(field.valueType, xml), name, xml)
+        val otherKeyFields = embedded.primaryKey.fields.filter(x => !keyFieldNames.contains(x.name))
+        val embeddedFields = embedded.fields.filter(x => !keyFieldNames.contains(x.name))
         s"""
            |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
            |  cmd.${cToCamel(aggregate.name)}
            |    .map(x => Create${cToPascal(field.valueType)}Cmd(
+           |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, ${substituteMethodParams(embeddedFields, "x")}
            |      )
            |     )
            |    .map(orderItemDao.create${cToPascal(field.valueType)}(_))
@@ -568,17 +572,18 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
            |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
            |  cmd.${cToCamel(aggregate.name)}
            |    .map(x => Delete${cToPascal(field.valueType)}Cmd(
+           |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, ${substituteMethodParams(otherKeyFields, "x")}
            |      )
            |     )
            |    .map(orderItemDao.delete${cToPascal(field.valueType)}(_))
            |    .foldLeft(0)((t, u) => t + u)
            |}
      """.stripMargin.trim
-      else if ("map" == field._type)
+      } else if ("map" == field._type)
         s"""
            |
          """.stripMargin.trim
-      else
+      else // one-to-one relationship is not supported. simple JDBC fields only.
         s"""
            |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
            |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})

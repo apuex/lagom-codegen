@@ -63,6 +63,10 @@ object ModelLoader {
       .trim
   }
 
+  def getEntity(name: String, root: Node): Node = {
+    root.child.filter(x => x.label == "entity" && name == x.\@("name")).head
+  }
+
   def toField(node: Node): Field = {
     val name = node.\@("name")
     val _type = node.\@("type")
@@ -269,6 +273,14 @@ object ModelLoader {
     )
   }
 
+  def substituteMethodParams(fields: Seq[Field], alias: String): String = {
+    val t = if("" == alias) "" else s"${alias}."
+    fields
+      .map(x => s"${t}${cToCamel(x.name)}")
+      .reduceOption((l, r) => s"${l}, ${r}")
+      .getOrElse("")
+  }
+
   def save(fileName: String, content: String, dir: String): Unit = {
     new File(dir).mkdirs()
     val pw = new PrintWriter(new File(dir, fileName), "utf-8")
@@ -383,14 +395,6 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
            |${cToCamel(x.name)}: ${defFieldType(x)}
          """.stripMargin.trim
       })
-      .reduceOption((l, r) => s"${l}, ${r}")
-      .getOrElse("")
-  }
-
-  def substituteMethodParams(fields: Seq[Field], alias: String): String = {
-    val t = if("" == alias) "" else s"${alias}."
-    fields
-      .map(x => s"${t}${cToCamel(x.name)}")
       .reduceOption((l, r) => s"${l}, ${r}")
       .getOrElse("")
   }
