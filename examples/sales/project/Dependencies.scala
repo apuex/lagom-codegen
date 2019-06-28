@@ -1,3 +1,6 @@
+/*****************************************************
+ ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+ *****************************************************/
 import sbt._
 import scalapb.compiler.Version.scalapbVersion
 

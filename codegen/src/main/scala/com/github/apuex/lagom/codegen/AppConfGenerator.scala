@@ -207,6 +207,10 @@ class AppConfGenerator(modelLoader: ModelLoader) {
     val printWriter = new PrintWriter(s"${appProjectConfDir}/messages", "utf-8")
     printWriter.println(
       s"""
+         |#######################################################
+         |##  This file is 100% ***GENERATED***, DO NOT EDIT!  ##
+         |#######################################################
+         |
          |# https://www.playframework.com/documentation/latest/ScalaI18N
        """.stripMargin
         .trim)

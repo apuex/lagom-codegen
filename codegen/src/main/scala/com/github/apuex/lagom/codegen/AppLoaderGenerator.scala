@@ -1,7 +1,5 @@
 package com.github.apuex.lagom.codegen
 
-import java.io.{File, PrintWriter}
-
 import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 
