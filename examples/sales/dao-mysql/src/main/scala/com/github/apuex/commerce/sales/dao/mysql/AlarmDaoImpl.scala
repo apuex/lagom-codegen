@@ -240,13 +240,13 @@ class AlarmDaoImpl() extends AlarmDao {
   private def alarmParser(implicit c: Connection): RowParser[AlarmVo] = {
     get[String]("alarm_id") ~ 
     get[Date]("alarm_begin") ~ 
-    get[Date]("alarm_end") ~ 
+    get[Option[Date]]("alarm_end") ~ 
     get[String]("alarm_desc") map {
       case alarmId ~ alarmBegin ~ alarmEnd ~ alarmDesc =>
         AlarmVo(
           alarmId,
           Some(toScalapbTimestamp(alarmBegin)),
-          Some(toScalapbTimestamp(alarmEnd)),
+          alarmEnd.map(toScalapbTimestamp(_)),
           alarmDesc
         )
     }

@@ -164,7 +164,7 @@ object ModelLoader {
     Some(getFields(node, root)
       .filter(_.name == refField).head)
       // disable aggregate attribute on referenced columns
-      .map(x => Field(name, x._type, x.length, x.scale, false, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, false, x.transient, x.comment))
+      .map(x => Field(name, x._type, x.length, x.scale, x.required, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, false, x.transient, x.comment))
   }
 
   def getForeignKeys(node: Node): Seq[ForeignKey] = {

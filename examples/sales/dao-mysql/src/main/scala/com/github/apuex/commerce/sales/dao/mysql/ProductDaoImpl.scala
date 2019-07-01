@@ -140,13 +140,13 @@ class ProductDaoImpl() extends ProductDao {
 
   private def productSalesParser(implicit c: Connection): RowParser[ProductSalesVo] = {
     get[String]("product_id") ~ 
-    get[Date]("record_time") ~ 
-    get[Double]("quantity_sold") map {
+    get[Option[Date]]("record_time") ~ 
+    get[Option[Double]]("quantity_sold") map {
       case productId ~ recordTime ~ quantitySold =>
         ProductSalesVo(
           productId,
-          Some(toScalapbTimestamp(recordTime)),
-          quantitySold
+          recordTime.map(toScalapbTimestamp(_)),
+          quantitySold.getOrElse(0)
         )
     }
   }
@@ -344,16 +344,16 @@ class ProductDaoImpl() extends ProductDao {
     get[String]("product_name") ~ 
     get[String]("product_unit") ~ 
     get[Double]("unit_price") ~ 
-    get[Date]("record_time") ~ 
-    get[Double]("quantity_sold") map {
+    get[Option[Date]]("record_time") ~ 
+    get[Option[Double]]("quantity_sold") map {
       case productId ~ productName ~ productUnit ~ unitPrice ~ recordTime ~ quantitySold =>
         ProductVo(
           productId,
           productName,
           productUnit,
           unitPrice,
-          Some(toScalapbTimestamp(recordTime)),
-          quantitySold
+          recordTime.map(toScalapbTimestamp(_)),
+          quantitySold.getOrElse(0)
         )
     }
   }

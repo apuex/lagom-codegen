@@ -13,40 +13,40 @@ GRANT ALL PRIVILEGES ON *.* TO 'sales' WITH GRANT OPTION;
 USE sales;
 
 CREATE TABLE sales.alarm (
-  alarm_id VARCHAR(64),
-  alarm_begin DATETIME,
+  alarm_id VARCHAR(64) NOT NULL,
+  alarm_begin DATETIME NOT NULL,
   alarm_end DATETIME,
-  alarm_desc VARCHAR(64)
+  alarm_desc VARCHAR(64) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE sales.payment_type (
-  payment_type_id INT,
-  payment_type_name VARCHAR(64),
-  payment_type_label VARCHAR(64)
+  payment_type_id INT NOT NULL,
+  payment_type_name VARCHAR(64) NOT NULL,
+  payment_type_label VARCHAR(64) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE sales.order_item (
   order_id VARCHAR(64),
   product_id VARCHAR(64),
-  product_name VARCHAR(64),
-  item_unit VARCHAR(64),
-  unit_price DOUBLE,
-  order_quantity DOUBLE
+  product_name VARCHAR(64) NOT NULL,
+  item_unit VARCHAR(64) NOT NULL,
+  unit_price DOUBLE NOT NULL,
+  order_quantity DOUBLE NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE sales.product (
-  product_id VARCHAR(64),
-  product_name VARCHAR(64),
-  product_unit VARCHAR(64),
-  unit_price DOUBLE,
+  product_id VARCHAR(64) NOT NULL,
+  product_name VARCHAR(64) NOT NULL,
+  product_unit VARCHAR(64) NOT NULL,
+  unit_price DOUBLE NOT NULL,
   record_time DATETIME,
   quantity_sold DOUBLE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE sales.order (
-  order_id VARCHAR(64),
-  order_time DATETIME,
-  order_payment_type INT
+  order_id VARCHAR(64) NOT NULL,
+  order_time DATETIME NOT NULL,
+  order_payment_type INT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 ALTER TABLE sales.alarm ADD CONSTRAINT alarm_pk PRIMARY KEY(alarm_id, alarm_begin);

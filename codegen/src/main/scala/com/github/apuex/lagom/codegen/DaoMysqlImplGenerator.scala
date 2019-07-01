@@ -297,19 +297,51 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     }
   }
 
+  def wrapOption(name: String, required: Boolean): String = {
+    if (required) name else s"Option[${name}]"
+  }
+
+  def wrapOptionValue(valueType: String, value: String, required: Boolean): String = valueType match {
+    case "bool" =>
+      if(required) value else s"${value}.getOrElse(false)"
+    case "short" =>
+      if(required) value else s"${value}.getOrElse(0)"
+    case "byte" =>
+      if(required) value else s"${value}.getOrElse(0)"
+    case "int" =>
+      if(required) value else s"${value}.getOrElse(0)"
+    case "long" =>
+      if(required) value else s"${value}.getOrElse(0)"
+    case "decimal" =>
+      if(required) value else s"${value}.getOrElse(0)"
+    case "string" =>
+      if(required) value else s"""${value}.getOrElse("")"""
+    case "timestamp" =>
+      if (required) s"Some(toScalapbTimestamp(${value}))" else s"${value}.map(toScalapbTimestamp(_))"
+    case "float" =>
+      if(required) value else s"${value}.getOrElse(0)"
+    case "double" =>
+      if(required) value else s"${value}.getOrElse(0)"
+    case "blob" =>
+      if(required) value else s"${value}.getOrElse(0)"
+    case _ => ""
+  }
+
   def rowParser(name: String, fields: Seq[Field], keyFields: Seq[Field]): String = {
+    val keyFieldNames = keyFields.map(_.name).toSet
     val gets = fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
-      .map(x =>
+      .map(x => {
+      val required = x.required || keyFieldNames.contains(x.name)
       if ("timestamp" == x._type)
         s"""
-           |get[Date]("${x.name}")
+           |get[${wrapOption("Date", required)}]("${x.name}")
          """.stripMargin.trim
       else
         s"""
-           |get[${cToPascal(toJdbcType(x._type))}]("${x.name}")
+           |get[${wrapOption(cToPascal(toJdbcType(x._type)), required)}]("${x.name}")
          """.stripMargin.trim
-    )
+    })
       .reduceOption((l, r) => s"${l} ~ \n${r}")
       .getOrElse("")
 
@@ -320,20 +352,18 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
 
     val constructorParam = fields
-      .map(x =>
+      .map(x => {
+        val required = x.required || keyFieldNames.contains(x.name)
         if (isJdbcType(x._type)) {
-          if ("timestamp" == x._type)
-            s"Some(toScalapbTimestamp(${cToCamel(x.name)}))"
-          else
-            cToCamel(x.name)
+          wrapOptionValue(x._type, s"${cToCamel(x.name)}", required)
         }
-        else if (isEnum(x._type)) s"${cToPascal(x._type)}.fromValue(${cToCamel(x.name)})"
+        else if (isEnum(x._type)) if(required) s"${cToPascal(x._type)}.fromValue(${cToCamel(x.name)})" else s"${cToCamel(x.name)}.map(x => ${cToPascal(x._type)}.fromValue(x)).getOrElse(${cToPascal(x._type)}.fromValue(0))"
         else { // array, map or value object type,
           s"""
              |${selectComposite(x, keyFields)}
            """.stripMargin.trim
         }
-      )
+      })
       .reduceOption((l, r) => s"${l},\n${r}")
       .getOrElse("")
 
@@ -574,7 +604,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
     import aggregate._
     val parser = rowParser(name, fields, primaryKey.fields)
-    val get = if(nonKeyFieldCount > 1)
+    val get = if (nonKeyFieldCount > 1)
       s"""
          |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
          |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
