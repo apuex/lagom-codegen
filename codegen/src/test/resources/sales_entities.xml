@@ -5,10 +5,10 @@
        dbSchema="sales"
        maintainer="xtwxy@hotmail.com">
   <entity name="alarm" aggregate="true">
-    <field name="alarm_id" type="string" required="true" length="64"/>
-    <field name="alarm_begin" type="timestamp" required="true"/>
-    <field name="alarm_end" type="timestamp"/>
-    <field name="alarm_desc" type="string" length="64" required="true"/>
+    <field name="alarm_id" type="string" required="true" length="64" comment="告警对象ID"/>
+    <field name="alarm_begin" type="timestamp" required="true" comment="告警发生时间"/>
+    <field name="alarm_end" type="timestamp" comment="告警结束时间"/>
+    <field name="alarm_desc" type="string" length="64" required="true" comment="告警描述"/>
     <primaryKey name="alarm_pk">
       <field name="alarm_id"/>
       <field name="alarm_begin"/>

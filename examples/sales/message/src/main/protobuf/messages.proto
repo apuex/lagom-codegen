@@ -16,10 +16,10 @@ option (scalapb.options) = {
 
 message AlarmVo {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
-  string alarmId = 1; //
-  google.protobuf.Timestamp alarmBegin = 2; //
-  google.protobuf.Timestamp alarmEnd = 3; //
-  string alarmDesc = 4; //
+  string alarmId = 1; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 2; // 告警发生时间
+  google.protobuf.Timestamp alarmEnd = 3; // 告警结束时间
+  string alarmDesc = 4; // 告警描述
 }
 
 message AlarmListVo {
@@ -30,92 +30,92 @@ message AlarmListVo {
 message CreateAlarmCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  google.protobuf.Timestamp alarmEnd = 4; //
-  string alarmDesc = 5; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
+  google.protobuf.Timestamp alarmEnd = 4; // 告警结束时间
+  string alarmDesc = 5; // 告警描述
 }
 
 message RetrieveAlarmCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
 }
 
 message UpdateAlarmCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  google.protobuf.Timestamp alarmEnd = 4; //
-  string alarmDesc = 5; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
+  google.protobuf.Timestamp alarmEnd = 4; // 告警结束时间
+  string alarmDesc = 5; // 告警描述
 }
 
 message DeleteAlarmCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
 }
 
 message CreateAlarmEvent {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  google.protobuf.Timestamp alarmEnd = 4; //
-  string alarmDesc = 5; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
+  google.protobuf.Timestamp alarmEnd = 4; // 告警结束时间
+  string alarmDesc = 5; // 告警描述
 }
 
 message UpdateAlarmEvent {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  google.protobuf.Timestamp alarmEnd = 4; //
-  string alarmDesc = 5; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
+  google.protobuf.Timestamp alarmEnd = 4; // 告警结束时间
+  string alarmDesc = 5; // 告警描述
 }
 
 message DeleteAlarmEvent {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
 }
 
 message BeginAlarmCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  string alarmDesc = 4; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
+  string alarmDesc = 4; // 告警描述
 }
 
 message EndAlarmCmd {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmCommand";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  google.protobuf.Timestamp alarmEnd = 4; //
-  string alarmDesc = 5; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
+  google.protobuf.Timestamp alarmEnd = 4; // 告警结束时间
+  string alarmDesc = 5; // 告警描述
 }
 
 message BeginAlarmEvent {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  string alarmDesc = 4; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
+  string alarmDesc = 4; // 告警描述
 }
 
 message EndAlarmEvent {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.AlarmEvent";
   string userId = 1; // 用户ID
-  string alarmId = 2; //
-  google.protobuf.Timestamp alarmBegin = 3; //
-  google.protobuf.Timestamp alarmEnd = 4; //
-  string alarmDesc = 5; //
+  string alarmId = 2; // 告警对象ID
+  google.protobuf.Timestamp alarmBegin = 3; // 告警发生时间
+  google.protobuf.Timestamp alarmEnd = 4; // 告警结束时间
+  string alarmDesc = 5; // 告警描述
 }
 
 message PaymentTypeVo {
