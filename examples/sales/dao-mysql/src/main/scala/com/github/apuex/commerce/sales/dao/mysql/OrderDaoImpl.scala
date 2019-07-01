@@ -22,15 +22,10 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   def createOrder(cmd: CreateOrderCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
        |UPDATE sales.order
-       |    order.order_id,
-       |    order.order_time,
-       |    order.order_payment_type
        |  SET
-       |    order.order_id = {orderId},
        |    order.order_time = {orderTime},
        |    order.order_payment_type = {orderPaymentType}
-       |  WHERE
-       |    order.order_id = {orderId}
+       |  WHERE order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId,
@@ -65,8 +60,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
        |    order.order_time,
        |    order.order_payment_type
        |  FROM sales.order
-       |  WHERE
-       |    order.order_id = {orderId}
+       |  WHERE order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId
@@ -76,15 +70,10 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   def updateOrder(cmd: UpdateOrderCmd)(implicit conn: Connection): Int = {
     SQL(s"""
        |UPDATE sales.order
-       |    order.order_id,
-       |    order.order_time,
-       |    order.order_payment_type
        |  SET
-       |    order.order_id = {orderId},
        |    order.order_time = {orderTime},
        |    order.order_payment_type = {orderPaymentType}
-       |  WHERE
-       |    order.order_id = {orderId}
+       |  WHERE order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId,
@@ -97,8 +86,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
     SQL(s"""
        |DELETE
        |  FROM sales.order
-       |  WHERE
-       |    order.order_id = {orderId}
+       |  WHERE order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId
@@ -116,8 +104,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
        |    order.order_time,
        |    order.order_payment_type
        |  FROM sales.order
-       |  WHERE
-       |    order.rowid = {rowid}
+       |  WHERE rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> rowid
@@ -135,16 +122,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   }
   
   def getOrderLines(cmd: GetOrderLinesCmd)(implicit conn: Connection): OrderLinesVo = {
-    SQL(s"""
-       |SELECT
-       |    order_lines.order_id
-       |  FROM sales.order_lines
-       |  WHERE
-       |    order_lines.order_id = {orderId}
-     """.stripMargin.trim)
-    .on(
-      "orderId" -> cmd.orderId
-    ).as(orderLinesParser.single)
+    OrderLinesVo(cmd.orderId, orderItemDao.selectByOrderId(cmd.orderId))
   }
   
   def addOrderLines(cmd: AddOrderLinesCmd)(implicit conn: Connection): Int = {
@@ -181,11 +159,10 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   def getOrderPaymentType(cmd: GetOrderPaymentTypeCmd)(implicit conn: Connection): OrderPaymentTypeVo = {
     SQL(s"""
        |SELECT
-       |    order_payment_type.order_id,
-       |    order_payment_type.order_payment_type
-       |  FROM sales.order_payment_type
-       |  WHERE
-       |    order_payment_type.order_id = {orderId}
+       |    order.order_id,
+       |    order.order_payment_type
+       |  FROM sales.order
+       |  WHERE order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId
@@ -194,14 +171,10 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   
   def changeOrderPaymentType(cmd: ChangeOrderPaymentTypeCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.order_payment_type
-       |    order_payment_type.order_id,
-       |    order_payment_type.order_payment_type
+       |UPDATE sales.order
        |  SET
-       |    order_payment_type.order_id = {orderId},
-       |    order_payment_type.order_payment_type = {orderPaymentType}
-       |  WHERE
-       |    order_payment_type.order_id = {orderId}
+       |    order.order_payment_type = {orderPaymentType}
+       |  WHERE order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId,

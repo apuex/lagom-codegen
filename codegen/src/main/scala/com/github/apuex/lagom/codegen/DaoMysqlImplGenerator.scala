@@ -74,8 +74,8 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       defCrud(name, fields, primaryKey.fields, foreignKeys) ++
         defSelectByFks(name, fields, foreignKeys) ++
         defDeleteByFks(name, fields, foreignKeys) ++
-        defMessages(aggregate.messages) ++
-        defEmbeddedAggregateMessages(aggregate.aggregates)
+        defMessages(name, aggregate.messages) ++
+        defEmbeddedAggregateMessages(name, aggregate.aggregates)
       )
       .map(indentWithLeftMargin(_, 2))
       .reduceOption((l, r) => s"${l}\n\n${r}")
@@ -442,14 +442,22 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
   }
 
+  def defFilterByFieldValues(name: String, fields: Seq[Field]): String = {
+    fields
+      .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
+      .map(x => s"${x.name} = {${cToCamel(x.name)}}")
+      .reduceOption((l, r) => s"$l\nAND $r")
+      .getOrElse("")
+  }
+
   def updateSql(name: String, fields: Seq[Field], pkFields: Seq[Field]): String = {
+    val pkFieldNames = pkFields.map(_.name).toSet
+    val nonKeyFields = fields.filter(x => !pkFieldNames.contains(x.name))
     s"""
        |UPDATE ${modelDbSchema}.${name}
-       |  ${indent(defSqlFields(name, fields), 2)}
        |SET
-       |  ${indent(defSetFieldValues(name, fields), 2)}
-       |WHERE
-       |  ${indent(defSetFieldValues(name, pkFields), 2)}
+       |  ${indent(defSetFieldValues(name, nonKeyFields), 2)}
+       |WHERE ${indent(defFilterByFieldValues(name, pkFields), 2)}
      """.stripMargin.trim
   }
 
@@ -457,8 +465,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     s"""
        |DELETE
        |FROM ${modelDbSchema}.${name}
-       |WHERE
-       |  ${indent(defSetFieldValues(name, pkFields), 2)}
+       |WHERE ${indent(defFilterByFieldValues(name, pkFields), 2)}
      """.stripMargin.trim
   }
 
@@ -467,8 +474,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |SELECT
        |  ${indent(defSqlFields(name, fields), 2)}
        |FROM ${modelDbSchema}.${name}
-       |WHERE
-       |  ${indent(defSetFieldValues(name, pkFields), 2)}
+       |WHERE ${indent(defFilterByFieldValues(name, pkFields), 2)}
      """.stripMargin.trim
   }
 
@@ -527,7 +533,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   )
 
-  def defMessage(message: Message): String = {
+  def defMessage(root: String, message: Message): String = {
     val returnType = if ("" == message.returnType) "Int"
     else {
       val baseName = message.returnType.replace("*", "")
@@ -542,47 +548,79 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     import message._
     s"""
        |def ${cToCamel(message.name)}(cmd: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType} = {
-       |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
+       |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(root, fields, primaryKey.fields), 2), 2)})
        |  .on(
-       |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+       |    ${indent(defFieldSubstitution(root, fields, "cmd"), 4)}
        |  ).executeUpdate()
        |
        |  if(rowsAffected == 0)
-       |    SQL(${indentWithLeftMargin(blockQuote(insertSql(name, fields), 2), 4)})
+       |    SQL(${indentWithLeftMargin(blockQuote(insertSql(root, fields), 2), 4)})
        |    .on(
-       |      ${indent(defFieldSubstitution(name, fields, "cmd"), 6)}
+       |      ${indent(defFieldSubstitution(root, fields, "cmd"), 6)}
        |    ).executeUpdate()
        |  else rowsAffected
        |}
      """.stripMargin.trim
   }
 
-  def defMessages(messages: Seq[Message]): Seq[String] = {
-    messages.map(defMessage(_))
+  def defMessages(root: String, messages: Seq[Message]): Seq[String] = {
+    messages.map(defMessage(root, _))
   }
 
-  def defEmbeddedAggregateMessage(aggregate: Aggregate): String = {
+  def defEmbeddedAggregateMessage(aggregateRoot: String, aggregate: Aggregate): String = {
     val nonKeyFieldCount = aggregate.fields.length - aggregate.primaryKey.fields.length
     val keyFieldNames = aggregate.primaryKey.fields.map(_.name).toSet
     val nonKeyFields = aggregate.fields.filter(x => !keyFieldNames.contains(x.name))
 
     import aggregate._
     val parser = rowParser(name, fields, primaryKey.fields)
-    val get =
+    val get = if(nonKeyFieldCount > 1)
       s"""
          |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
-         |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, primaryKey.fields), 2), 2)})
+         |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
          |  .on(
-         |    ${indent(defFieldSubstitution(name, primaryKey.fields, "cmd"), 4)}
+         |    ${indent(defFieldSubstitution(aggregateRoot, primaryKey.fields, "cmd"), 4)}
          |  ).as(${cToCamel(name)}Parser.single)
          |}
      """.stripMargin.trim
+    else if (nonKeyFieldCount == 1) {
+      val field = nonKeyFields.head
+      if ("array" == field._type) {
+        val embedded = toValueObject(getEntity(field.valueType, xml), name, xml)
+        val otherKeyFields = embedded.primaryKey.fields.filter(x => !keyFieldNames.contains(x.name))
+        val embeddedFields = embedded.fields.filter(x => !keyFieldNames.contains(x.name))
+        s"""
+           |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
+           |  ${cToPascal(aggregate.name)}Vo(${substituteMethodParams(primaryKey.fields, "cmd")}, ${cToCamel(field.valueType)}Dao.${callSelectByFk(primaryKey.fields, "cmd")})
+           |}
+     """.stripMargin.trim
+      } else if ("map" == field._type) {
+        // FIXME: not properly implemented
+        s"""
+           |
+         """.stripMargin.trim
+      } else {
+        s"""
+           |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
+           |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
+           |  .on(
+           |    ${indent(defFieldSubstitution(aggregateRoot, primaryKey.fields, "cmd"), 4)}
+           |  ).as(${cToCamel(name)}Parser.single)
+           |}
+     """.stripMargin.trim
+      }
+    } else { // this cannot be happen.
+      s"""
+         |
+     """.stripMargin.trim
+    }
+
     val update = if (nonKeyFieldCount > 1)
       s"""
          |def update${cToPascal(aggregate.name)}(cmd: Update${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-         |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
+         |  SQL(${indentWithLeftMargin(blockQuote(updateSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
          |  .on(
-         |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+         |    ${indent(defFieldSubstitution(aggregateRoot, fields, "cmd"), 4)}
          |  ).executeUpdate()
          |}
      """.stripMargin.trim
@@ -599,7 +637,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
            |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, ${substituteMethodParams(embeddedFields, "x")}
            |      )
            |     )
-           |    .map(orderItemDao.create${cToPascal(field.valueType)}(_))
+           |    .map(${cToCamel(field.valueType)}Dao.create${cToPascal(field.valueType)}(_))
            |    .foldLeft(0)((t, u) => t + u)
            |}
            |
@@ -609,7 +647,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
            |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, ${substituteMethodParams(otherKeyFields, "x")}
            |      )
            |     )
-           |    .map(orderItemDao.delete${cToPascal(field.valueType)}(_))
+           |    .map(${cToCamel(field.valueType)}Dao.delete${cToPascal(field.valueType)}(_))
            |    .foldLeft(0)((t, u) => t + u)
            |}
      """.stripMargin.trim
@@ -623,7 +661,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
            |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, x._1, x._2
            |      )
            |     )
-           |    .map(orderItemDao.create${cToPascal(field.valueType)}(_))
+           |    .map(${cToCamel(field.valueType)}Dao.create${cToPascal(field.valueType)}(_))
            |    .foldLeft(0)((t, u) => t + u)
            |}
            |
@@ -634,16 +672,16 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
            |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, x._1
            |      )
            |     )
-           |    .map(orderItemDao.delete${cToPascal(field.valueType)}(_))
+           |    .map(${cToCamel(field.valueType)}Dao.delete${cToPascal(field.valueType)}(_))
            |    .foldLeft(0)((t, u) => t + u)
            |}
      """.stripMargin.trim
       } else // one-to-one relationship is not supported. simple JDBC fields only.
         s"""
            |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-           |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
+           |  SQL(${indentWithLeftMargin(blockQuote(updateSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
            |  .on(
-           |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+           |    ${indent(defFieldSubstitution(aggregateRoot, fields, "cmd"), 4)}
            |  ).executeUpdate()
            |}
      """.stripMargin.trim
@@ -662,8 +700,8 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def defEmbeddedAggregateMessages(aggregates: Seq[Aggregate]): Seq[String] = {
-    aggregates.map(defEmbeddedAggregateMessage(_))
+  def defEmbeddedAggregateMessages(aggregateRoot: String, aggregates: Seq[Aggregate]): Seq[String] = {
+    aggregates.map(defEmbeddedAggregateMessage(aggregateRoot, _))
   }
 
   def defSelectByFks(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {

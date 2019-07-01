@@ -22,21 +22,13 @@ class ProductDaoImpl() extends ProductDao {
   def createProduct(cmd: CreateProductCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
        |UPDATE sales.product
-       |    product.product_id,
-       |    product.product_name,
-       |    product.product_unit,
-       |    product.unit_price,
-       |    product.record_time,
-       |    product.quantity_sold
        |  SET
-       |    product.product_id = {productId},
        |    product.product_name = {productName},
        |    product.product_unit = {productUnit},
        |    product.unit_price = {unitPrice},
        |    product.record_time = {recordTime},
        |    product.quantity_sold = {quantitySold}
-       |  WHERE
-       |    product.product_id = {productId}
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId,
@@ -86,8 +78,7 @@ class ProductDaoImpl() extends ProductDao {
        |    product.record_time,
        |    product.quantity_sold
        |  FROM sales.product
-       |  WHERE
-       |    product.product_id = {productId}
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId
@@ -97,21 +88,13 @@ class ProductDaoImpl() extends ProductDao {
   def updateProduct(cmd: UpdateProductCmd)(implicit conn: Connection): Int = {
     SQL(s"""
        |UPDATE sales.product
-       |    product.product_id,
-       |    product.product_name,
-       |    product.product_unit,
-       |    product.unit_price,
-       |    product.record_time,
-       |    product.quantity_sold
        |  SET
-       |    product.product_id = {productId},
        |    product.product_name = {productName},
        |    product.product_unit = {productUnit},
        |    product.unit_price = {unitPrice},
        |    product.record_time = {recordTime},
        |    product.quantity_sold = {quantitySold}
-       |  WHERE
-       |    product.product_id = {productId}
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId,
@@ -127,8 +110,7 @@ class ProductDaoImpl() extends ProductDao {
     SQL(s"""
        |DELETE
        |  FROM sales.product
-       |  WHERE
-       |    product.product_id = {productId}
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId
@@ -149,8 +131,7 @@ class ProductDaoImpl() extends ProductDao {
        |    product.record_time,
        |    product.quantity_sold
        |  FROM sales.product
-       |  WHERE
-       |    product.rowid = {rowid}
+       |  WHERE rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> rowid
@@ -173,12 +154,11 @@ class ProductDaoImpl() extends ProductDao {
   def getProductSales(cmd: GetProductSalesCmd)(implicit conn: Connection): ProductSalesVo = {
     SQL(s"""
        |SELECT
-       |    product_sales.product_id,
-       |    product_sales.record_time,
-       |    product_sales.quantity_sold
-       |  FROM sales.product_sales
-       |  WHERE
-       |    product_sales.product_id = {productId}
+       |    product.product_id,
+       |    product.record_time,
+       |    product.quantity_sold
+       |  FROM sales.product
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId
@@ -187,16 +167,11 @@ class ProductDaoImpl() extends ProductDao {
   
   def updateProductSales(cmd: UpdateProductSalesCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.product_sales
-       |    product_sales.product_id,
-       |    product_sales.record_time,
-       |    product_sales.quantity_sold
+       |UPDATE sales.product
        |  SET
-       |    product_sales.product_id = {productId},
-       |    product_sales.record_time = {recordTime},
-       |    product_sales.quantity_sold = {quantitySold}
-       |  WHERE
-       |    product_sales.product_id = {productId}
+       |    product.record_time = {recordTime},
+       |    product.quantity_sold = {quantitySold}
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId,
@@ -219,11 +194,10 @@ class ProductDaoImpl() extends ProductDao {
   def getProductName(cmd: GetProductNameCmd)(implicit conn: Connection): ProductNameVo = {
     SQL(s"""
        |SELECT
-       |    product_name.product_id,
-       |    product_name.product_name
-       |  FROM sales.product_name
-       |  WHERE
-       |    product_name.product_id = {productId}
+       |    product.product_id,
+       |    product.product_name
+       |  FROM sales.product
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId
@@ -232,14 +206,10 @@ class ProductDaoImpl() extends ProductDao {
   
   def changeProductName(cmd: ChangeProductNameCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.product_name
-       |    product_name.product_id,
-       |    product_name.product_name
+       |UPDATE sales.product
        |  SET
-       |    product_name.product_id = {productId},
-       |    product_name.product_name = {productName}
-       |  WHERE
-       |    product_name.product_id = {productId}
+       |    product.product_name = {productName}
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId,
@@ -261,11 +231,10 @@ class ProductDaoImpl() extends ProductDao {
   def getProductUnit(cmd: GetProductUnitCmd)(implicit conn: Connection): ProductUnitVo = {
     SQL(s"""
        |SELECT
-       |    product_unit.product_id,
-       |    product_unit.product_unit
-       |  FROM sales.product_unit
-       |  WHERE
-       |    product_unit.product_id = {productId}
+       |    product.product_id,
+       |    product.product_unit
+       |  FROM sales.product
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId
@@ -274,14 +243,10 @@ class ProductDaoImpl() extends ProductDao {
   
   def changeProductUnit(cmd: ChangeProductUnitCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.product_unit
-       |    product_unit.product_id,
-       |    product_unit.product_unit
+       |UPDATE sales.product
        |  SET
-       |    product_unit.product_id = {productId},
-       |    product_unit.product_unit = {productUnit}
-       |  WHERE
-       |    product_unit.product_id = {productId}
+       |    product.product_unit = {productUnit}
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId,
@@ -303,11 +268,10 @@ class ProductDaoImpl() extends ProductDao {
   def getUnitPrice(cmd: GetUnitPriceCmd)(implicit conn: Connection): UnitPriceVo = {
     SQL(s"""
        |SELECT
-       |    unit_price.product_id,
-       |    unit_price.unit_price
-       |  FROM sales.unit_price
-       |  WHERE
-       |    unit_price.product_id = {productId}
+       |    product.product_id,
+       |    product.unit_price
+       |  FROM sales.product
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId
@@ -316,14 +280,10 @@ class ProductDaoImpl() extends ProductDao {
   
   def changeUnitPrice(cmd: ChangeUnitPriceCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.unit_price
-       |    unit_price.product_id,
-       |    unit_price.unit_price
+       |UPDATE sales.product
        |  SET
-       |    unit_price.product_id = {productId},
-       |    unit_price.unit_price = {unitPrice}
-       |  WHERE
-       |    unit_price.product_id = {productId}
+       |    product.unit_price = {unitPrice}
+       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> cmd.productId,

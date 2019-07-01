@@ -22,18 +22,11 @@ class AlarmDaoImpl() extends AlarmDao {
   def createAlarm(cmd: CreateAlarmCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
        |UPDATE sales.alarm
-       |    alarm.alarm_id,
-       |    alarm.alarm_begin,
-       |    alarm.alarm_end,
-       |    alarm.alarm_desc
        |  SET
-       |    alarm.alarm_id = {alarmId},
-       |    alarm.alarm_begin = {alarmBegin},
        |    alarm.alarm_end = {alarmEnd},
        |    alarm.alarm_desc = {alarmDesc}
-       |  WHERE
-       |    alarm.alarm_id = {alarmId},
-       |    alarm.alarm_begin = {alarmBegin}
+       |  WHERE alarm_id = {alarmId}
+       |    AND alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -73,9 +66,8 @@ class AlarmDaoImpl() extends AlarmDao {
        |    alarm.alarm_end,
        |    alarm.alarm_desc
        |  FROM sales.alarm
-       |  WHERE
-       |    alarm.alarm_id = {alarmId},
-       |    alarm.alarm_begin = {alarmBegin}
+       |  WHERE alarm_id = {alarmId}
+       |    AND alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -86,18 +78,11 @@ class AlarmDaoImpl() extends AlarmDao {
   def updateAlarm(cmd: UpdateAlarmCmd)(implicit conn: Connection): Int = {
     SQL(s"""
        |UPDATE sales.alarm
-       |    alarm.alarm_id,
-       |    alarm.alarm_begin,
-       |    alarm.alarm_end,
-       |    alarm.alarm_desc
        |  SET
-       |    alarm.alarm_id = {alarmId},
-       |    alarm.alarm_begin = {alarmBegin},
        |    alarm.alarm_end = {alarmEnd},
        |    alarm.alarm_desc = {alarmDesc}
-       |  WHERE
-       |    alarm.alarm_id = {alarmId},
-       |    alarm.alarm_begin = {alarmBegin}
+       |  WHERE alarm_id = {alarmId}
+       |    AND alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -111,9 +96,8 @@ class AlarmDaoImpl() extends AlarmDao {
     SQL(s"""
        |DELETE
        |  FROM sales.alarm
-       |  WHERE
-       |    alarm.alarm_id = {alarmId},
-       |    alarm.alarm_begin = {alarmBegin}
+       |  WHERE alarm_id = {alarmId}
+       |    AND alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -133,8 +117,7 @@ class AlarmDaoImpl() extends AlarmDao {
        |    alarm.alarm_end,
        |    alarm.alarm_desc
        |  FROM sales.alarm
-       |  WHERE
-       |    alarm.rowid = {rowid}
+       |  WHERE rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> rowid
@@ -143,17 +126,11 @@ class AlarmDaoImpl() extends AlarmDao {
 
   def beginAlarm(cmd: BeginAlarmCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
-       |UPDATE sales.begin_alarm
-       |    begin_alarm.alarm_id,
-       |    begin_alarm.alarm_begin,
-       |    begin_alarm.alarm_desc
+       |UPDATE sales.alarm
        |  SET
-       |    begin_alarm.alarm_id = {alarmId},
-       |    begin_alarm.alarm_begin = {alarmBegin},
-       |    begin_alarm.alarm_desc = {alarmDesc}
-       |  WHERE
-       |    begin_alarm.alarm_id = {alarmId},
-       |    begin_alarm.alarm_begin = {alarmBegin}
+       |    alarm.alarm_desc = {alarmDesc}
+       |  WHERE alarm_id = {alarmId}
+       |    AND alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -163,10 +140,10 @@ class AlarmDaoImpl() extends AlarmDao {
   
     if(rowsAffected == 0)
       SQL(s"""
-         |INSERT INTO sales.begin_alarm(
-         |    begin_alarm.alarm_id,
-         |    begin_alarm.alarm_begin,
-         |    begin_alarm.alarm_desc
+         |INSERT INTO sales.alarm(
+         |    alarm.alarm_id,
+         |    alarm.alarm_begin,
+         |    alarm.alarm_desc
          |  ) VALUES (
          |    {alarmId},
          |    {alarmBegin},
@@ -183,19 +160,12 @@ class AlarmDaoImpl() extends AlarmDao {
 
   def endAlarm(cmd: EndAlarmCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
-       |UPDATE sales.end_alarm
-       |    end_alarm.alarm_id,
-       |    end_alarm.alarm_begin,
-       |    end_alarm.alarm_end,
-       |    end_alarm.alarm_desc
+       |UPDATE sales.alarm
        |  SET
-       |    end_alarm.alarm_id = {alarmId},
-       |    end_alarm.alarm_begin = {alarmBegin},
-       |    end_alarm.alarm_end = {alarmEnd},
-       |    end_alarm.alarm_desc = {alarmDesc}
-       |  WHERE
-       |    end_alarm.alarm_id = {alarmId},
-       |    end_alarm.alarm_begin = {alarmBegin}
+       |    alarm.alarm_end = {alarmEnd},
+       |    alarm.alarm_desc = {alarmDesc}
+       |  WHERE alarm_id = {alarmId}
+       |    AND alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
       "alarmId" -> cmd.alarmId,
@@ -206,11 +176,11 @@ class AlarmDaoImpl() extends AlarmDao {
   
     if(rowsAffected == 0)
       SQL(s"""
-         |INSERT INTO sales.end_alarm(
-         |    end_alarm.alarm_id,
-         |    end_alarm.alarm_begin,
-         |    end_alarm.alarm_end,
-         |    end_alarm.alarm_desc
+         |INSERT INTO sales.alarm(
+         |    alarm.alarm_id,
+         |    alarm.alarm_begin,
+         |    alarm.alarm_end,
+         |    alarm.alarm_desc
          |  ) VALUES (
          |    {alarmId},
          |    {alarmBegin},

@@ -22,15 +22,10 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
   def createPaymentType(cmd: CreatePaymentTypeCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
        |UPDATE sales.payment_type
-       |    payment_type.payment_type_id,
-       |    payment_type.payment_type_name,
-       |    payment_type.payment_type_label
        |  SET
-       |    payment_type.payment_type_id = {paymentTypeId},
        |    payment_type.payment_type_name = {paymentTypeName},
        |    payment_type.payment_type_label = {paymentTypeLabel}
-       |  WHERE
-       |    payment_type.payment_type_id = {paymentTypeId}
+       |  WHERE payment_type_id = {paymentTypeId}
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId,
@@ -65,8 +60,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
        |    payment_type.payment_type_name,
        |    payment_type.payment_type_label
        |  FROM sales.payment_type
-       |  WHERE
-       |    payment_type.payment_type_id = {paymentTypeId}
+       |  WHERE payment_type_id = {paymentTypeId}
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId
@@ -76,15 +70,10 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
   def updatePaymentType(cmd: UpdatePaymentTypeCmd)(implicit conn: Connection): Int = {
     SQL(s"""
        |UPDATE sales.payment_type
-       |    payment_type.payment_type_id,
-       |    payment_type.payment_type_name,
-       |    payment_type.payment_type_label
        |  SET
-       |    payment_type.payment_type_id = {paymentTypeId},
        |    payment_type.payment_type_name = {paymentTypeName},
        |    payment_type.payment_type_label = {paymentTypeLabel}
-       |  WHERE
-       |    payment_type.payment_type_id = {paymentTypeId}
+       |  WHERE payment_type_id = {paymentTypeId}
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId,
@@ -97,8 +86,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
     SQL(s"""
        |DELETE
        |  FROM sales.payment_type
-       |  WHERE
-       |    payment_type.payment_type_id = {paymentTypeId}
+       |  WHERE payment_type_id = {paymentTypeId}
      """.stripMargin.trim)
     .on(
       "paymentTypeId" -> cmd.paymentTypeId
@@ -116,8 +104,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
        |    payment_type.payment_type_name,
        |    payment_type.payment_type_label
        |  FROM sales.payment_type
-       |  WHERE
-       |    payment_type.rowid = {rowid}
+       |  WHERE rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> rowid
