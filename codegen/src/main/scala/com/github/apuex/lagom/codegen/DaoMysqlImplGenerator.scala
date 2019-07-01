@@ -21,6 +21,35 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   def generate(): Unit = {
     generateDaoContent(xml)
       .foreach(x => save(x._1, x._2, daoMysqlSrcDir))
+    save("DaoModule.scala", wireModule(xml), daoMysqlSrcDir)
+  }
+
+  def wireModule(root: Node): String = {
+    s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
+       |package ${daoMysqlSrcPackage}
+       |
+       |import com.softwaremill.macwire._
+       |
+       |@Module
+       |class DaoModule {
+       |  ${indent(wireDaos(root), 2)}
+       |}
+     """.stripMargin.trim
+  }
+
+  def wireDaos(root: Node): String = {
+    root.child.filter(_.label == "entity")
+      .map(_.\@("name"))
+      .map(x => {
+        s"""
+           |lazy val ${cToCamel(x)}Dao = wire[${cToPascal(x)}DaoImpl]
+         """.stripMargin.trim
+      })
+      .reduceOption((l, r) => s"${l}\n\n${r}")
+      .getOrElse("")
   }
 
   def generateDaoContent(xml: Node): Seq[(String, String)] = {
