@@ -195,7 +195,6 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |libraryDependencies ++= {
          |  Seq(
-         |    playEvents,
          |    akkaPersistence,
          |    akkaPersistenceQuery,
          |    akkaClusterSharding,
@@ -229,10 +228,6 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |libraryDependencies ++= {
          |  Seq(
-         |    playEvents,
-         |    akkaPersistence,
-         |    akkaPersistenceQuery,
-         |    akkaClusterSharding,
          |    macwireMacros          % Provided,
          |    macrosakka             % Provided,
          |    macwireUtil,

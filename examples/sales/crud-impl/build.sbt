@@ -11,10 +11,6 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
-    playEvents,
-    akkaPersistence,
-    akkaPersistenceQuery,
-    akkaClusterSharding,
     macwireMacros          % Provided,
     macrosakka             % Provided,
     macwireUtil,

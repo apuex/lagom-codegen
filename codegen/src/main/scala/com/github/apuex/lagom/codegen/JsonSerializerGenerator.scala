@@ -19,7 +19,6 @@ class JsonSerializerGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${apiSrcPackage}
        |
-       |import ${messageSrcPackage}._
        |import com.github.apuex.events.play.{EventEnvelope, EventEnvelopeProto}
        |import com.google.protobuf.any.Any
        |import play.api.libs.json._

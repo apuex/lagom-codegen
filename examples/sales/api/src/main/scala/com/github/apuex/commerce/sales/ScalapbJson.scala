@@ -3,7 +3,6 @@
  *****************************************************/
 package com.github.apuex.commerce.sales
 
-import com.github.apuex.commerce.sales._
 import com.github.apuex.events.play.{EventEnvelope, EventEnvelopeProto}
 import com.google.protobuf.any.Any
 import play.api.libs.json._

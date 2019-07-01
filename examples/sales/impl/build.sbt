@@ -11,7 +11,6 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
-    playEvents,
     akkaPersistence,
     akkaPersistenceQuery,
     akkaClusterSharding,
