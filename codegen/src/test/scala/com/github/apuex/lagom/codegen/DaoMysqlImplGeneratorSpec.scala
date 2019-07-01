@@ -17,7 +17,6 @@ class DaoMysqlImplGeneratorSpec extends FlatSpec with Matchers {
       .reduceOption((l, r) => s"$l\n$r")
       .getOrElse("")
 
-    println(daoDependencies)
     daoDependencies should be("orderItemDao: OrderItemDao")
   }
 }

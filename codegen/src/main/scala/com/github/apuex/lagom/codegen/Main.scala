@@ -19,6 +19,7 @@ object Main extends App {
       case "generate-service" => ServiceGenerator(args.drop(1)(0)).generate()
       case "generate-dao" => DaoGenerator(args.drop(1)(0)).generate()
       case "generate-dao-mysql" => DaoMysqlImplGenerator(args.drop(1)(0)).generate()
+      case "generate-dbschema-mysql" => MysqlSchemaGenerator(args.drop(1)(0)).generate()
       case "generate-project-settings" => ProjectGenerator(args.drop(1)(0)).generate()
       case "generate-all" => generateAll(args.drop(1)(0))
       case c =>
@@ -40,6 +41,7 @@ object Main extends App {
     CrudServiceGenerator(modelLoader).generate()
     DaoGenerator(modelLoader).generate()
     DaoMysqlImplGenerator(modelLoader).generate()
+    MysqlSchemaGenerator(modelLoader).generate()
     ProjectGenerator(modelLoader).generate()
   }
 }

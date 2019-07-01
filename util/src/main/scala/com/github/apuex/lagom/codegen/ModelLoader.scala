@@ -23,7 +23,7 @@ object ModelLoader {
 
   def apply(xml: Node, modelFileName: String): ModelLoader = new ModelLoader(xml, modelFileName)
 
-  case class Field(name: String, _type: String, length: Int, required: Boolean, entity: String, keyField: String, valueField: String, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
+  case class Field(name: String, _type: String, length: Int, scale: Int, required: Boolean, entity: String, keyField: String, valueField: String, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
 
   case class PrimaryKey(name: String, fields: Seq[Field])
 
@@ -41,8 +41,8 @@ object ModelLoader {
 
   case class Enumeration(name: String, options: Seq[EnumOption])
 
-  val userField = Field("user_id", "string", 64, false, "", "", "", "", "", false, false, "用户ID")
-  val rowidField = Field("rowid", "string", 64, false, "", "", "", "", "", false, false, "数据行ID")
+  val userField = Field("user_id", "string", 64, 0, false, "", "", "", "", "", false, false, "用户ID")
+  val rowidField = Field("rowid", "string", 64, 0, false, "", "", "", "", "", false, false, "数据行ID")
 
   def importPackagesForService(model: Node, service: Node): String = {
     s"""
@@ -71,6 +71,7 @@ object ModelLoader {
     val name = node.\@("name")
     val _type = node.\@("type")
     val length = if ("" == node.\@("length")) 0 else node.\@("length").toInt
+    val scale = if ("" == node.\@("scale")) 0 else node.\@("scale").toInt
     val required = if ("true" == node.\@("required")) true else false
     val entity = node.\@("entity")
     val keyField = node.\@("keyField")
@@ -80,7 +81,7 @@ object ModelLoader {
     val aggregate = if ("true" == node.\@("aggregate")) true else false
     val transient = if ("true" == node.\@("transient")) true else false
     val comment = node.\@("comment")
-    Field(name, _type, length, required, entity, keyField, valueField, keyType, valueType, aggregate, transient, comment)
+    Field(name, _type, length, scale, required, entity, keyField, valueField, keyType, valueType, aggregate, transient, comment)
   }
 
   def getFieldNames(node: Node): Seq[String] = {
@@ -155,7 +156,7 @@ object ModelLoader {
 
     // disable aggregate attribute on referenced columns
     refField
-      .map(x => Field(fkField.name, x._type, x.length, fkField.required, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, false, x.transient, x.comment))
+      .map(x => Field(fkField.name, x._type, x.length, x.scale, fkField.required, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, false, x.transient, x.comment))
   }
 
   def getReferencedColumn(name: String, refKey: String, refEntity: String, refField: String, root: Node): Option[Field] = {
@@ -163,7 +164,7 @@ object ModelLoader {
     Some(getFields(node, root)
       .filter(_.name == refField).head)
       // disable aggregate attribute on referenced columns
-      .map(x => Field(name, x._type, x.length, false, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, false, x.transient, x.comment))
+      .map(x => Field(name, x._type, x.length, x.scale, false, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, false, x.transient, x.comment))
   }
 
   def getForeignKeys(node: Node): Seq[ForeignKey] = {

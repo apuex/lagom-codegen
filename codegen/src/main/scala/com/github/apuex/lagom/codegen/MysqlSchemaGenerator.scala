@@ -3,7 +3,6 @@ package com.github.apuex.lagom.codegen
 import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime.TextUtils.indent
-import com.github.apuex.springbootsolution.runtime.TypeConverters._
 
 import scala.xml.Node
 
@@ -35,6 +34,24 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
         else
           toValueObject(x, aggregatesTo, xml)
       })
+
+    val prelude = Seq(
+      s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
+         |
+         |DROP USER IF EXISTS '${modelDbSchema}';
+         |DROP DATABASE IF EXISTS ${modelDbSchema};
+         |
+         |CREATE DATABASE ${modelDbSchema} DEFAULT CHARACTER SET 'UTF8' DEFAULT COLLATE utf8_unicode_ci;
+         |
+         |CREATE USER '${modelDbSchema}' IDENTIFIED BY 'password';
+         |GRANT ALL PRIVILEGES ON *.* TO '${modelDbSchema}' WITH GRANT OPTION;
+         |
+         |USE ${modelDbSchema};
+       """.stripMargin.trim
+    )
 
     val tables = entities
       .map(x => {
@@ -75,13 +92,12 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
       })
       .flatMap(x => x)
 
-    s"""
-       |${tables}
-       |
-       |${primaryKeys}
-       |
-       |${foreignKeys}
-     """.stripMargin.trim
+    (prelude ++
+      tables ++
+      primaryKeys ++
+      foreignKeys)
+      .reduceOption((l, r) => s"${l}\n\n${r}")
+      .getOrElse("")
   }
 
   def depends(x: Node, y: Node): Boolean = {
@@ -94,8 +110,8 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
     fields
       .filter(x => "array" != x._type && "map" != x._type)
       .map(x => {
-        val fieldType = toMysqlType(x.name, x.length)
-        val nullOpt = if(x.required) "NOT NULL" else ""
+        val fieldType = toMysqlType(x._type, x.length, x.scale)
+        val nullOpt = if (x.required) "NOT NULL" else ""
         s"""
            |${x.name} ${fieldType} ${nullOpt}
          """.stripMargin.trim
@@ -104,19 +120,19 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
   }
 
-  def toMysqlType(typeName: String, length: Int): String = typeName match {
+  def toMysqlType(typeName: String, length: Int, scale: Int): String = typeName match {
     case "bool" => "TINYINT"
     case "short" => "SHORT"
-    case "byte" => if(length == 0) "CHAR" else if(length > 0 && length < 256) s"CHAR(${length})" else "BLOB"
+    case "byte" => if (length == 0) "CHAR" else if (length > 0 && length < 256) s"CHAR(${length})" else "BLOB"
     case "int" => "INT"
     case "long" => "BIGINT"
-    case "decimal" => "DECIMAL"
-    case "string" => if(length < 256) s"VARCHAR(${length})" else "TEXT"
+    case "decimal" => s"DECIMAL(${length}, ${scale})"
+    case "string" => if (length < 256) s"VARCHAR(${length})" else "TEXT"
     case "text" => "TEXT"
     case "timestamp" => "DATETIME"
     case "float" => "FLOAT"
     case "double" => "DOUBLE"
     case "blob" => "BLOB"
-    case _ => "int" // enum type
+    case _ => "INT" // enum type
   }
 }
