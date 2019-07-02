@@ -57,7 +57,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |      with HikariCPComponents {
        |
        |    // Bind the service that this server provides
-       |    lazy val db = dbApi.database("${cToShell(modelName)}-db")
+       |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
        |    lazy val daoModule = wire[DaoModule]
        |    import daoModule._
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
@@ -103,7 +103,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |      with HikariCPComponents {
        |
        |    // Bind the service that this server provides
-       |    lazy val db = dbApi.database("${cToShell(modelName)}-db")
+       |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
        |    lazy val daoModule = wire[DaoModule]
        |    import daoModule._
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
