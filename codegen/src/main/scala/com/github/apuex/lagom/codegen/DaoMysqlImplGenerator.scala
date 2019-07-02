@@ -74,7 +74,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       defCrud(name, fields, primaryKey.fields, foreignKeys) ++
         defSelectByFks(name, fields, foreignKeys) ++
         defDeleteByFks(name, fields, foreignKeys) ++
-        defMessages(name, aggregate.messages) ++
+        defMessages(name, fields, primaryKey, aggregate.messages) ++
         defEmbeddedAggregateMessages(name, aggregate.aggregates)
       )
       .map(indentWithLeftMargin(_, 2))
@@ -88,20 +88,22 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          | *****************************************************/
          |package ${daoMysqlSrcPackage}
          |
+         |import java.io.InputStream
          |import java.sql.Connection
          |import java.util.Date
          |
+         |import anorm.ParameterValue._
          |import anorm.SqlParser._
          |import anorm._
          |import play._
-         |import anorm.ParameterValue._
-         |import ${messageSrcPackage}._
-         |import ${daoSrcPackage}._
-         |import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+         |import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, toScalapbTimestamp}
          |import com.github.apuex.springbootsolution.runtime.EnumConvert._
          |import com.github.apuex.springbootsolution.runtime.Parser._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.github.apuex.springbootsolution.runtime._
+         |import com.google.protobuf.ByteString
+         |import ${messageSrcPackage}._
+         |import ${daoSrcPackage}._
          |
          |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
          |  ${indent(calls, 2)}
@@ -144,20 +146,22 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          | *****************************************************/
          |package ${daoMysqlSrcPackage}
          |
+         |import java.io.InputStream
          |import java.sql.Connection
          |import java.util.Date
          |
+         |import anorm.ParameterValue._
          |import anorm.SqlParser._
          |import anorm._
          |import play._
-         |import anorm.ParameterValue._
-         |import ${messageSrcPackage}._
-         |import ${daoSrcPackage}._
-         |import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+         |import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, toScalapbTimestamp}
          |import com.github.apuex.springbootsolution.runtime.EnumConvert._
          |import com.github.apuex.springbootsolution.runtime.Parser._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
          |import com.github.apuex.springbootsolution.runtime._
+         |import com.google.protobuf.ByteString
+         |import ${messageSrcPackage}._
+         |import ${daoSrcPackage}._
          |
          |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
          |  ${indent(calls, 2)}
@@ -214,6 +218,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   def paramParser(fields: Seq[Field]): String = {
     val cases = fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
+      .filter(x => "text" != x._type && "blob" != x._type && "clob" != x._type)
       .map(x => {
       val javaType = cToPascal(toJavaType(x._type))
       if (isEnum(x._type))
@@ -238,6 +243,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
     val arrayCases = fields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
+      .filter(x => "text" != x._type && "blob" != x._type && "clob" != x._type)
       .map(x => {
       val javaType = cToPascal(toJavaType(x._type))
       if (isEnum(x._type))
@@ -303,27 +309,27 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def wrapOptionValue(valueType: String, value: String, required: Boolean): String = valueType match {
     case "bool" =>
-      if(required) value else s"${value}.getOrElse(false)"
+      if (required) value else s"${value}.getOrElse(false)"
     case "short" =>
-      if(required) value else s"${value}.getOrElse(0)"
+      if (required) value else s"${value}.getOrElse(0)"
     case "byte" =>
-      if(required) value else s"${value}.getOrElse(0)"
+      if (required) value else s"${value}.getOrElse(0)"
     case "int" =>
-      if(required) value else s"${value}.getOrElse(0)"
+      if (required) value else s"${value}.getOrElse(0)"
     case "long" =>
-      if(required) value else s"${value}.getOrElse(0)"
+      if (required) value else s"${value}.getOrElse(0)"
     case "decimal" =>
-      if(required) value else s"${value}.getOrElse(0)"
+      if (required) value else s"${value}.getOrElse(0)"
     case "string" =>
-      if(required) value else s"""${value}.getOrElse("")"""
+      if (required) value else s"""${value}.getOrElse("")"""
     case "timestamp" =>
       if (required) s"Some(toScalapbTimestamp(${value}))" else s"${value}.map(toScalapbTimestamp(_))"
     case "float" =>
-      if(required) value else s"${value}.getOrElse(0)"
+      if (required) value else s"${value}.getOrElse(0)"
     case "double" =>
-      if(required) value else s"${value}.getOrElse(0)"
+      if (required) value else s"${value}.getOrElse(0)"
     case "blob" =>
-      if(required) value else s"${value}.getOrElse(0)"
+      if (required) s"ByteString.readFrom(${value})" else s"${value}.map(ByteString.readFrom(_)).getOrElse(ByteString.EMPTY)"
     case _ => ""
   }
 
@@ -336,6 +342,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       if ("timestamp" == x._type)
         s"""
            |get[${wrapOption("Date", required)}]("${x.name}")
+         """.stripMargin.trim
+      else if ("blob" == x._type)
+        s"""
+           |get[${wrapOption("InputStream", required)}]("${x.name}")
          """.stripMargin.trim
       else
         s"""
@@ -357,7 +367,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         if (isJdbcType(x._type)) {
           wrapOptionValue(x._type, s"${cToCamel(x.name)}", required)
         }
-        else if (isEnum(x._type)) if(required) s"${cToPascal(x._type)}.fromValue(${cToCamel(x.name)})" else s"${cToCamel(x.name)}.map(x => ${cToPascal(x._type)}.fromValue(x)).getOrElse(${cToPascal(x._type)}.fromValue(0))"
+        else if (isEnum(x._type)) if (required) s"${cToPascal(x._type)}.fromValue(${cToCamel(x.name)})" else s"${cToCamel(x.name)}.map(x => ${cToPascal(x._type)}.fromValue(x)).getOrElse(${cToPascal(x._type)}.fromValue(0))"
         else { // array, map or value object type,
           s"""
              |${selectComposite(x, keyFields)}
@@ -445,6 +455,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       else if ("timestamp" == x._type)
         s"""
            |"${cToCamel(x.name)}" -> scalapbToDate(${t}${cToCamel(x.name)})
+           |""".stripMargin.trim
+      else if ("blob" == x._type)
+        s"""
+           |"${cToCamel(x.name)}" -> ${t}${cToCamel(x.name)}.toByteArray
            |""".stripMargin.trim
       else
         s"""
@@ -563,8 +577,12 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   )
 
-  def defMessage(root: String, message: Message): String = {
+  def defMessage(root: String, rootFields: Seq[Field], primaryKey: PrimaryKey, message: Message): String = {
+    val key = primaryKey.fields.map(_.name).toSet
+    val derived = rootFields.map(_.name).filter(!key.contains(_)).toSet
+    val fields = message.fields.filter(x => derived.contains(x.name))
     val returnType = if ("" == message.returnType) "Int"
+
     else {
       val baseName = message.returnType.replace("*", "")
       val multiple = message.returnType.endsWith("*")
@@ -575,7 +593,6 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       }
     }
 
-    import message._
     s"""
        |def ${cToCamel(message.name)}(cmd: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType} = {
        |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(root, fields, primaryKey.fields), 2), 2)})
@@ -593,8 +610,13 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def defMessages(root: String, messages: Seq[Message]): Seq[String] = {
-    messages.map(defMessage(root, _))
+  def defMessages(root: String, rootFields: Seq[Field], primaryKey: PrimaryKey, messages: Seq[Message]): Seq[String] = {
+    val key = primaryKey.fields.map(_.name).toSet
+    val derived = rootFields.map(_.name).filter(!key.contains(_)).toSet
+
+    messages
+      .filter(x => !x.transient && !x.fields.filter(f => derived.contains(f.name)).isEmpty)
+      .map(defMessage(root, rootFields, primaryKey, _))
   }
 
   def defEmbeddedAggregateMessage(aggregateRoot: String, aggregate: Aggregate): String = {

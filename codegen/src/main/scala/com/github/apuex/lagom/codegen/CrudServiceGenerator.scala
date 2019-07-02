@@ -155,7 +155,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
     (
       defCrudCalls(name) ++
         defByForeignKeyCalls(name, fields, foreignKeys) ++
-        defMessageCalls(name, aggregate.messages) ++
+        defMessageCalls(aggregate.messages, name, fields, primaryKey) ++
         defCallsForEmbeddedAggregateMessages(aggregate.name, aggregate.aggregates)
       )
       .reduceOption((l, r) => s"${l}\n\n${r}")
@@ -172,7 +172,9 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
   }
 
-  def defMessageCall(name: String, message: Message): String = {
+  def defMessageCall(message: Message, parentName: String, parentFields: Seq[Field], primaryKey: PrimaryKey): String = {
+    val key = primaryKey.fields.map(_.name).toSet
+    val derived = parentFields.map(_.name).filter(!key.contains(_)).toSet
     val multiple = message.returnType.endsWith("*")
     val returnType = if ("" == message.returnType) "Int"
     else {
@@ -183,13 +185,16 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
         cToPascal(toJavaType(baseName))
       }
     }
-    val daoCall = if (multiple)
+
+    val daoCall = if(message.transient || message.fields.filter(x => derived.contains(x.name)).isEmpty)
+      "0"
+    else if (multiple)
       s"""
-         |${returnType}(${cToCamel(name)}Dao.${cToCamel(message.name)}(cmd))
+         |${returnType}(${cToCamel(parentName)}Dao.${cToCamel(message.name)}(cmd))
        """.stripMargin.trim
     else
       s"""
-         |${cToCamel(name)}Dao.${cToCamel(message.name)}(cmd)
+         |${cToCamel(parentName)}Dao.${cToCamel(message.name)}(cmd)
        """.stripMargin.trim
 
     s"""
@@ -203,8 +208,8 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def defMessageCalls(name: String, messages: Seq[Message]): Seq[String] = {
-    messages.map(defMessageCall(name, _))
+  def defMessageCalls(messages: Seq[Message], parentName: String, parentFields: Seq[Field], primaryKey: PrimaryKey): Seq[String] = {
+    messages.map(defMessageCall(_, parentName, parentFields, primaryKey))
   }
 
   def defCrudCalls(name: String): Seq[String] = Seq(

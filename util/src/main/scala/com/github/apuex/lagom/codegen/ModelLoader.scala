@@ -214,11 +214,23 @@ object ModelLoader {
   }
 
   def toMessage(node: Node, fields: Seq[Field], primaryKey: PrimaryKey, root: Node): Message = {
+    val name = node.\@("name")
     val transient = if ("true" == node.\@("transient")) true else false
-    val fieldNames = getFieldNames(node).toSet
-    val messageFields = fields.filter(x => fieldNames.contains(x.name))
+
+    val keyFieldNames = primaryKey.fields.map(_.name).toSet
+    val parentFieldNames = fields.map(_.name).toSet
+
+    val fieldNames = node.child.filter(x => x.label == "field").map(_.\@("name")).toSet
+
+    val derivedFields = fields.filter(x => fieldNames.contains(x.name))
+    val extendedFields = node.child.filter(x => x.label == "field" && !parentFieldNames.contains(x.\@("name")))
+      .map(toField)
+      .filter(x => !keyFieldNames.contains(x.name))
+
+    val messageFields = derivedFields ++ extendedFields
+
     Message(
-      node.\@("name"),
+      name,
       shuffleFields(primaryKey.fields ++ messageFields, primaryKey.fields),
       primaryKey,
       transient,

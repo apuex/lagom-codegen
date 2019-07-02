@@ -76,4 +76,15 @@
       <field name="product_id" refField="product_id"/>
     </foreignKey>
   </entity>
+
+  <entity name="event" aggregate="true">
+    <field name="entity_id" type="string" length="64" required="true" comment="实体ID" />
+    <field name="occurred_time" type="timestamp" required="true" comment="事件发生时间" />
+    <field name="meta_data" type="string" length="128" required="true" comment="事件元数据" />
+    <field name="content" type="blob" required="true" comment="事件内容" />
+    <primaryKey name="event_pk">
+      <field name="entity_id"/>
+      <field name="occurred_time"/>
+    </primaryKey>
+  </entity>
 </model>

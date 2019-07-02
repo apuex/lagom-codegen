@@ -79,7 +79,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
     val calls = (
       defCrud(name) ++
         defByForeignKeys(name, fields, foreignKeys) ++
-        defMessages(aggregate.messages) ++
+        defMessages(aggregate.messages, aggregate.fields, aggregate.primaryKey) ++
         defEmbeddedAggregateMessages(aggregate.aggregates)
       )
       .reduceOption((l, r) => s"${l}\n\n${r}")
@@ -151,8 +151,12 @@ class DaoGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def defMessages(messages: Seq[Message]): Seq[String] = {
-    messages.map(defMessage(_))
+  def defMessages(messages: Seq[Message], parentFields: Seq[Field], primaryKey: PrimaryKey): Seq[String] = {
+    val key = primaryKey.fields.map(_.name).toSet
+    val derived = parentFields.map(_.name).filter(!key.contains(_)).toSet
+    messages
+      .filter(x => !x.transient && !x.fields.filter(f => derived.contains(f.name)).isEmpty)
+      .map(defMessage(_))
   }
 
   def defCrud(name: String): Seq[String] = Seq(
