@@ -13,10 +13,10 @@
       <field name="alarm_id"/>
       <field name="alarm_begin"/>
     </primaryKey>
-    <message name="begin_alarm">
+    <message name="begin_alarm" comment="告警发生">
       <field name="alarm_desc"/>
     </message>
-    <message name="end_alarm">
+    <message name="end_alarm" comment="告警结束">
       <field name="alarm_end"/>
       <field name="alarm_desc"/>
     </message>
