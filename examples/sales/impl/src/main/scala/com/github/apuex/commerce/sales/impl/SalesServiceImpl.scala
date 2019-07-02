@@ -20,6 +20,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   productDao: ProductDao,
   orderDao: OrderDao,
   orderItemDao: OrderItemDao,
+  eventJournalDao: EventJournalDao,
   db: Database)
   extends SalesService {
 
@@ -411,6 +412,54 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
          orderItemDao.deleteByProductId(productId)
+      }
+    )
+  }
+
+  def createEventJournal(): ServiceCall[CreateEventJournalCmd, Int] = ServiceCall { cmd =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         eventJournalDao.createEventJournal(cmd)
+      }
+    )
+  }
+
+  def retrieveEventJournal(): ServiceCall[RetrieveEventJournalCmd, EventJournalVo] = ServiceCall { cmd =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         eventJournalDao.retrieveEventJournal(cmd)
+      }
+    )
+  }
+
+  def updateEventJournal(): ServiceCall[UpdateEventJournalCmd, Int] = ServiceCall { cmd =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         eventJournalDao.updateEventJournal(cmd)
+      }
+    )
+  }
+
+  def deleteEventJournal(): ServiceCall[DeleteEventJournalCmd, Int] = ServiceCall { cmd =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         eventJournalDao.deleteEventJournal(cmd)
+      }
+    )
+  }
+
+  def queryEventJournal(): ServiceCall[QueryCommand, EventJournalListVo] = ServiceCall { cmd =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         EventJournalListVo(eventJournalDao.queryEventJournal(cmd))
+      }
+    )
+  }
+
+  def retrieveEventJournalByRowid(rowid: String): ServiceCall[NotUsed, EventJournalVo] = ServiceCall { _ =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         eventJournalDao.retrieveEventJournalByRowid(rowid)
       }
     )
   }

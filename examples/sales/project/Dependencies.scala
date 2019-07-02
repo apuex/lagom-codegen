@@ -9,7 +9,7 @@ object Dependencies {
   lazy val akkaVersion           = "2.5.22"
   lazy val artifactGroupName     = "com.github.apuex.commerce.sales"
   lazy val artifactVersionNumber = "1.0.0"
-  lazy val artifactMaintainer    = "xtwxy@hotmail"
+  lazy val artifactMaintainer    = "xtwxy@hotmail.com"
   lazy val sprayVersion          = "1.3.5"
   lazy val playVersion           = "2.7.2"
   lazy val lagomVersion          = "1.5.0"

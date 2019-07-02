@@ -3,25 +3,27 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.dao.mysql
 
+import java.io.InputStream
 import java.sql.Connection
 import java.util.Date
 
+import anorm.ParameterValue._
 import anorm.SqlParser._
 import anorm._
 import play._
-import anorm.ParameterValue._
-import com.github.apuex.commerce.sales._
-import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, toScalapbTimestamp}
 import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime._
+import com.google.protobuf.ByteString
+import com.github.apuex.commerce.sales._
+import com.github.apuex.commerce.sales.dao._
 
 class PaymentTypeDaoImpl() extends PaymentTypeDao {
   def createPaymentType(cmd: CreatePaymentTypeCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
-       |UPDATE sales.payment_type
+      |UPDATE sales.payment_type
        |  SET
        |    payment_type.payment_type_name = {paymentTypeName},
        |    payment_type.payment_type_label = {paymentTypeLabel}
@@ -35,7 +37,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
   
     if(rowsAffected == 0)
       SQL(s"""
-         |INSERT INTO sales.payment_type(
+        |INSERT INTO sales.payment_type(
          |    payment_type.payment_type_id,
          |    payment_type.payment_type_name,
          |    payment_type.payment_type_label
@@ -55,7 +57,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
 
   def retrievePaymentType(cmd: RetrievePaymentTypeCmd)(implicit conn: Connection): PaymentTypeVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    payment_type.payment_type_id,
        |    payment_type.payment_type_name,
        |    payment_type.payment_type_label
@@ -69,7 +71,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
 
   def updatePaymentType(cmd: UpdatePaymentTypeCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.payment_type
+      |UPDATE sales.payment_type
        |  SET
        |    payment_type.payment_type_name = {paymentTypeName},
        |    payment_type.payment_type_label = {paymentTypeLabel}
@@ -84,7 +86,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
 
   def deletePaymentType(cmd: DeletePaymentTypeCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |DELETE
+      |DELETE
        |  FROM sales.payment_type
        |  WHERE payment_type_id = {paymentTypeId}
      """.stripMargin.trim)
@@ -99,7 +101,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
 
   def retrievePaymentTypeByRowid(rowid: String)(implicit conn: Connection): PaymentTypeVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    payment_type.payment_type_id,
        |    payment_type.payment_type_name,
        |    payment_type.payment_type_label
@@ -113,7 +115,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
 
   private val selectPaymentTypeSql =
     s"""
-       |SELECT
+      |SELECT
        |    t.payment_type_id,
        |    t.payment_type_name,
        |    t.payment_type_label

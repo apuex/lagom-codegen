@@ -3,25 +3,27 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.dao.mysql
 
+import java.io.InputStream
 import java.sql.Connection
 import java.util.Date
 
+import anorm.ParameterValue._
 import anorm.SqlParser._
 import anorm._
 import play._
-import anorm.ParameterValue._
-import com.github.apuex.commerce.sales._
-import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, toScalapbTimestamp}
 import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime._
+import com.google.protobuf.ByteString
+import com.github.apuex.commerce.sales._
+import com.github.apuex.commerce.sales.dao._
 
 class ProductDaoImpl() extends ProductDao {
   def createProduct(cmd: CreateProductCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
-       |UPDATE sales.product
+      |UPDATE sales.product
        |  SET
        |    product.product_name = {productName},
        |    product.product_unit = {productUnit},
@@ -41,7 +43,7 @@ class ProductDaoImpl() extends ProductDao {
   
     if(rowsAffected == 0)
       SQL(s"""
-         |INSERT INTO sales.product(
+        |INSERT INTO sales.product(
          |    product.product_id,
          |    product.product_name,
          |    product.product_unit,
@@ -70,7 +72,7 @@ class ProductDaoImpl() extends ProductDao {
 
   def retrieveProduct(cmd: RetrieveProductCmd)(implicit conn: Connection): ProductVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    product.product_id,
        |    product.product_name,
        |    product.product_unit,
@@ -87,7 +89,7 @@ class ProductDaoImpl() extends ProductDao {
 
   def updateProduct(cmd: UpdateProductCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.product
+      |UPDATE sales.product
        |  SET
        |    product.product_name = {productName},
        |    product.product_unit = {productUnit},
@@ -108,7 +110,7 @@ class ProductDaoImpl() extends ProductDao {
 
   def deleteProduct(cmd: DeleteProductCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |DELETE
+      |DELETE
        |  FROM sales.product
        |  WHERE product_id = {productId}
      """.stripMargin.trim)
@@ -123,7 +125,7 @@ class ProductDaoImpl() extends ProductDao {
 
   def retrieveProductByRowid(rowid: String)(implicit conn: Connection): ProductVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    product.product_id,
        |    product.product_name,
        |    product.product_unit,
@@ -153,7 +155,7 @@ class ProductDaoImpl() extends ProductDao {
   
   def getProductSales(cmd: GetProductSalesCmd)(implicit conn: Connection): ProductSalesVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    product.product_id,
        |    product.record_time,
        |    product.quantity_sold
@@ -167,7 +169,7 @@ class ProductDaoImpl() extends ProductDao {
   
   def updateProductSales(cmd: UpdateProductSalesCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.product
+      |UPDATE sales.product
        |  SET
        |    product.record_time = {recordTime},
        |    product.quantity_sold = {quantitySold}
@@ -193,7 +195,7 @@ class ProductDaoImpl() extends ProductDao {
   
   def getProductName(cmd: GetProductNameCmd)(implicit conn: Connection): ProductNameVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    product.product_id,
        |    product.product_name
        |  FROM sales.product
@@ -206,7 +208,7 @@ class ProductDaoImpl() extends ProductDao {
   
   def changeProductName(cmd: ChangeProductNameCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.product
+      |UPDATE sales.product
        |  SET
        |    product.product_name = {productName}
        |  WHERE product_id = {productId}
@@ -230,7 +232,7 @@ class ProductDaoImpl() extends ProductDao {
   
   def getProductUnit(cmd: GetProductUnitCmd)(implicit conn: Connection): ProductUnitVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    product.product_id,
        |    product.product_unit
        |  FROM sales.product
@@ -243,7 +245,7 @@ class ProductDaoImpl() extends ProductDao {
   
   def changeProductUnit(cmd: ChangeProductUnitCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.product
+      |UPDATE sales.product
        |  SET
        |    product.product_unit = {productUnit}
        |  WHERE product_id = {productId}
@@ -267,7 +269,7 @@ class ProductDaoImpl() extends ProductDao {
   
   def getUnitPrice(cmd: GetUnitPriceCmd)(implicit conn: Connection): UnitPriceVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    product.product_id,
        |    product.unit_price
        |  FROM sales.product
@@ -280,7 +282,7 @@ class ProductDaoImpl() extends ProductDao {
   
   def changeUnitPrice(cmd: ChangeUnitPriceCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.product
+      |UPDATE sales.product
        |  SET
        |    product.unit_price = {unitPrice}
        |  WHERE product_id = {productId}
@@ -293,7 +295,7 @@ class ProductDaoImpl() extends ProductDao {
 
   private val selectProductSql =
     s"""
-       |SELECT
+      |SELECT
        |    t.product_id,
        |    t.product_name,
        |    t.product_unit,

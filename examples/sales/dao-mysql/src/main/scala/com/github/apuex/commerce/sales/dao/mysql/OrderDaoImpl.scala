@@ -3,25 +3,27 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.dao.mysql
 
+import java.io.InputStream
 import java.sql.Connection
 import java.util.Date
 
+import anorm.ParameterValue._
 import anorm.SqlParser._
 import anorm._
 import play._
-import anorm.ParameterValue._
-import com.github.apuex.commerce.sales._
-import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, toScalapbTimestamp}
 import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime._
+import com.google.protobuf.ByteString
+import com.github.apuex.commerce.sales._
+import com.github.apuex.commerce.sales.dao._
 
 class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   def createOrder(cmd: CreateOrderCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
-       |UPDATE sales.order
+      |UPDATE sales.order
        |  SET
        |    order.order_time = {orderTime},
        |    order.order_payment_type = {orderPaymentType}
@@ -35,7 +37,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   
     if(rowsAffected == 0)
       SQL(s"""
-         |INSERT INTO sales.order(
+        |INSERT INTO sales.order(
          |    order.order_id,
          |    order.order_time,
          |    order.order_payment_type
@@ -55,7 +57,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
 
   def retrieveOrder(cmd: RetrieveOrderCmd)(implicit conn: Connection): OrderVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    order.order_id,
        |    order.order_time,
        |    order.order_payment_type
@@ -69,7 +71,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
 
   def updateOrder(cmd: UpdateOrderCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.order
+      |UPDATE sales.order
        |  SET
        |    order.order_time = {orderTime},
        |    order.order_payment_type = {orderPaymentType}
@@ -84,7 +86,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
 
   def deleteOrder(cmd: DeleteOrderCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |DELETE
+      |DELETE
        |  FROM sales.order
        |  WHERE order_id = {orderId}
      """.stripMargin.trim)
@@ -99,7 +101,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
 
   def retrieveOrderByRowid(rowid: String)(implicit conn: Connection): OrderVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    order.order_id,
        |    order.order_time,
        |    order.order_payment_type
@@ -158,7 +160,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   
   def getOrderPaymentType(cmd: GetOrderPaymentTypeCmd)(implicit conn: Connection): OrderPaymentTypeVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    order.order_id,
        |    order.order_payment_type
        |  FROM sales.order
@@ -171,7 +173,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   
   def changeOrderPaymentType(cmd: ChangeOrderPaymentTypeCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.order
+      |UPDATE sales.order
        |  SET
        |    order.order_payment_type = {orderPaymentType}
        |  WHERE order_id = {orderId}
@@ -184,7 +186,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
 
   private val selectOrderSql =
     s"""
-       |SELECT
+      |SELECT
        |    t.order_id,
        |    t.order_time,
        |    t.order_payment_type

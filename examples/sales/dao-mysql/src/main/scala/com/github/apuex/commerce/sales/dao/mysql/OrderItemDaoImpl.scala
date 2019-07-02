@@ -3,25 +3,27 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.dao.mysql
 
+import java.io.InputStream
 import java.sql.Connection
 import java.util.Date
 
+import anorm.ParameterValue._
 import anorm.SqlParser._
 import anorm._
 import play._
-import anorm.ParameterValue._
-import com.github.apuex.commerce.sales._
-import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat.{toScalapbTimestamp, scalapbToDate}
+import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, toScalapbTimestamp}
 import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime._
+import com.google.protobuf.ByteString
+import com.github.apuex.commerce.sales._
+import com.github.apuex.commerce.sales.dao._
 
 class OrderItemDaoImpl() extends OrderItemDao {
   def createOrderItem(cmd: CreateOrderItemCmd)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
-       |UPDATE sales.order_item
+      |UPDATE sales.order_item
        |  SET
        |    order_item.product_name = {productName},
        |    order_item.item_unit = {itemUnit},
@@ -41,7 +43,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
   
     if(rowsAffected == 0)
       SQL(s"""
-         |INSERT INTO sales.order_item(
+        |INSERT INTO sales.order_item(
          |    order_item.order_id,
          |    order_item.product_id,
          |    order_item.product_name,
@@ -70,7 +72,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
 
   def retrieveOrderItem(cmd: RetrieveOrderItemCmd)(implicit conn: Connection): OrderItemVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    order_item.order_id,
        |    order_item.product_id,
        |    order_item.product_name,
@@ -89,7 +91,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
 
   def updateOrderItem(cmd: UpdateOrderItemCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |UPDATE sales.order_item
+      |UPDATE sales.order_item
        |  SET
        |    order_item.product_name = {productName},
        |    order_item.item_unit = {itemUnit},
@@ -110,7 +112,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
 
   def deleteOrderItem(cmd: DeleteOrderItemCmd)(implicit conn: Connection): Int = {
     SQL(s"""
-       |DELETE
+      |DELETE
        |  FROM sales.order_item
        |  WHERE order_id = {orderId}
        |    AND product_id = {productId}
@@ -127,7 +129,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
 
   def retrieveOrderItemByRowid(rowid: String)(implicit conn: Connection): OrderItemVo = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    order_item.order_id,
        |    order_item.product_id,
        |    order_item.product_name,
@@ -144,7 +146,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
 
   def selectByOrderId(orderId: String)(implicit conn: Connection): Seq[OrderItemVo] = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    order_item.order_id,
        |    order_item.product_id,
        |    order_item.product_name,
@@ -161,7 +163,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
 
   def selectByProductId(productId: String)(implicit conn: Connection): Seq[OrderItemVo] = {
     SQL(s"""
-       |SELECT
+      |SELECT
        |    order_item.order_id,
        |    order_item.product_id,
        |    order_item.product_name,
@@ -178,7 +180,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
 
   def deleteByOrderId(orderId: String)(implicit conn: Connection): Int = {
     SQL(s"""
-       |DELETE
+      |DELETE
        |  FROM sales.order_item
        |  WHERE order_id = {orderId}
      """.stripMargin.trim)
@@ -189,7 +191,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
 
   def deleteByProductId(productId: String)(implicit conn: Connection): Int = {
     SQL(s"""
-       |DELETE
+      |DELETE
        |  FROM sales.order_item
        |  WHERE product_id = {productId}
      """.stripMargin.trim)
@@ -200,7 +202,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
 
   private val selectOrderItemSql =
     s"""
-       |SELECT
+      |SELECT
        |    t.order_id,
        |    t.product_id,
        |    t.product_name,

@@ -594,3 +594,73 @@ message DeleteOrderItemEvent {
   string productId = 3; // 商品编号
 }
 
+message EventJournalVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  string persistenceId = 1; // 实体ID
+  google.protobuf.Timestamp occurredTime = 2; // 事件发生时间
+  string metaData = 3; // 事件元数据
+  bytes content = 4; // 事件内容
+}
+
+message EventJournalListVo {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+  repeated EventJournalVo items = 1;
+}
+
+message CreateEventJournalCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.EventJournalCommand";
+  string userId = 1; // 用户ID
+  string persistenceId = 2; // 实体ID
+  google.protobuf.Timestamp occurredTime = 3; // 事件发生时间
+  string metaData = 4; // 事件元数据
+  bytes content = 5; // 事件内容
+}
+
+message RetrieveEventJournalCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.EventJournalCommand";
+  string userId = 1; // 用户ID
+  string persistenceId = 2; // 实体ID
+  google.protobuf.Timestamp occurredTime = 3; // 事件发生时间
+}
+
+message UpdateEventJournalCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.EventJournalCommand";
+  string userId = 1; // 用户ID
+  string persistenceId = 2; // 实体ID
+  google.protobuf.Timestamp occurredTime = 3; // 事件发生时间
+  string metaData = 4; // 事件元数据
+  bytes content = 5; // 事件内容
+}
+
+message DeleteEventJournalCmd {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.EventJournalCommand";
+  string userId = 1; // 用户ID
+  string persistenceId = 2; // 实体ID
+  google.protobuf.Timestamp occurredTime = 3; // 事件发生时间
+}
+
+message CreateEventJournalEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.EventJournalEvent";
+  string userId = 1; // 用户ID
+  string persistenceId = 2; // 实体ID
+  google.protobuf.Timestamp occurredTime = 3; // 事件发生时间
+  string metaData = 4; // 事件元数据
+  bytes content = 5; // 事件内容
+}
+
+message UpdateEventJournalEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.EventJournalEvent";
+  string userId = 1; // 用户ID
+  string persistenceId = 2; // 实体ID
+  google.protobuf.Timestamp occurredTime = 3; // 事件发生时间
+  string metaData = 4; // 事件元数据
+  bytes content = 5; // 事件内容
+}
+
+message DeleteEventJournalEvent {
+  option (scalapb.message).extends = "com.github.apuex.commerce.sales.EventJournalEvent";
+  string userId = 1; // 用户ID
+  string persistenceId = 2; // 实体ID
+  google.protobuf.Timestamp occurredTime = 3; // 事件发生时间
+}
+

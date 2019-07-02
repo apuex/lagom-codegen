@@ -16,4 +16,6 @@ class DaoModule {
   lazy val orderDao = wire[OrderDaoImpl]
 
   lazy val orderItemDao = wire[OrderItemDaoImpl]
+
+  lazy val eventJournalDao = wire[EventJournalDaoImpl]
 }
