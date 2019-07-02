@@ -380,7 +380,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  lazy val akkaVersion           = "2.5.22"
          |  lazy val artifactGroupName     = "${modelPackage}"
          |  lazy val artifactVersionNumber = "${modelVersion}"
-         |  lazy val artifactMaintainer    = "xtwxy@hotmail"
+         |  lazy val artifactMaintainer    = "${modelMaintainer}"
          |  lazy val sprayVersion          = "1.3.5"
          |  lazy val playVersion           = "2.7.2"
          |  lazy val lagomVersion          = "1.5.0"

@@ -24,7 +24,7 @@ class ModelTestGenerator(modelLoader: ModelLoader) {
        |import org.scalatest._
        |
        |class ModelAttributeSpec extends FlatSpec with Matchers {
-       |  val model = fromClasspath("sales_entities.xml")
+       |  val model = fromClasspath("${modelFileName}")
        |  import model._
        |
        |  "A Model" should "have modelName == \\\"${modelName}\\\"" in {
