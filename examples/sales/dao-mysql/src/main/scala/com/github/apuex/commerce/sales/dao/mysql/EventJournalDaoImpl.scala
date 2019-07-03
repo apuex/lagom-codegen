@@ -32,7 +32,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
      """.stripMargin.trim)
     .on(
       "persistenceId" -> evt.persistenceId,
-      "occurredTime" -> scalapbToDate(evt.occurredTime),
+      "occurredTime" -> evt.occurredTime,
       "metaData" -> evt.metaData,
       "content" -> evt.content.toByteArray
     ).executeUpdate()
@@ -53,7 +53,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
        """.stripMargin.trim)
       .on(
         "persistenceId" -> evt.persistenceId,
-        "occurredTime" -> scalapbToDate(evt.occurredTime),
+        "occurredTime" -> evt.occurredTime,
         "metaData" -> evt.metaData,
         "content" -> evt.content.toByteArray
       ).executeUpdate()
@@ -73,7 +73,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
      """.stripMargin.trim)
     .on(
       "persistenceId" -> cmd.persistenceId,
-      "occurredTime" -> scalapbToDate(cmd.occurredTime)
+      "occurredTime" -> cmd.occurredTime
     ).as(eventJournalParser.single)
   }
 
@@ -88,7 +88,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
      """.stripMargin.trim)
     .on(
       "persistenceId" -> evt.persistenceId,
-      "occurredTime" -> scalapbToDate(evt.occurredTime),
+      "occurredTime" -> evt.occurredTime,
       "metaData" -> evt.metaData,
       "content" -> evt.content.toByteArray
     ).executeUpdate()
@@ -103,7 +103,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
      """.stripMargin.trim)
     .on(
       "persistenceId" -> evt.persistenceId,
-      "occurredTime" -> scalapbToDate(evt.occurredTime)
+      "occurredTime" -> evt.occurredTime
     ).executeUpdate()
   }
 
@@ -154,25 +154,25 @@ class EventJournalDaoImpl() extends EventJournalDao {
 
   private def parseParam(fieldName: String, paramName:String, paramValue: String): NamedParameter = fieldName match {
     case "persistenceId" => paramName -> paramValue
-    case "occurredTime" => paramName -> DateParser.parse(paramValue)
+    case "occurredTime" => paramName -> paramValue
     case "metaData" => paramName -> paramValue
   }
 
   private def parseParam(fieldName: String, paramName:String, paramValue: Seq[String]): NamedParameter = fieldName match {
     case "persistenceId" => paramName -> paramValue
-    case "occurredTime" => paramName -> paramValue.map(DateParser.parse(_))
+    case "occurredTime" => paramName -> paramValue
     case "metaData" => paramName -> paramValue
   }
 
   private def eventJournalParser(implicit c: Connection): RowParser[EventJournalVo] = {
     get[String]("persistence_id") ~ 
-    get[Date]("occurred_time") ~ 
+    get[String]("occurred_time") ~ 
     get[String]("meta_data") ~ 
     get[InputStream]("content") map {
       case persistenceId ~ occurredTime ~ metaData ~ content =>
         EventJournalVo(
           persistenceId,
-          Some(toScalapbTimestamp(occurredTime)),
+          occurredTime,
           metaData,
           ByteString.readFrom(content)
         )

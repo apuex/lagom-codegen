@@ -51,7 +51,7 @@ CREATE TABLE sales.order (
 
 CREATE TABLE sales.event_journal (
   persistence_id VARCHAR(64) NOT NULL,
-  occurred_time DATETIME NOT NULL,
+  occurred_time VARCHAR(64) NOT NULL,
   meta_data VARCHAR(128) NOT NULL,
   content BLOB NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

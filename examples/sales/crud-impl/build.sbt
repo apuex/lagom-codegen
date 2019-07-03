@@ -11,6 +11,7 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
+    akkaPersistenceCassandra,
     macwireMacros          % Provided,
     macrosakka             % Provided,
     macwireUtil,
