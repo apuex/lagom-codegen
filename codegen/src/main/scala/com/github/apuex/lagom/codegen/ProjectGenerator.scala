@@ -228,6 +228,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |libraryDependencies ++= {
          |  Seq(
+         |    akkaPersistenceCassandra,
          |    macwireMacros          % Provided,
          |    macrosakka             % Provided,
          |    macwireUtil,
