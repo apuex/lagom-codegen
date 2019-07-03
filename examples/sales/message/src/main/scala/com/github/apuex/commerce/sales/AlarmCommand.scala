@@ -9,6 +9,6 @@ trait AlarmCommand extends ShardingEntityCommand {
   def alarmId: String
   def alarmBegin: Option[Timestamp]
   override def entityId: String = {
-    s"alarm_${alarmId}_${alarmBegin.map(x => formatTimestamp(x.seconds * 1000 + x.nanos / 1000000))}"
+    s"alarm_${alarmId}_${alarmBegin.map(x => formatTimestamp(x.seconds * 1000 + x.nanos / 1000000)).getOrElse("")}"
   }
 }

@@ -9,13 +9,13 @@ import com.google.protobuf.timestamp.Timestamp
 import java.sql.Connection
 
 trait OrderDao {
-  def createOrder(cmd: CreateOrderCmd)(implicit conn: Connection): Int
+  def createOrder(evt: CreateOrderEvent)(implicit conn: Connection): Int
 
   def retrieveOrder(cmd: RetrieveOrderCmd)(implicit conn: Connection): OrderVo
 
-  def updateOrder(cmd: UpdateOrderCmd)(implicit conn: Connection): Int
+  def updateOrder(evt: UpdateOrderEvent)(implicit conn: Connection): Int
 
-  def deleteOrder(cmd: DeleteOrderCmd)(implicit conn: Connection): Int
+  def deleteOrder(evt: DeleteOrderEvent)(implicit conn: Connection): Int
 
   def queryOrder(cmd: QueryCommand)(implicit conn: Connection): Seq[OrderVo]
 
@@ -23,11 +23,11 @@ trait OrderDao {
 
   def getOrderLines(cmd: GetOrderLinesCmd)(implicit conn: Connection): OrderLinesVo
 
-  def addOrderLines(cmd: AddOrderLinesCmd)(implicit conn: Connection): Int
+  def addOrderLines(evt: AddOrderLinesEvent)(implicit conn: Connection): Int
 
-  def removeOrderLines(cmd: RemoveOrderLinesCmd)(implicit conn: Connection): Int
+  def removeOrderLines(evt: RemoveOrderLinesEvent)(implicit conn: Connection): Int
 
   def getOrderPaymentType(cmd: GetOrderPaymentTypeCmd)(implicit conn: Connection): OrderPaymentTypeVo
 
-  def changeOrderPaymentType(cmd: ChangeOrderPaymentTypeCmd)(implicit conn: Connection): Int
+  def changeOrderPaymentType(evt: ChangeOrderPaymentTypeEvent)(implicit conn: Connection): Int
 }

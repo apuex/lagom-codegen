@@ -9,13 +9,13 @@ import com.google.protobuf.timestamp.Timestamp
 import java.sql.Connection
 
 trait EventJournalDao {
-  def createEventJournal(cmd: CreateEventJournalCmd)(implicit conn: Connection): Int
+  def createEventJournal(evt: CreateEventJournalEvent)(implicit conn: Connection): Int
 
   def retrieveEventJournal(cmd: RetrieveEventJournalCmd)(implicit conn: Connection): EventJournalVo
 
-  def updateEventJournal(cmd: UpdateEventJournalCmd)(implicit conn: Connection): Int
+  def updateEventJournal(evt: UpdateEventJournalEvent)(implicit conn: Connection): Int
 
-  def deleteEventJournal(cmd: DeleteEventJournalCmd)(implicit conn: Connection): Int
+  def deleteEventJournal(evt: DeleteEventJournalEvent)(implicit conn: Connection): Int
 
   def queryEventJournal(cmd: QueryCommand)(implicit conn: Connection): Seq[EventJournalVo]
 

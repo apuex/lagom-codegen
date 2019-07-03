@@ -318,6 +318,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val modelVersion = xml.\@("version")
   val modelMaintainer = xml.\@("maintainer")
   val modelDbSchema = xml.\@("dbSchema")
+  val journalTable = xml.\@("journalTable")
   val outputDir = s"${System.getProperty("output.dir", "target/generated")}"
   val rootProjectName = s"${cToShell(modelName)}"
   val rootProjectDir = s"${outputDir}/${rootProjectName}"

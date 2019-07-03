@@ -37,7 +37,8 @@ object Main extends App {
     EntityGenerator(modelLoader).generate()
     JsonSerializerGenerator(modelLoader).generate()
     ServiceGenerator(modelLoader).generate()
-    CqrsServiceGenerator(modelLoader).generate()
+    // TODO: NOT implemented.
+    // CqrsServiceGenerator(modelLoader).generate()
     CrudServiceGenerator(modelLoader).generate()
     DaoGenerator(modelLoader).generate()
     DaoMysqlImplGenerator(modelLoader).generate()

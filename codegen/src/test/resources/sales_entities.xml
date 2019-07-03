@@ -3,6 +3,7 @@
        package="com.github.apuex.commerce.sales"
        version="1.0.0"
        dbSchema="sales"
+       journalTable="event_journal"
        maintainer="xtwxy@hotmail.com">
   <entity name="alarm" aggregate="true">
     <field name="alarm_id" type="string" required="true" length="64" comment="告警对象ID"/>

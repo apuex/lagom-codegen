@@ -92,6 +92,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
             val enumration = toEnumeration(x, aggregatesTo, xml)
             valueObjects ++
               generateCrudCmd(valueObject.name, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage) ++
+              generateCrudEvt(valueObject.name, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage) ++
               generateEnumeration(enumration.name, enumration.options, messageSrcPackage)
           } else {
             valueObjects ++
@@ -392,7 +393,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
         dependencies += "com.google.protobuf.timestamp.Timestamp"
         dependencies += "com.github.apuex.springbootsolution.runtime.DateFormat._"
         s"""
-           |$${${cToCamel(x.name)}.map(x => formatTimestamp(x.seconds * 1000 + x.nanos / 1000000))}
+           |$${${cToCamel(x.name)}.map(x => formatTimestamp(x.seconds * 1000 + x.nanos / 1000000)).getOrElse("")}
          """.stripMargin.trim
       } else {
         s"""

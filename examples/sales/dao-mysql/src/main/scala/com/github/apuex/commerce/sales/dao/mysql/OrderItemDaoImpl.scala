@@ -21,51 +21,51 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
 
 class OrderItemDaoImpl() extends OrderItemDao {
-  def createOrderItem(cmd: CreateOrderItemCmd)(implicit conn: Connection): Int = {
+  def createOrderItem(evt: CreateOrderItemEvent)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
       |UPDATE sales.order_item
-       |  SET
-       |    order_item.product_name = {productName},
-       |    order_item.item_unit = {itemUnit},
-       |    order_item.unit_price = {unitPrice},
-       |    order_item.order_quantity = {orderQuantity}
-       |  WHERE order_id = {orderId}
-       |    AND product_id = {productId}
+      |  SET
+      |    order_item.product_name = {productName},
+      |    order_item.item_unit = {itemUnit},
+      |    order_item.unit_price = {unitPrice},
+      |    order_item.order_quantity = {orderQuantity}
+      |  WHERE order_id = {orderId}
+      |    AND product_id = {productId}
      """.stripMargin.trim)
     .on(
-      "orderId" -> cmd.orderId,
-      "productId" -> cmd.productId,
-      "productName" -> cmd.productName,
-      "itemUnit" -> cmd.itemUnit,
-      "unitPrice" -> cmd.unitPrice,
-      "orderQuantity" -> cmd.orderQuantity
+      "orderId" -> evt.orderId,
+      "productId" -> evt.productId,
+      "productName" -> evt.productName,
+      "itemUnit" -> evt.itemUnit,
+      "unitPrice" -> evt.unitPrice,
+      "orderQuantity" -> evt.orderQuantity
     ).executeUpdate()
   
     if(rowsAffected == 0)
       SQL(s"""
         |INSERT INTO sales.order_item(
-         |    order_item.order_id,
-         |    order_item.product_id,
-         |    order_item.product_name,
-         |    order_item.item_unit,
-         |    order_item.unit_price,
-         |    order_item.order_quantity
-         |  ) VALUES (
-         |    {orderId},
-         |    {productId},
-         |    {productName},
-         |    {itemUnit},
-         |    {unitPrice},
-         |    {orderQuantity}
-         |  )
+        |    order_item.order_id,
+        |    order_item.product_id,
+        |    order_item.product_name,
+        |    order_item.item_unit,
+        |    order_item.unit_price,
+        |    order_item.order_quantity
+        |  ) VALUES (
+        |    {orderId},
+        |    {productId},
+        |    {productName},
+        |    {itemUnit},
+        |    {unitPrice},
+        |    {orderQuantity}
+        |  )
        """.stripMargin.trim)
       .on(
-        "orderId" -> cmd.orderId,
-        "productId" -> cmd.productId,
-        "productName" -> cmd.productName,
-        "itemUnit" -> cmd.itemUnit,
-        "unitPrice" -> cmd.unitPrice,
-        "orderQuantity" -> cmd.orderQuantity
+        "orderId" -> evt.orderId,
+        "productId" -> evt.productId,
+        "productName" -> evt.productName,
+        "itemUnit" -> evt.itemUnit,
+        "unitPrice" -> evt.unitPrice,
+        "orderQuantity" -> evt.orderQuantity
       ).executeUpdate()
     else rowsAffected
   }
@@ -73,15 +73,15 @@ class OrderItemDaoImpl() extends OrderItemDao {
   def retrieveOrderItem(cmd: RetrieveOrderItemCmd)(implicit conn: Connection): OrderItemVo = {
     SQL(s"""
       |SELECT
-       |    order_item.order_id,
-       |    order_item.product_id,
-       |    order_item.product_name,
-       |    order_item.item_unit,
-       |    order_item.unit_price,
-       |    order_item.order_quantity
-       |  FROM sales.order_item
-       |  WHERE order_id = {orderId}
-       |    AND product_id = {productId}
+      |    order_item.order_id,
+      |    order_item.product_id,
+      |    order_item.product_name,
+      |    order_item.item_unit,
+      |    order_item.unit_price,
+      |    order_item.order_quantity
+      |  FROM sales.order_item
+      |  WHERE order_id = {orderId}
+      |    AND product_id = {productId}
      """.stripMargin.trim)
     .on(
       "orderId" -> cmd.orderId,
@@ -89,37 +89,37 @@ class OrderItemDaoImpl() extends OrderItemDao {
     ).as(orderItemParser.single)
   }
 
-  def updateOrderItem(cmd: UpdateOrderItemCmd)(implicit conn: Connection): Int = {
+  def updateOrderItem(evt: UpdateOrderItemEvent)(implicit conn: Connection): Int = {
     SQL(s"""
       |UPDATE sales.order_item
-       |  SET
-       |    order_item.product_name = {productName},
-       |    order_item.item_unit = {itemUnit},
-       |    order_item.unit_price = {unitPrice},
-       |    order_item.order_quantity = {orderQuantity}
-       |  WHERE order_id = {orderId}
-       |    AND product_id = {productId}
+      |  SET
+      |    order_item.product_name = {productName},
+      |    order_item.item_unit = {itemUnit},
+      |    order_item.unit_price = {unitPrice},
+      |    order_item.order_quantity = {orderQuantity}
+      |  WHERE order_id = {orderId}
+      |    AND product_id = {productId}
      """.stripMargin.trim)
     .on(
-      "orderId" -> cmd.orderId,
-      "productId" -> cmd.productId,
-      "productName" -> cmd.productName,
-      "itemUnit" -> cmd.itemUnit,
-      "unitPrice" -> cmd.unitPrice,
-      "orderQuantity" -> cmd.orderQuantity
+      "orderId" -> evt.orderId,
+      "productId" -> evt.productId,
+      "productName" -> evt.productName,
+      "itemUnit" -> evt.itemUnit,
+      "unitPrice" -> evt.unitPrice,
+      "orderQuantity" -> evt.orderQuantity
     ).executeUpdate()
   }
 
-  def deleteOrderItem(cmd: DeleteOrderItemCmd)(implicit conn: Connection): Int = {
+  def deleteOrderItem(evt: DeleteOrderItemEvent)(implicit conn: Connection): Int = {
     SQL(s"""
       |DELETE
-       |  FROM sales.order_item
-       |  WHERE order_id = {orderId}
-       |    AND product_id = {productId}
+      |  FROM sales.order_item
+      |  WHERE order_id = {orderId}
+      |    AND product_id = {productId}
      """.stripMargin.trim)
     .on(
-      "orderId" -> cmd.orderId,
-      "productId" -> cmd.productId
+      "orderId" -> evt.orderId,
+      "productId" -> evt.productId
     ).executeUpdate()
   }
 
@@ -130,14 +130,14 @@ class OrderItemDaoImpl() extends OrderItemDao {
   def retrieveOrderItemByRowid(rowid: String)(implicit conn: Connection): OrderItemVo = {
     SQL(s"""
       |SELECT
-       |    order_item.order_id,
-       |    order_item.product_id,
-       |    order_item.product_name,
-       |    order_item.item_unit,
-       |    order_item.unit_price,
-       |    order_item.order_quantity
-       |  FROM sales.order_item
-       |  WHERE rowid = {rowid}
+      |    order_item.order_id,
+      |    order_item.product_id,
+      |    order_item.product_name,
+      |    order_item.item_unit,
+      |    order_item.unit_price,
+      |    order_item.order_quantity
+      |  FROM sales.order_item
+      |  WHERE rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> rowid
@@ -147,14 +147,14 @@ class OrderItemDaoImpl() extends OrderItemDao {
   def selectByOrderId(orderId: String)(implicit conn: Connection): Seq[OrderItemVo] = {
     SQL(s"""
       |SELECT
-       |    order_item.order_id,
-       |    order_item.product_id,
-       |    order_item.product_name,
-       |    order_item.item_unit,
-       |    order_item.unit_price,
-       |    order_item.order_quantity
-       |  FROM sales.order_item
-       |  WHERE order_id = {orderId}
+      |    order_item.order_id,
+      |    order_item.product_id,
+      |    order_item.product_name,
+      |    order_item.item_unit,
+      |    order_item.unit_price,
+      |    order_item.order_quantity
+      |  FROM sales.order_item
+      |  WHERE order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> orderId
@@ -164,14 +164,14 @@ class OrderItemDaoImpl() extends OrderItemDao {
   def selectByProductId(productId: String)(implicit conn: Connection): Seq[OrderItemVo] = {
     SQL(s"""
       |SELECT
-       |    order_item.order_id,
-       |    order_item.product_id,
-       |    order_item.product_name,
-       |    order_item.item_unit,
-       |    order_item.unit_price,
-       |    order_item.order_quantity
-       |  FROM sales.order_item
-       |  WHERE product_id = {productId}
+      |    order_item.order_id,
+      |    order_item.product_id,
+      |    order_item.product_name,
+      |    order_item.item_unit,
+      |    order_item.unit_price,
+      |    order_item.order_quantity
+      |  FROM sales.order_item
+      |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> productId
@@ -181,8 +181,8 @@ class OrderItemDaoImpl() extends OrderItemDao {
   def deleteByOrderId(orderId: String)(implicit conn: Connection): Int = {
     SQL(s"""
       |DELETE
-       |  FROM sales.order_item
-       |  WHERE order_id = {orderId}
+      |  FROM sales.order_item
+      |  WHERE order_id = {orderId}
      """.stripMargin.trim)
     .on(
       "orderId" -> orderId
@@ -192,8 +192,8 @@ class OrderItemDaoImpl() extends OrderItemDao {
   def deleteByProductId(productId: String)(implicit conn: Connection): Int = {
     SQL(s"""
       |DELETE
-       |  FROM sales.order_item
-       |  WHERE product_id = {productId}
+      |  FROM sales.order_item
+      |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> productId
@@ -203,13 +203,13 @@ class OrderItemDaoImpl() extends OrderItemDao {
   private val selectOrderItemSql =
     s"""
       |SELECT
-       |    t.order_id,
-       |    t.product_id,
-       |    t.product_name,
-       |    t.item_unit,
-       |    t.unit_price,
-       |    t.order_quantity
-       |  FROM sales.order_item t
+      |    t.order_id,
+      |    t.product_id,
+      |    t.product_name,
+      |    t.item_unit,
+      |    t.unit_price,
+      |    t.order_quantity
+      |  FROM sales.order_item t
      """.stripMargin.trim
 
   private val fieldConverter: SymbolConverter = {

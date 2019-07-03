@@ -18,10 +18,16 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
+    val content = generateServiceImpl()
     save(
       s"${cToPascal(s"${modelName}_${service}_${impl}")}.scala",
-      generateServiceImpl(),
+      content,
       crudImplSrcDir
+    )
+    save(
+      s"${cToPascal(s"${modelName}_${service}_${impl}")}.scala",
+      content,
+      implSrcDir
     )
   }
 
@@ -37,15 +43,16 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${crudImplSrcPackage}
        |
+       |import java.util.Date
+       |
        |import akka._
        |import akka.stream.scaladsl._
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.dao._
+       |import com.github.apuex.springbootsolution.runtime.DateFormat._
        |import com.github.apuex.springbootsolution.runtime._
-       |import com.google.protobuf.timestamp.Timestamp
        |import com.lightbend.lagom.scaladsl.api._
        |import play.api.db.Database
-       |import play.api.libs.json.Json
        |
        |import scala.concurrent.Future
        |
@@ -99,7 +106,11 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
          |def update${cToPascal(aggregate.name)}(): ServiceCall[Update${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
          |  Future.successful(
          |    db.withTransaction { implicit c =>
-         |       ${cToCamel(name)}Dao.update${cToPascal(aggregate.name)}(cmd)
+         |      val evt = Update${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.fields, "cmd")})
+         |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+         |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+         |      )
+         |      ${cToCamel(name)}Dao.update${cToPascal(aggregate.name)}(evt)
          |    }
          |  )
          |}
@@ -111,7 +122,11 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |def add${cToPascal(aggregate.name)}(): ServiceCall[Add${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
            |  Future.successful(
            |    db.withTransaction { implicit c =>
-           |       ${cToCamel(name)}Dao.add${cToPascal(aggregate.name)}(cmd)
+           |      val evt = Add${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.fields, "cmd")})
+           |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+           |      )
+           |      ${cToCamel(name)}Dao.add${cToPascal(aggregate.name)}(evt)
            |    }
            |  )
            |}
@@ -119,7 +134,11 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |def remove${cToPascal(aggregate.name)}(): ServiceCall[Remove${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
            |  Future.successful(
            |    db.withTransaction { implicit c =>
-           |       ${cToCamel(name)}Dao.remove${cToPascal(aggregate.name)}(cmd)
+           |      val evt = Remove${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.primaryKey.fields, "cmd")})
+           |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+           |      )
+           |      ${cToCamel(name)}Dao.remove${cToPascal(aggregate.name)}(evt)
            |    }
            |  )
            |}
@@ -129,7 +148,11 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |def change${cToPascal(aggregate.name)}(): ServiceCall[Change${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
            |  Future.successful(
            |    db.withTransaction { implicit c =>
-           |       ${cToCamel(name)}Dao.change${cToPascal(aggregate.name)}(cmd)
+           |      val evt = Change${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.fields, "cmd")})
+           |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+           |      )
+           |      ${cToCamel(name)}Dao.change${cToPascal(aggregate.name)}(evt)
            |    }
            |  )
            |}
@@ -153,7 +176,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
   def generateCallsForAggregate(aggregate: Aggregate): String = {
     import aggregate._
     (
-      defCrudCalls(name) ++
+      defCrudCalls(name, fields, primaryKey) ++
         defByForeignKeyCalls(name, fields, foreignKeys) ++
         defMessageCalls(aggregate.messages, name, fields, primaryKey) ++
         defCallsForEmbeddedAggregateMessages(aggregate.name, aggregate.aggregates)
@@ -165,7 +188,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
   def generateCallsForValueObject(valueObject: ValueObject): String = {
     import valueObject._
     (
-      defCrudCalls(name) ++
+      defCrudCalls(name, fields, primaryKey) ++
         defByForeignKeyCalls(name, fields, foreignKeys)
       )
       .reduceOption((l, r) => s"${l}\n\n${r}")
@@ -190,18 +213,28 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       "0"
     else if (multiple)
       s"""
-         |${returnType}(${cToCamel(parentName)}Dao.${cToCamel(message.name)}(cmd))
+         |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
+         |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+         |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+         |)
+         |${returnType}(
+         |  ${cToCamel(parentName)}Dao.${cToCamel(message.name)}(evt)
+         |)
        """.stripMargin.trim
     else
       s"""
-         |${cToCamel(parentName)}Dao.${cToCamel(message.name)}(cmd)
+         |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
+         |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+         |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+         |)
+         |${cToCamel(parentName)}Dao.${cToCamel(message.name)}(evt)
        """.stripMargin.trim
 
     s"""
        |def ${cToCamel(message.name)}(): ServiceCall[${cToPascal(message.name)}Cmd, ${returnType}] = ServiceCall { cmd =>
        |  Future.successful(
        |    db.withTransaction { implicit c =>
-       |       ${daoCall}
+       |      ${indent(daoCall, 6)}
        |    }
        |  )
        |}
@@ -212,12 +245,16 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
     messages.map(defMessageCall(_, parentName, parentFields, primaryKey))
   }
 
-  def defCrudCalls(name: String): Seq[String] = Seq(
+  def defCrudCalls(name: String, fields: Seq[Field], primaryKey: PrimaryKey): Seq[String] = Seq(
     s"""
        |def create${cToPascal(name)}(): ServiceCall[Create${cToPascal(name)}Cmd, Int] = ServiceCall { cmd =>
        |  Future.successful(
        |    db.withTransaction { implicit c =>
-       |       ${cToCamel(name)}Dao.create${cToPascal(name)}(cmd)
+       |      val evt = Create${cToPascal(name)}Event(${substituteMethodParams(userField +: fields, "cmd")})
+       |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+       |      )
+       |      ${cToCamel(name)}Dao.create${cToPascal(name)}(evt)
        |    }
        |  )
        |}
@@ -226,7 +263,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |def retrieve${cToPascal(name)}(): ServiceCall[Retrieve${cToPascal(name)}Cmd, ${cToPascal(name)}Vo] = ServiceCall { cmd =>
        |  Future.successful(
        |    db.withTransaction { implicit c =>
-       |       ${cToCamel(name)}Dao.retrieve${cToPascal(name)}(cmd)
+       |      ${cToCamel(name)}Dao.retrieve${cToPascal(name)}(cmd)
        |    }
        |  )
        |}
@@ -235,7 +272,11 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |def update${cToPascal(name)}(): ServiceCall[Update${cToPascal(name)}Cmd, Int] = ServiceCall { cmd =>
        |  Future.successful(
        |    db.withTransaction { implicit c =>
-       |       ${cToCamel(name)}Dao.update${cToPascal(name)}(cmd)
+       |      val evt = Update${cToPascal(name)}Event(${substituteMethodParams(userField +: fields, "cmd")})
+       |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+       |      )
+       |      ${cToCamel(name)}Dao.update${cToPascal(name)}(evt)
        |    }
        |  )
        |}
@@ -244,7 +285,11 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |def delete${cToPascal(name)}(): ServiceCall[Delete${cToPascal(name)}Cmd, Int] = ServiceCall { cmd =>
        |  Future.successful(
        |    db.withTransaction { implicit c =>
-       |       ${cToCamel(name)}Dao.delete${cToPascal(name)}(cmd)
+       |      val evt = Delete${cToPascal(name)}Event(${substituteMethodParams(userField +: primaryKey.fields, "cmd")})
+       |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+       |      )
+       |      ${cToCamel(name)}Dao.delete${cToPascal(name)}(evt)
        |    }
        |  )
        |}

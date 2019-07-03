@@ -3,15 +3,16 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.impl
 
+import java.util.Date
+
 import akka._
 import akka.stream.scaladsl._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
+import com.github.apuex.springbootsolution.runtime.DateFormat._
 import com.github.apuex.springbootsolution.runtime._
-import com.google.protobuf.timestamp.Timestamp
 import com.lightbend.lagom.scaladsl.api._
 import play.api.db.Database
-import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -27,7 +28,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def createAlarm(): ServiceCall[CreateAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         alarmDao.createAlarm(cmd)
+        val evt = CreateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        alarmDao.createAlarm(evt)
       }
     )
   }
@@ -35,7 +40,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def retrieveAlarm(): ServiceCall[RetrieveAlarmCmd, AlarmVo] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         alarmDao.retrieveAlarm(cmd)
+        alarmDao.retrieveAlarm(cmd)
       }
     )
   }
@@ -43,7 +48,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updateAlarm(): ServiceCall[UpdateAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         alarmDao.updateAlarm(cmd)
+        val evt = UpdateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        alarmDao.updateAlarm(evt)
       }
     )
   }
@@ -51,7 +60,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def deleteAlarm(): ServiceCall[DeleteAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         alarmDao.deleteAlarm(cmd)
+        val evt = DeleteAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        alarmDao.deleteAlarm(evt)
       }
     )
   }
@@ -75,7 +88,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def beginAlarm(): ServiceCall[BeginAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         alarmDao.beginAlarm(cmd)
+        val evt = BeginAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        alarmDao.beginAlarm(evt)
       }
     )
   }
@@ -83,7 +100,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def endAlarm(): ServiceCall[EndAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         alarmDao.endAlarm(cmd)
+        val evt = EndAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        alarmDao.endAlarm(evt)
       }
     )
   }
@@ -91,7 +112,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def createPaymentType(): ServiceCall[CreatePaymentTypeCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         paymentTypeDao.createPaymentType(cmd)
+        val evt = CreatePaymentTypeEvent(cmd.userId, cmd.paymentTypeId, cmd.paymentTypeName, cmd.paymentTypeLabel)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        paymentTypeDao.createPaymentType(evt)
       }
     )
   }
@@ -99,7 +124,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def retrievePaymentType(): ServiceCall[RetrievePaymentTypeCmd, PaymentTypeVo] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         paymentTypeDao.retrievePaymentType(cmd)
+        paymentTypeDao.retrievePaymentType(cmd)
       }
     )
   }
@@ -107,7 +132,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updatePaymentType(): ServiceCall[UpdatePaymentTypeCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         paymentTypeDao.updatePaymentType(cmd)
+        val evt = UpdatePaymentTypeEvent(cmd.userId, cmd.paymentTypeId, cmd.paymentTypeName, cmd.paymentTypeLabel)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        paymentTypeDao.updatePaymentType(evt)
       }
     )
   }
@@ -115,7 +144,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def deletePaymentType(): ServiceCall[DeletePaymentTypeCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         paymentTypeDao.deletePaymentType(cmd)
+        val evt = DeletePaymentTypeEvent(cmd.userId, cmd.paymentTypeId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        paymentTypeDao.deletePaymentType(evt)
       }
     )
   }
@@ -139,7 +172,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def createProduct(): ServiceCall[CreateProductCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         productDao.createProduct(cmd)
+        val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.recordTime, cmd.quantitySold)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        productDao.createProduct(evt)
       }
     )
   }
@@ -147,7 +184,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def retrieveProduct(): ServiceCall[RetrieveProductCmd, ProductVo] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         productDao.retrieveProduct(cmd)
+        productDao.retrieveProduct(cmd)
       }
     )
   }
@@ -155,7 +192,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updateProduct(): ServiceCall[UpdateProductCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         productDao.updateProduct(cmd)
+        val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.recordTime, cmd.quantitySold)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        productDao.updateProduct(evt)
       }
     )
   }
@@ -163,7 +204,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def deleteProduct(): ServiceCall[DeleteProductCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         productDao.deleteProduct(cmd)
+        val evt = DeleteProductEvent(cmd.userId, cmd.productId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        productDao.deleteProduct(evt)
       }
     )
   }
@@ -195,7 +240,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updateProductSales(): ServiceCall[UpdateProductSalesCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         productDao.updateProductSales(cmd)
+        val evt = UpdateProductSalesEvent(cmd.userId, cmd.productId, cmd.recordTime, cmd.quantitySold)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        productDao.updateProductSales(evt)
       }
     )
   }
@@ -211,7 +260,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def changeProductName(): ServiceCall[ChangeProductNameCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         productDao.changeProductName(cmd)
+        val evt = ChangeProductNameEvent(cmd.userId, cmd.productId, cmd.productName)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        productDao.changeProductName(evt)
       }
     )
   }
@@ -227,7 +280,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def changeProductUnit(): ServiceCall[ChangeProductUnitCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         productDao.changeProductUnit(cmd)
+        val evt = ChangeProductUnitEvent(cmd.userId, cmd.productId, cmd.productUnit)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        productDao.changeProductUnit(evt)
       }
     )
   }
@@ -243,7 +300,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def changeUnitPrice(): ServiceCall[ChangeUnitPriceCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         productDao.changeUnitPrice(cmd)
+        val evt = ChangeUnitPriceEvent(cmd.userId, cmd.productId, cmd.unitPrice)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        productDao.changeUnitPrice(evt)
       }
     )
   }
@@ -251,7 +312,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def createOrder(): ServiceCall[CreateOrderCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderDao.createOrder(cmd)
+        val evt = CreateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        orderDao.createOrder(evt)
       }
     )
   }
@@ -259,7 +324,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def retrieveOrder(): ServiceCall[RetrieveOrderCmd, OrderVo] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderDao.retrieveOrder(cmd)
+        orderDao.retrieveOrder(cmd)
       }
     )
   }
@@ -267,7 +332,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updateOrder(): ServiceCall[UpdateOrderCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderDao.updateOrder(cmd)
+        val evt = UpdateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        orderDao.updateOrder(evt)
       }
     )
   }
@@ -275,7 +344,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def deleteOrder(): ServiceCall[DeleteOrderCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderDao.deleteOrder(cmd)
+        val evt = DeleteOrderEvent(cmd.userId, cmd.orderId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        orderDao.deleteOrder(evt)
       }
     )
   }
@@ -307,7 +380,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def addOrderLines(): ServiceCall[AddOrderLinesCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderDao.addOrderLines(cmd)
+        val evt = AddOrderLinesEvent(cmd.userId, cmd.orderId, cmd.orderLines)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        orderDao.addOrderLines(evt)
       }
     )
   }
@@ -315,7 +392,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def removeOrderLines(): ServiceCall[RemoveOrderLinesCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderDao.removeOrderLines(cmd)
+        val evt = RemoveOrderLinesEvent(cmd.userId, cmd.orderId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        orderDao.removeOrderLines(evt)
       }
     )
   }
@@ -331,7 +412,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def changeOrderPaymentType(): ServiceCall[ChangeOrderPaymentTypeCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderDao.changeOrderPaymentType(cmd)
+        val evt = ChangeOrderPaymentTypeEvent(cmd.userId, cmd.orderId, cmd.orderPaymentType)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        orderDao.changeOrderPaymentType(evt)
       }
     )
   }
@@ -339,7 +424,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def createOrderItem(): ServiceCall[CreateOrderItemCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderItemDao.createOrderItem(cmd)
+        val evt = CreateOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId, cmd.productName, cmd.itemUnit, cmd.unitPrice, cmd.orderQuantity)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        orderItemDao.createOrderItem(evt)
       }
     )
   }
@@ -347,7 +436,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def retrieveOrderItem(): ServiceCall[RetrieveOrderItemCmd, OrderItemVo] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderItemDao.retrieveOrderItem(cmd)
+        orderItemDao.retrieveOrderItem(cmd)
       }
     )
   }
@@ -355,7 +444,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updateOrderItem(): ServiceCall[UpdateOrderItemCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderItemDao.updateOrderItem(cmd)
+        val evt = UpdateOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId, cmd.productName, cmd.itemUnit, cmd.unitPrice, cmd.orderQuantity)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        orderItemDao.updateOrderItem(evt)
       }
     )
   }
@@ -363,7 +456,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def deleteOrderItem(): ServiceCall[DeleteOrderItemCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         orderItemDao.deleteOrderItem(cmd)
+        val evt = DeleteOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        orderItemDao.deleteOrderItem(evt)
       }
     )
   }
@@ -419,7 +516,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def createEventJournal(): ServiceCall[CreateEventJournalCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         eventJournalDao.createEventJournal(cmd)
+        val evt = CreateEventJournalEvent(cmd.userId, cmd.persistenceId, cmd.occurredTime, cmd.metaData, cmd.content)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        eventJournalDao.createEventJournal(evt)
       }
     )
   }
@@ -427,7 +528,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def retrieveEventJournal(): ServiceCall[RetrieveEventJournalCmd, EventJournalVo] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         eventJournalDao.retrieveEventJournal(cmd)
+        eventJournalDao.retrieveEventJournal(cmd)
       }
     )
   }
@@ -435,7 +536,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updateEventJournal(): ServiceCall[UpdateEventJournalCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         eventJournalDao.updateEventJournal(cmd)
+        val evt = UpdateEventJournalEvent(cmd.userId, cmd.persistenceId, cmd.occurredTime, cmd.metaData, cmd.content)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        eventJournalDao.updateEventJournal(evt)
       }
     )
   }
@@ -443,7 +548,11 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def deleteEventJournal(): ServiceCall[DeleteEventJournalCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-         eventJournalDao.deleteEventJournal(cmd)
+        val evt = DeleteEventJournalEvent(cmd.userId, cmd.persistenceId, cmd.occurredTime)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        eventJournalDao.deleteEventJournal(evt)
       }
     )
   }

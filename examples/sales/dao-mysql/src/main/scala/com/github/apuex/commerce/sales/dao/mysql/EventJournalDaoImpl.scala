@@ -21,41 +21,41 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
 
 class EventJournalDaoImpl() extends EventJournalDao {
-  def createEventJournal(cmd: CreateEventJournalCmd)(implicit conn: Connection): Int = {
+  def createEventJournal(evt: CreateEventJournalEvent)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
       |UPDATE sales.event_journal
-       |  SET
-       |    event_journal.meta_data = {metaData},
-       |    event_journal.content = {content}
-       |  WHERE persistence_id = {persistenceId}
-       |    AND occurred_time = {occurredTime}
+      |  SET
+      |    event_journal.meta_data = {metaData},
+      |    event_journal.content = {content}
+      |  WHERE persistence_id = {persistenceId}
+      |    AND occurred_time = {occurredTime}
      """.stripMargin.trim)
     .on(
-      "persistenceId" -> cmd.persistenceId,
-      "occurredTime" -> scalapbToDate(cmd.occurredTime),
-      "metaData" -> cmd.metaData,
-      "content" -> cmd.content.toByteArray
+      "persistenceId" -> evt.persistenceId,
+      "occurredTime" -> scalapbToDate(evt.occurredTime),
+      "metaData" -> evt.metaData,
+      "content" -> evt.content.toByteArray
     ).executeUpdate()
   
     if(rowsAffected == 0)
       SQL(s"""
         |INSERT INTO sales.event_journal(
-         |    event_journal.persistence_id,
-         |    event_journal.occurred_time,
-         |    event_journal.meta_data,
-         |    event_journal.content
-         |  ) VALUES (
-         |    {persistenceId},
-         |    {occurredTime},
-         |    {metaData},
-         |    {content}
-         |  )
+        |    event_journal.persistence_id,
+        |    event_journal.occurred_time,
+        |    event_journal.meta_data,
+        |    event_journal.content
+        |  ) VALUES (
+        |    {persistenceId},
+        |    {occurredTime},
+        |    {metaData},
+        |    {content}
+        |  )
        """.stripMargin.trim)
       .on(
-        "persistenceId" -> cmd.persistenceId,
-        "occurredTime" -> scalapbToDate(cmd.occurredTime),
-        "metaData" -> cmd.metaData,
-        "content" -> cmd.content.toByteArray
+        "persistenceId" -> evt.persistenceId,
+        "occurredTime" -> scalapbToDate(evt.occurredTime),
+        "metaData" -> evt.metaData,
+        "content" -> evt.content.toByteArray
       ).executeUpdate()
     else rowsAffected
   }
@@ -63,13 +63,13 @@ class EventJournalDaoImpl() extends EventJournalDao {
   def retrieveEventJournal(cmd: RetrieveEventJournalCmd)(implicit conn: Connection): EventJournalVo = {
     SQL(s"""
       |SELECT
-       |    event_journal.persistence_id,
-       |    event_journal.occurred_time,
-       |    event_journal.meta_data,
-       |    event_journal.content
-       |  FROM sales.event_journal
-       |  WHERE persistence_id = {persistenceId}
-       |    AND occurred_time = {occurredTime}
+      |    event_journal.persistence_id,
+      |    event_journal.occurred_time,
+      |    event_journal.meta_data,
+      |    event_journal.content
+      |  FROM sales.event_journal
+      |  WHERE persistence_id = {persistenceId}
+      |    AND occurred_time = {occurredTime}
      """.stripMargin.trim)
     .on(
       "persistenceId" -> cmd.persistenceId,
@@ -77,33 +77,33 @@ class EventJournalDaoImpl() extends EventJournalDao {
     ).as(eventJournalParser.single)
   }
 
-  def updateEventJournal(cmd: UpdateEventJournalCmd)(implicit conn: Connection): Int = {
+  def updateEventJournal(evt: UpdateEventJournalEvent)(implicit conn: Connection): Int = {
     SQL(s"""
       |UPDATE sales.event_journal
-       |  SET
-       |    event_journal.meta_data = {metaData},
-       |    event_journal.content = {content}
-       |  WHERE persistence_id = {persistenceId}
-       |    AND occurred_time = {occurredTime}
+      |  SET
+      |    event_journal.meta_data = {metaData},
+      |    event_journal.content = {content}
+      |  WHERE persistence_id = {persistenceId}
+      |    AND occurred_time = {occurredTime}
      """.stripMargin.trim)
     .on(
-      "persistenceId" -> cmd.persistenceId,
-      "occurredTime" -> scalapbToDate(cmd.occurredTime),
-      "metaData" -> cmd.metaData,
-      "content" -> cmd.content.toByteArray
+      "persistenceId" -> evt.persistenceId,
+      "occurredTime" -> scalapbToDate(evt.occurredTime),
+      "metaData" -> evt.metaData,
+      "content" -> evt.content.toByteArray
     ).executeUpdate()
   }
 
-  def deleteEventJournal(cmd: DeleteEventJournalCmd)(implicit conn: Connection): Int = {
+  def deleteEventJournal(evt: DeleteEventJournalEvent)(implicit conn: Connection): Int = {
     SQL(s"""
       |DELETE
-       |  FROM sales.event_journal
-       |  WHERE persistence_id = {persistenceId}
-       |    AND occurred_time = {occurredTime}
+      |  FROM sales.event_journal
+      |  WHERE persistence_id = {persistenceId}
+      |    AND occurred_time = {occurredTime}
      """.stripMargin.trim)
     .on(
-      "persistenceId" -> cmd.persistenceId,
-      "occurredTime" -> scalapbToDate(cmd.occurredTime)
+      "persistenceId" -> evt.persistenceId,
+      "occurredTime" -> scalapbToDate(evt.occurredTime)
     ).executeUpdate()
   }
 
@@ -114,12 +114,12 @@ class EventJournalDaoImpl() extends EventJournalDao {
   def retrieveEventJournalByRowid(rowid: String)(implicit conn: Connection): EventJournalVo = {
     SQL(s"""
       |SELECT
-       |    event_journal.persistence_id,
-       |    event_journal.occurred_time,
-       |    event_journal.meta_data,
-       |    event_journal.content
-       |  FROM sales.event_journal
-       |  WHERE rowid = {rowid}
+      |    event_journal.persistence_id,
+      |    event_journal.occurred_time,
+      |    event_journal.meta_data,
+      |    event_journal.content
+      |  FROM sales.event_journal
+      |  WHERE rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> rowid
@@ -129,11 +129,11 @@ class EventJournalDaoImpl() extends EventJournalDao {
   private val selectEventJournalSql =
     s"""
       |SELECT
-       |    t.persistence_id,
-       |    t.occurred_time,
-       |    t.meta_data,
-       |    t.content
-       |  FROM sales.event_journal t
+      |    t.persistence_id,
+      |    t.occurred_time,
+      |    t.meta_data,
+      |    t.content
+      |  FROM sales.event_journal t
      """.stripMargin.trim
 
   private val fieldConverter: SymbolConverter = {

@@ -524,16 +524,16 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def defCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fks: Seq[ForeignKey]): Seq[String] = Seq(
     s"""
-       |def create${cToPascal(name)}(cmd: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
+       |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int = {
        |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, pkFields), 2), 2)})
        |  .on(
-       |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+       |    ${indent(defFieldSubstitution(name, fields, "evt"), 4)}
        |  ).executeUpdate()
        |
        |  if(rowsAffected == 0)
        |    SQL(${indentWithLeftMargin(blockQuote(insertSql(name, fields), 2), 4)})
        |    .on(
-       |      ${indent(defFieldSubstitution(name, fields, "cmd"), 6)}
+       |      ${indent(defFieldSubstitution(name, fields, "evt"), 6)}
        |    ).executeUpdate()
        |  else rowsAffected
        |}
@@ -547,18 +547,18 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |}
      """.stripMargin.trim,
     s"""
-       |def update${cToPascal(name)}(cmd: Update${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
+       |def update${cToPascal(name)}(evt: Update${cToPascal(name)}Event)(implicit conn: Connection): Int = {
        |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, pkFields), 2), 2)})
        |  .on(
-       |    ${indent(defFieldSubstitution(name, fields, "cmd"), 4)}
+       |    ${indent(defFieldSubstitution(name, fields, "evt"), 4)}
        |  ).executeUpdate()
        |}
      """.stripMargin.trim,
     s"""
-       |def delete${cToPascal(name)}(cmd: Delete${cToPascal(name)}Cmd)(implicit conn: Connection): Int = {
+       |def delete${cToPascal(name)}(evt: Delete${cToPascal(name)}Event)(implicit conn: Connection): Int = {
        |  SQL(${indentWithLeftMargin(blockQuote(deleteSql(name, pkFields), 2), 2)})
        |  .on(
-       |    ${indent(defFieldSubstitution(name, pkFields, "cmd"), 4)}
+       |    ${indent(defFieldSubstitution(name, pkFields, "evt"), 4)}
        |  ).executeUpdate()
        |}
      """.stripMargin.trim,
@@ -594,16 +594,16 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     }
 
     s"""
-       |def ${cToCamel(message.name)}(cmd: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType} = {
+       |def ${cToCamel(message.name)}(evt: ${cToPascal(message.name)}Event)(implicit conn: Connection): ${returnType} = {
        |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(root, fields, primaryKey.fields), 2), 2)})
        |  .on(
-       |    ${indent(defFieldSubstitution(root, fields, "cmd"), 4)}
+       |    ${indent(defFieldSubstitution(root, fields, "evt"), 4)}
        |  ).executeUpdate()
        |
        |  if(rowsAffected == 0)
        |    SQL(${indentWithLeftMargin(blockQuote(insertSql(root, fields), 2), 4)})
        |    .on(
-       |      ${indent(defFieldSubstitution(root, fields, "cmd"), 6)}
+       |      ${indent(defFieldSubstitution(root, fields, "evt"), 6)}
        |    ).executeUpdate()
        |  else rowsAffected
        |}
@@ -669,10 +669,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
     val update = if (nonKeyFieldCount > 1)
       s"""
-         |def update${cToPascal(aggregate.name)}(cmd: Update${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+         |def update${cToPascal(aggregate.name)}(evt: Update${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
          |  SQL(${indentWithLeftMargin(blockQuote(updateSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
          |  .on(
-         |    ${indent(defFieldSubstitution(aggregateRoot, fields, "cmd"), 4)}
+         |    ${indent(defFieldSubstitution(aggregateRoot, fields, "evt"), 4)}
          |  ).executeUpdate()
          |}
      """.stripMargin.trim
@@ -683,20 +683,20 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         val otherKeyFields = embedded.primaryKey.fields.filter(x => !keyFieldNames.contains(x.name))
         val embeddedFields = embedded.fields.filter(x => !keyFieldNames.contains(x.name))
         s"""
-           |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-           |  cmd.${cToCamel(aggregate.name)}
-           |    .map(x => Create${cToPascal(field.valueType)}Cmd(
-           |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, ${substituteMethodParams(embeddedFields, "x")}
+           |def add${cToPascal(aggregate.name)}(evt: Add${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
+           |  evt.${cToCamel(aggregate.name)}
+           |    .map(x => Create${cToPascal(field.valueType)}Event(
+           |        ${substituteMethodParams(Seq(userField), "evt")}, ${substituteMethodParams(primaryKey.fields, "evt")}, ${substituteMethodParams(embeddedFields, "x")}
            |      )
            |     )
            |    .map(${cToCamel(field.valueType)}Dao.create${cToPascal(field.valueType)}(_))
            |    .foldLeft(0)((t, u) => t + u)
            |}
            |
-           |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-           |  cmd.${cToCamel(aggregate.name)}
-           |    .map(x => Delete${cToPascal(field.valueType)}Cmd(
-           |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, ${substituteMethodParams(otherKeyFields, "x")}
+           |def remove${cToPascal(aggregate.name)}(evt: Remove${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
+           |  evt.${cToCamel(aggregate.name)}
+           |    .map(x => Delete${cToPascal(field.valueType)}Event(
+           |        ${substituteMethodParams(Seq(userField), "evt")}, ${substituteMethodParams(primaryKey.fields, "evt")}, ${substituteMethodParams(otherKeyFields, "x")}
            |      )
            |     )
            |    .map(${cToCamel(field.valueType)}Dao.delete${cToPascal(field.valueType)}(_))
@@ -707,10 +707,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         // FIXME: not properly implemented
         s"""
            |// FIXME: not properly implemented
-           |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-           |  cmd.${cToCamel(aggregate.name)}
-           |    .map(x => Create${cToPascal(field.valueType)}Cmd(
-           |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, x._1, x._2
+           |def add${cToPascal(aggregate.name)}(evt: Add${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
+           |  evt.${cToCamel(aggregate.name)}
+           |    .map(x => Create${cToPascal(field.valueType)}Event(
+           |        ${substituteMethodParams(Seq(userField), "evt")}, ${substituteMethodParams(primaryKey.fields, "evt")}, x._1, x._2
            |      )
            |     )
            |    .map(${cToCamel(field.valueType)}Dao.create${cToPascal(field.valueType)}(_))
@@ -718,10 +718,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
            |}
            |
            |// FIXME: not properly implemented
-           |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
-           |  cmd.${cToCamel(aggregate.name)}
-           |    .map(x => Delete${cToPascal(field.valueType)}Cmd(
-           |        ${substituteMethodParams(Seq(userField), "cmd")}, ${substituteMethodParams(primaryKey.fields, "cmd")}, x._1
+           |def remove${cToPascal(aggregate.name)}(evt: Remove${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
+           |  evt.${cToCamel(aggregate.name)}
+           |    .map(x => Delete${cToPascal(field.valueType)}Event(
+           |        ${substituteMethodParams(Seq(userField), "evt")}, ${substituteMethodParams(primaryKey.fields, "evt")}, x._1
            |      )
            |     )
            |    .map(${cToCamel(field.valueType)}Dao.delete${cToPascal(field.valueType)}(_))
@@ -730,10 +730,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
       } else // one-to-one relationship is not supported. simple JDBC fields only.
         s"""
-           |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int = {
+           |def change${cToPascal(aggregate.name)}(evt: Change${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
            |  SQL(${indentWithLeftMargin(blockQuote(updateSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
            |  .on(
-           |    ${indent(defFieldSubstitution(aggregateRoot, fields, "cmd"), 4)}
+           |    ${indent(defFieldSubstitution(aggregateRoot, fields, "evt"), 4)}
            |  ).executeUpdate()
            |}
      """.stripMargin.trim

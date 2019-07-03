@@ -43,7 +43,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
       s"""
          |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo
          |
-         |def update${cToPascal(aggregate.name)}(cmd: Update${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
+         |def update${cToPascal(aggregate.name)}(evt: Update${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int
      """.stripMargin.trim
     else if (nonKeyFieldCount == 1) {
       val field = nonKeyFields.head
@@ -51,15 +51,15 @@ class DaoGenerator(modelLoader: ModelLoader) {
         s"""
            |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo
            |
-           |def add${cToPascal(aggregate.name)}(cmd: Add${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
+           |def add${cToPascal(aggregate.name)}(evt: Add${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int
            |
-           |def remove${cToPascal(aggregate.name)}(cmd: Remove${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
+           |def remove${cToPascal(aggregate.name)}(evt: Remove${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int
      """.stripMargin.trim
       else
         s"""
            |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo
            |
-           |def change${cToPascal(aggregate.name)}(cmd: Change${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): Int
+           |def change${cToPascal(aggregate.name)}(evt: Change${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int
      """.stripMargin.trim
     } else { // this cannot be happen.
       s"""
@@ -147,7 +147,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
       }
     }
     s"""
-       |def ${cToCamel(message.name)}(cmd: ${cToPascal(message.name)}Cmd)(implicit conn: Connection): ${returnType}
+       |def ${cToCamel(message.name)}(evt: ${cToPascal(message.name)}Event)(implicit conn: Connection): ${returnType}
      """.stripMargin.trim
   }
 
@@ -161,16 +161,16 @@ class DaoGenerator(modelLoader: ModelLoader) {
 
   def defCrud(name: String): Seq[String] = Seq(
     s"""
-       |def create${cToPascal(name)}(cmd: Create${cToPascal(name)}Cmd)(implicit conn: Connection): Int
+       |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int
      """.stripMargin.trim,
     s"""
        |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo
      """.stripMargin.trim,
     s"""
-       |def update${cToPascal(name)}(cmd: Update${cToPascal(name)}Cmd)(implicit conn: Connection): Int
+       |def update${cToPascal(name)}(evt: Update${cToPascal(name)}Event)(implicit conn: Connection): Int
      """.stripMargin.trim,
     s"""
-       |def delete${cToPascal(name)}(cmd: Delete${cToPascal(name)}Cmd)(implicit conn: Connection): Int
+       |def delete${cToPascal(name)}(evt: Delete${cToPascal(name)}Event)(implicit conn: Connection): Int
      """.stripMargin.trim,
     s"""
        |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]

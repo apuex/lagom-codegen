@@ -9,6 +9,6 @@ trait EventJournalCommand extends ShardingEntityCommand {
   def persistenceId: String
   def occurredTime: Option[Timestamp]
   override def entityId: String = {
-    s"eventJournal_${persistenceId}_${occurredTime.map(x => formatTimestamp(x.seconds * 1000 + x.nanos / 1000000))}"
+    s"eventJournal_${persistenceId}_${occurredTime.map(x => formatTimestamp(x.seconds * 1000 + x.nanos / 1000000)).getOrElse("")}"
   }
 }
