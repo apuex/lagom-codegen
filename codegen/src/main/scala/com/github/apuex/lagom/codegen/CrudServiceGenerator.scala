@@ -47,7 +47,6 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |
        |import akka._
        |import akka.stream.scaladsl._
-       |import com.datastax.driver.core.utils.UUIDs
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.dao._
        |import com.github.apuex.springbootsolution.runtime.DateFormat._
@@ -109,7 +108,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
          |    db.withTransaction { implicit c =>
          |      val evt = Update${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.fields, "cmd")})
          |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-         |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+         |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
          |      )
          |      ${cToCamel(name)}Dao.update${cToPascal(aggregate.name)}(evt)
          |    }
@@ -125,7 +124,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |    db.withTransaction { implicit c =>
            |      val evt = Add${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.fields, "cmd")})
            |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
            |      )
            |      ${cToCamel(name)}Dao.add${cToPascal(aggregate.name)}(evt)
            |    }
@@ -137,7 +136,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |    db.withTransaction { implicit c =>
            |      val evt = Remove${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.primaryKey.fields, "cmd")})
            |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
            |      )
            |      ${cToCamel(name)}Dao.remove${cToPascal(aggregate.name)}(evt)
            |    }
@@ -151,7 +150,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |    db.withTransaction { implicit c =>
            |      val evt = Change${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.fields, "cmd")})
            |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
            |      )
            |      ${cToCamel(name)}Dao.change${cToPascal(aggregate.name)}(evt)
            |    }
@@ -216,7 +215,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       s"""
          |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
          |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-         |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+         |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
          |)
          |${returnType}(
          |  ${cToCamel(parentName)}Dao.${cToCamel(message.name)}(evt)
@@ -226,7 +225,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       s"""
          |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
          |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-         |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+         |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
          |)
          |${cToCamel(parentName)}Dao.${cToCamel(message.name)}(evt)
        """.stripMargin.trim
@@ -253,7 +252,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |    db.withTransaction { implicit c =>
        |      val evt = Create${cToPascal(name)}Event(${substituteMethodParams(userField +: fields, "cmd")})
        |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
        |      )
        |      ${cToCamel(name)}Dao.create${cToPascal(name)}(evt)
        |    }
@@ -275,7 +274,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |    db.withTransaction { implicit c =>
        |      val evt = Update${cToPascal(name)}Event(${substituteMethodParams(userField +: fields, "cmd")})
        |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
        |      )
        |      ${cToCamel(name)}Dao.update${cToPascal(name)}(evt)
        |    }
@@ -288,7 +287,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |    db.withTransaction { implicit c =>
        |      val evt = Delete${cToPascal(name)}Event(${substituteMethodParams(userField +: primaryKey.fields, "cmd")})
        |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
        |      )
        |      ${cToCamel(name)}Dao.delete${cToPascal(name)}(evt)
        |    }
