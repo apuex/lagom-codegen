@@ -50,10 +50,12 @@ CREATE TABLE sales.order (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE sales.event_journal (
+  offset BIGINT NOT NULL AUTO_INCREMENT,
   persistence_id VARCHAR(64) NOT NULL,
   occurred_time VARCHAR(64) NOT NULL,
   meta_data VARCHAR(128) NOT NULL,
-  content BLOB NOT NULL
+  content BLOB NOT NULL,
+  PRIMARY KEY (offset)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 ALTER TABLE sales.alarm ADD CONSTRAINT alarm_pk PRIMARY KEY(alarm_id, alarm_begin);
@@ -65,8 +67,6 @@ ALTER TABLE sales.order_item ADD CONSTRAINT order_item_pk PRIMARY KEY(order_id, 
 ALTER TABLE sales.product ADD CONSTRAINT product_pk PRIMARY KEY(product_id);
 
 ALTER TABLE sales.order ADD CONSTRAINT order_pk PRIMARY KEY(order_id);
-
-ALTER TABLE sales.event_journal ADD CONSTRAINT event_pk PRIMARY KEY(persistence_id, occurred_time);
 
 ALTER TABLE sales.order_item ADD CONSTRAINT order_item_order_fk FOREIGN KEY(order_id) REFERENCES sales.order(order_id);
 
