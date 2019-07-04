@@ -100,6 +100,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import com.github.apuex.springbootsolution.runtime.EnumConvert._
          |import com.github.apuex.springbootsolution.runtime.Parser._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+         |import com.github.apuex.springbootsolution.runtime.TextUtils._
          |import com.github.apuex.springbootsolution.runtime._
          |import com.google.protobuf.ByteString
          |import ${messageSrcPackage}._
@@ -158,6 +159,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import com.github.apuex.springbootsolution.runtime.EnumConvert._
          |import com.github.apuex.springbootsolution.runtime.Parser._
          |import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+         |import com.github.apuex.springbootsolution.runtime.TextUtils._
          |import com.github.apuex.springbootsolution.runtime._
          |import com.google.protobuf.ByteString
          |import ${messageSrcPackage}._
@@ -412,6 +414,40 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
   }
 
+  def defQuery(name: String): String = {
+    val logSql =
+      s"""[SQL statement] =>
+         |  $${indent(sqlStr, 2)}
+         |[params for substitution] =>
+         |  {}
+       """.stripMargin.trim
+    val select =
+      s"""$${select${cToPascal(name)}Sql}
+         |$${whereClause.toWhereClause(cmd, 4)}
+       """.stripMargin.trim
+
+    s"""
+       |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo] = {
+       |  val sqlStr = ${indentWithLeftMargin(blockQuote(select, 2), 2)}
+       |  val stmt = SQL(sqlStr)
+       |  val params = namedParams(cmd)
+       |
+       |  Logger.of(getClass).info(
+       |    ${indentWithLeftMargin(blockQuote(logSql, 0), 2)},
+       |    params
+       |  )
+       |
+       |  if (params.isEmpty) {
+       |    stmt.as(${cToCamel(name)}Parser.*)
+       |  } else {
+       |    stmt.on(
+       |      params: _*
+       |    ).as(${cToCamel(name)}Parser.*)
+       |  }
+       |}
+     """.stripMargin.trim
+  }
+
   def defSelectSql(name: String, fields: Seq[Field]): String = {
     val sql =
       s"""
@@ -562,11 +598,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |  ).executeUpdate()
        |}
      """.stripMargin.trim,
-    s"""
-       |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo] = {
-       |  Seq()
-       |}
-     """.stripMargin.trim,
+    defQuery(name),
     s"""
        |def retrieve${cToPascal(name)}ByRowid(rowid: String)(implicit conn: Connection): ${cToPascal(name)}Vo = {
        |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, Seq(rowidField)), 2), 2)})

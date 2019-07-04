@@ -15,6 +15,7 @@ import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, to
 import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+import com.github.apuex.springbootsolution.runtime.TextUtils._
 import com.github.apuex.springbootsolution.runtime._
 import com.google.protobuf.ByteString
 import com.github.apuex.commerce.sales._
@@ -96,7 +97,30 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
   }
 
   def queryPaymentType(cmd: QueryCommand)(implicit conn: Connection): Seq[PaymentTypeVo] = {
-    Seq()
+    val sqlStr = s"""
+      |${selectPaymentTypeSql}
+      |  ${whereClause.toWhereClause(cmd, 4)}
+     """.stripMargin.trim
+    val stmt = SQL(sqlStr)
+    val params = namedParams(cmd)
+  
+    Logger.of(getClass).info(
+      s"""
+      |[SQL statement] =>
+      |  ${indent(sqlStr, 2)}
+      |[params for substitution] =>
+      |  {}
+     """.stripMargin.trim,
+      params
+    )
+  
+    if (params.isEmpty) {
+      stmt.as(paymentTypeParser.*)
+    } else {
+      stmt.on(
+        params: _*
+      ).as(paymentTypeParser.*)
+    }
   }
 
   def retrievePaymentTypeByRowid(rowid: String)(implicit conn: Connection): PaymentTypeVo = {

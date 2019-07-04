@@ -195,6 +195,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |libraryDependencies ++= {
          |  Seq(
+         |    akkaPersistenceCassandra,
          |    akkaPersistence,
          |    akkaPersistenceQuery,
          |    akkaClusterSharding,

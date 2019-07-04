@@ -15,6 +15,7 @@ import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, to
 import com.github.apuex.springbootsolution.runtime.EnumConvert._
 import com.github.apuex.springbootsolution.runtime.Parser._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+import com.github.apuex.springbootsolution.runtime.TextUtils._
 import com.github.apuex.springbootsolution.runtime._
 import com.google.protobuf.ByteString
 import com.github.apuex.commerce.sales._
@@ -120,7 +121,30 @@ class ProductDaoImpl() extends ProductDao {
   }
 
   def queryProduct(cmd: QueryCommand)(implicit conn: Connection): Seq[ProductVo] = {
-    Seq()
+    val sqlStr = s"""
+      |${selectProductSql}
+      |  ${whereClause.toWhereClause(cmd, 4)}
+     """.stripMargin.trim
+    val stmt = SQL(sqlStr)
+    val params = namedParams(cmd)
+  
+    Logger.of(getClass).info(
+      s"""
+      |[SQL statement] =>
+      |  ${indent(sqlStr, 2)}
+      |[params for substitution] =>
+      |  {}
+     """.stripMargin.trim,
+      params
+    )
+  
+    if (params.isEmpty) {
+      stmt.as(productParser.*)
+    } else {
+      stmt.on(
+        params: _*
+      ).as(productParser.*)
+    }
   }
 
   def retrieveProductByRowid(rowid: String)(implicit conn: Connection): ProductVo = {

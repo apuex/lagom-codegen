@@ -11,6 +11,7 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
+    akkaPersistenceCassandra,
     akkaPersistence,
     akkaPersistenceQuery,
     akkaClusterSharding,
