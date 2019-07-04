@@ -1,0 +1,23 @@
+{
+  "predicate" : {
+    "connection" : {
+      "predicates" : [ {
+        "predicate" : {
+          "predicateType" : "IS_NOT_NULL",
+          "fieldName" : "alarmId",
+          "paramNames" : [ "col1" ]
+        }
+      }, {
+        "predicate" : {
+          "predicateType" : "IS_NOT_NULL",
+          "fieldName" : "alarmBegin",
+          "paramNames" : [ "col2" ]
+        }
+      } ]
+    }
+  },
+  "params" : {
+    "col1" : "col1 value",
+    "col2" : "col2 value"
+  }
+}
