@@ -27,6 +27,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${implSrcPackage}
        |
+       |import akka.cluster.pubsub.DistributedPubSub
        |import ${apiSrcPackage}._
        |import ${apiSrcPackage}.dao.mysql._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
@@ -58,6 +59,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
+       |    lazy val publishQueue = "instant-event-publish-queue"
+       |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
        |    import daoModule._
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
@@ -73,6 +76,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${implSrcPackage}
        |
+       |import akka.cluster.pubsub.DistributedPubSub
        |import ${apiSrcPackage}._
        |import ${apiSrcPackage}.dao.mysql._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
@@ -104,6 +108,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
+       |    lazy val publishQueue = "instant-event-publish-queue"
+       |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
        |    import daoModule._
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])

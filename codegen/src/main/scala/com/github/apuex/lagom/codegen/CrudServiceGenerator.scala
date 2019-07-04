@@ -32,8 +32,15 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
   }
 
   def generateServiceImpl(): String = {
-    val constructorParams = (xml.child.filter(_.label == "entity").map(_.\@("name"))
-      .map(x => s"${cToCamel(x)}Dao: ${cToPascal(x)}Dao") :+ "db: Database")
+    val constructorParams = (
+      xml.child.filter(_.label == "entity").map(_.\@("name"))
+        .map(x => s"${cToCamel(x)}Dao: ${cToPascal(x)}Dao") ++
+        Seq(
+          "publishQueue: String",
+          "mediator: ActorRef",
+          "db: Database"
+        )
+      )
       .reduceOption((l, r) => s"${l},\n${r}")
       .getOrElse("")
 
@@ -43,9 +50,9 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${crudImplSrcPackage}
        |
-       |import java.util.Date
-       |
        |import akka._
+       |import akka.actor._
+       |import akka.cluster.pubsub.DistributedPubSubMediator._
        |import akka.stream.scaladsl._
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.dao._
@@ -110,6 +117,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
          |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
          |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
          |      )
+         |      mediator ! Publish(publishQueue, evt)
          |      ${cToCamel(name)}Dao.update${cToPascal(aggregate.name)}(evt)
          |    }
          |  )
@@ -126,6 +134,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
            |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
            |      )
+           |      mediator ! Publish(publishQueue, evt)
            |      ${cToCamel(name)}Dao.add${cToPascal(aggregate.name)}(evt)
            |    }
            |  )
@@ -138,6 +147,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
            |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
            |      )
+           |      mediator ! Publish(publishQueue, evt)
            |      ${cToCamel(name)}Dao.remove${cToPascal(aggregate.name)}(evt)
            |    }
            |  )
@@ -152,6 +162,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
            |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
            |      )
+           |      mediator ! Publish(publishQueue, evt)
            |      ${cToCamel(name)}Dao.change${cToPascal(aggregate.name)}(evt)
            |    }
            |  )
@@ -209,14 +220,18 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       }
     }
 
-    val daoCall = if(message.transient || message.fields.filter(x => derived.contains(x.name)).isEmpty)
-      "0"
+    val daoCall = if (message.transient || message.fields.filter(x => derived.contains(x.name)).isEmpty)
+      s"""
+         |mediator ! Publish(publishQueue, cmd)
+         |0
+       """.stripMargin.trim
     else if (multiple)
       s"""
          |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
          |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
          |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
          |)
+         |mediator ! Publish(publishQueue, evt)
          |${returnType}(
          |  ${cToCamel(parentName)}Dao.${cToCamel(message.name)}(evt)
          |)
@@ -227,6 +242,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
          |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
          |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
          |)
+         |mediator ! Publish(publishQueue, evt)
          |${cToCamel(parentName)}Dao.${cToCamel(message.name)}(evt)
        """.stripMargin.trim
 
@@ -254,6 +270,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
        |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
        |      )
+       |      mediator ! Publish(publishQueue, evt)
        |      ${cToCamel(name)}Dao.create${cToPascal(name)}(evt)
        |    }
        |  )
@@ -276,6 +293,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
        |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
        |      )
+       |      mediator ! Publish(publishQueue, evt)
        |      ${cToCamel(name)}Dao.update${cToPascal(name)}(evt)
        |    }
        |  )
@@ -289,6 +307,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
        |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
        |      )
+       |      mediator ! Publish(publishQueue, evt)
        |      ${cToCamel(name)}Dao.delete${cToPascal(name)}(evt)
        |    }
        |  )

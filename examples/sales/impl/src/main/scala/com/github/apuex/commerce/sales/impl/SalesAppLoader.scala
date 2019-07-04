@@ -3,6 +3,7 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.impl
 
+import akka.cluster.pubsub.DistributedPubSub
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao.mysql._
 import com.github.apuex.commerce.sales.impl.SalesAppLoader._
@@ -34,6 +35,8 @@ object SalesAppLoader {
 
     // Bind the service that this server provides
     lazy val db = dbApi.database("sales-db")
+    lazy val publishQueue = "instant-event-publish-queue"
+    lazy val mediator = DistributedPubSub(actorSystem).mediator
     lazy val daoModule = wire[DaoModule]
     import daoModule._
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])

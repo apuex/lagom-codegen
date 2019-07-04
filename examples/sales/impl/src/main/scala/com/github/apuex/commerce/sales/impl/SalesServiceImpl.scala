@@ -3,9 +3,9 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.impl
 
-import java.util.Date
-
 import akka._
+import akka.actor._
+import akka.cluster.pubsub.DistributedPubSubMediator._
 import akka.stream.scaladsl._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
@@ -22,6 +22,8 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   orderDao: OrderDao,
   orderItemDao: OrderItemDao,
   eventJournalDao: EventJournalDao,
+  publishQueue: String,
+  mediator: ActorRef,
   db: Database)
   extends SalesService {
 
@@ -32,6 +34,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         alarmDao.createAlarm(evt)
       }
     )
@@ -52,6 +55,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         alarmDao.updateAlarm(evt)
       }
     )
@@ -64,6 +68,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         alarmDao.deleteAlarm(evt)
       }
     )
@@ -92,6 +97,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         alarmDao.beginAlarm(evt)
       }
     )
@@ -104,6 +110,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         alarmDao.endAlarm(evt)
       }
     )
@@ -116,6 +123,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         paymentTypeDao.createPaymentType(evt)
       }
     )
@@ -136,6 +144,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         paymentTypeDao.updatePaymentType(evt)
       }
     )
@@ -148,6 +157,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         paymentTypeDao.deletePaymentType(evt)
       }
     )
@@ -176,6 +186,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         productDao.createProduct(evt)
       }
     )
@@ -196,6 +207,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         productDao.updateProduct(evt)
       }
     )
@@ -208,6 +220,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         productDao.deleteProduct(evt)
       }
     )
@@ -244,6 +257,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         productDao.updateProductSales(evt)
       }
     )
@@ -264,6 +278,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         productDao.changeProductName(evt)
       }
     )
@@ -284,6 +299,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         productDao.changeProductUnit(evt)
       }
     )
@@ -304,6 +320,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         productDao.changeUnitPrice(evt)
       }
     )
@@ -316,6 +333,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         orderDao.createOrder(evt)
       }
     )
@@ -336,6 +354,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         orderDao.updateOrder(evt)
       }
     )
@@ -348,6 +367,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         orderDao.deleteOrder(evt)
       }
     )
@@ -384,6 +404,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         orderDao.addOrderLines(evt)
       }
     )
@@ -396,6 +417,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         orderDao.removeOrderLines(evt)
       }
     )
@@ -416,6 +438,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         orderDao.changeOrderPaymentType(evt)
       }
     )
@@ -428,6 +451,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         orderItemDao.createOrderItem(evt)
       }
     )
@@ -448,6 +472,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         orderItemDao.updateOrderItem(evt)
       }
     )
@@ -460,6 +485,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         orderItemDao.deleteOrderItem(evt)
       }
     )
@@ -520,6 +546,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         eventJournalDao.createEventJournal(evt)
       }
     )
@@ -540,6 +567,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         eventJournalDao.updateEventJournal(evt)
       }
     )
@@ -552,6 +580,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
         )
+        mediator ! Publish(publishQueue, evt)
         eventJournalDao.deleteEventJournal(evt)
       }
     )

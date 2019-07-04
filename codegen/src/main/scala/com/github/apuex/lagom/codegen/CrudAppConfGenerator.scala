@@ -62,6 +62,48 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |      port = 9000
          |    }
          |  }
+         |  akka {
+         |    actor-system = "${cToShell(modelName)}"
+         |  }
+         |}
+         |
+         |akka {
+         |  loggers = ["akka.event.slf4j.Slf4jLogger"]
+         |  loglevel = "INFO"
+         |  log-config-on-start = off
+         |  log-dead-letters = 0
+         |  log-dead-letters-during-shutdown = off
+         |
+         |  actor {
+         |    provider = "akka.cluster.ClusterActorRefProvider"
+         |
+         |    serializers {
+         |      ${cToShell(modelName)}-protobuf = "akka.remote.serialization.ProtobufSerializer"
+         |    }
+         |
+         |    serialization-bindings {
+         |      "java.io.Serializable" = none
+         |      // scalapb 0.8.4
+         |      "scalapb.GeneratedMessage" = ${cToShell(modelName)}-protobuf
+         |      // google protobuf-java 3.6.1
+         |      "com.google.protobuf.GeneratedMessageV3" = ${cToShell(modelName)}-protobuf
+         |    }
+         |  }
+         |
+         |//  remote {
+         |//    netty.tcp {
+         |//      hostname = "localhost"      // default to the first seed node
+         |//      port = 2553                 // default port
+         |//      hostname = $${? HOSTNAME}   // override with -DHOSTNAME
+         |//      port = $${? PORT}           // override with -DPORT
+         |//    }
+         |//  }
+         |//
+         |//  cluster {
+         |//    seed-nodes = [
+         |//      "akka.tcp://${cToShell(modelName)}@localhost:2553",
+         |//    ]
+         |//  }
          |}
          |
          |db {
