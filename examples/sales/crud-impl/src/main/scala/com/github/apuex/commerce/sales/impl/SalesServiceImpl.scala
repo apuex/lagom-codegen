@@ -3,13 +3,18 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.impl
 
+import java.util.Date
+
 import akka._
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSubMediator._
+import akka.stream._
 import akka.stream.scaladsl._
 import com.datastax.driver.core.utils.UUIDs.timeBased
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
+import com.github.apuex.springbootsolution.runtime.FilterPredicate.Clause.{Connection, Predicate}
+import com.github.apuex.springbootsolution.runtime.LogicalConnectionType.AND
 import com.github.apuex.springbootsolution.runtime._
 import com.lightbend.lagom.scaladsl.api._
 import play.api.db.Database
@@ -604,7 +609,49 @@ class SalesServiceImpl (alarmDao: AlarmDao,
 
   def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
     ServiceCall { is =>
-      Future.successful(is.map(x => x))
+      Future.successful({
+        is.map(x => x) // inbound message...
+        import scala.concurrent.duration.Duration
+        import java.util.concurrent.TimeUnit
+
+        implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
+
+        val queryCommand = QueryCommand(
+          Some(
+            FilterPredicate(
+              Connection(
+                LogicalConnectionVo(
+                  AND,
+                  Seq(
+                    FilterPredicate(
+                      Predicate(
+                        LogicalPredicateVo(
+                          PredicateType.GE,
+                          "occurredTime",
+                          Seq("offset")
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          ),
+          Map(
+            "offset" -> offset.getOrElse("")
+          )
+        )
+
+        Source.fromIterator(() => new Iterator[Seq[EventJournalVo]] {
+          override def hasNext: Boolean = true
+
+          override def next(): Seq[EventJournalVo] = db.withTransaction { implicit c =>
+            eventJournalDao.queryEventJournal(queryCommand)
+          }
+        })
+          .throttle(1, duration)
+          .map(_.toString)
+      })
     }
   }
 }
