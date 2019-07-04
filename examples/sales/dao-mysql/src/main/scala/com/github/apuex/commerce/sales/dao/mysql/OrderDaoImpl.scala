@@ -108,8 +108,8 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
       s"""
       |[SQL statement] =>
       |  ${indent(sqlStr, 2)}
-      |[params for substitution] =>
-      |  {}
+      |  [params for substitution] =>
+      |    {}
      """.stripMargin.trim,
       params
     )

@@ -108,8 +108,8 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
       s"""
       |[SQL statement] =>
       |  ${indent(sqlStr, 2)}
-      |[params for substitution] =>
-      |  {}
+      |  [params for substitution] =>
+      |    {}
      """.stripMargin.trim,
       params
     )
