@@ -7,9 +7,9 @@ import akka._
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSubMediator._
 import akka.stream.scaladsl._
+import com.datastax.driver.core.utils.UUIDs.timeBased
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.springbootsolution.runtime.DateFormat._
 import com.github.apuex.springbootsolution.runtime._
 import com.lightbend.lagom.scaladsl.api._
 import play.api.db.Database

@@ -54,9 +54,9 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |import akka.actor._
        |import akka.cluster.pubsub.DistributedPubSubMediator._
        |import akka.stream.scaladsl._
+       |import com.datastax.driver.core.utils.UUIDs.timeBased
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.dao._
-       |import com.github.apuex.springbootsolution.runtime.DateFormat._
        |import com.github.apuex.springbootsolution.runtime._
        |import com.lightbend.lagom.scaladsl.api._
        |import play.api.db.Database
