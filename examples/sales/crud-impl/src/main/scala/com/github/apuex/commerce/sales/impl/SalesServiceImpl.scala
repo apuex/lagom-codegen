@@ -725,7 +725,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     }
   }
 
-  private def queryForEventsCmd(offset: _root_.scala.Option[_root_.scala.Predef.String]): QueryCommand = {
+  private def queryForEventsCmd(offset: Option[String]): QueryCommand = {
     QueryCommand(
       Some(
         FilterPredicate(

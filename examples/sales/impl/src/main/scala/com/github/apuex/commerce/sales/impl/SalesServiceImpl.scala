@@ -614,6 +614,48 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     )
   }
 
+  def currentEvents(): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
+    ServiceCall { is =>
+      Future.successful({
+        val replySource = is
+          .map(parseJson)
+          .map(x => x.event.map(unpack))
+          .map(x => x.map(dispatch))
+          .filter(_ => false) // to drainage
+          .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
+
+        val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
+          512,
+          OverflowStrategy.dropHead)
+          .map({
+            case x: Event =>
+              EventEnvelope(
+                "",
+                "",
+                0,
+                Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+            case _ => null
+          })
+          .filter(x => null != x)
+          .map(printer.print(_))
+
+        Source.fromGraph(GraphDSL.create() { implicit builder =>
+          import akka.stream.scaladsl.GraphDSL.Implicits._
+          val replyShape = builder.add(replySource)
+          val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe(publishQueue, actorRef))
+          val commandShape = builder.add(materializedCommandSource)
+
+          val merge = builder.add(Merge[String](2))
+
+          replyShape ~> merge
+          commandShape ~> merge
+
+          SourceShape(merge.out)
+        })
+      })
+    }
+  }
+
   def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
     ServiceCall { is =>
       Future.successful({
@@ -635,7 +677,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
                 x.entityId,
                 0,
                 Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+            case _ => null
           })
+          .filter(x => null != x)
           .map(printer.print(_))
 
         val eventSource = Source.fromIterator(() => new Iterator[Seq[EventJournalVo]] {
@@ -666,7 +710,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
           import akka.stream.scaladsl.GraphDSL.Implicits._
           val replyShape = builder.add(replySource)
           val eventShape = builder.add(eventSource)
-          val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe("realdata", actorRef))
+          val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe(publishQueue, actorRef))
           val commandShape = builder.add(materializedCommandSource)
 
           val merge = builder.add(Merge[String](3))
@@ -681,7 +725,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     }
   }
 
-  private def queryForEventsCmd(offset: _root_.scala.Option[_root_.scala.Predef.String]): QueryCommand = {
+  private def queryForEventsCmd(offset: Option[String]): QueryCommand = {
     QueryCommand(
       Some(
         FilterPredicate(

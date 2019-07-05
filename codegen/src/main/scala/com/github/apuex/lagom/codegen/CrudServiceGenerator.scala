@@ -84,6 +84,8 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |
        |  ${indent(defEvents(), 2)}
        |
+       |  ${indent(defQueryForEvents(), 2)}
+       |
        |  ${indent(defDispatchMessage(), 2)}
        |}
      """.stripMargin.trim
@@ -452,7 +454,9 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       |              x.entityId,
       |              0,
       |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+      |          case _ => null
       |        })
+      |        .filter(x => null != x)
       |        .map(printer.print(_))
       |
       |      val eventSource = Source.fromIterator(() => new Iterator[Seq[${cToPascal(journalTable)}Vo]] {
@@ -483,7 +487,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       |        import akka.stream.scaladsl.GraphDSL.Implicits._
       |        val replyShape = builder.add(replySource)
       |        val eventShape = builder.add(eventSource)
-      |        val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe("realdata", actorRef))
+      |        val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe(publishQueue, actorRef))
       |        val commandShape = builder.add(materializedCommandSource)
       |
       |        val merge = builder.add(Merge[String](3))
@@ -502,7 +506,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
 
   def defQueryForEvents(): String = {
     s"""
-       |private def queryForEventsCmd(offset: _root_.scala.Option[_root_.scala.Predef.String]): QueryCommand = {
+       |private def queryForEventsCmd(offset: Option[String]): QueryCommand = {
        |  QueryCommand(
        |    Some(
        |      FilterPredicate(
@@ -529,7 +533,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |    )
        |  )
        |}
-     """.stripMargin
+     """.stripMargin.trim
   }
 
   def defDispatchMessage(): String = {
