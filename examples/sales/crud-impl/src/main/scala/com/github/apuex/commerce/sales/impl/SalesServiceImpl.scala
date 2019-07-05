@@ -3,23 +3,28 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.impl
 
-import java.util.Date
+import java.util.concurrent.TimeUnit
 
 import akka._
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSubMediator._
-import akka.stream._
+import akka.stream.{OverflowStrategy, SourceShape}
 import akka.stream.scaladsl._
 import com.datastax.driver.core.utils.UUIDs.timeBased
+import com.github.apuex.commerce.sales.ScalapbJson._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
+import com.github.apuex.events.play.EventEnvelope
 import com.github.apuex.springbootsolution.runtime.FilterPredicate.Clause.{Connection, Predicate}
 import com.github.apuex.springbootsolution.runtime.LogicalConnectionType.AND
 import com.github.apuex.springbootsolution.runtime._
+import com.google.protobuf.any.Any
 import com.lightbend.lagom.scaladsl.api._
 import play.api.db.Database
+import scalapb.GeneratedMessage
 
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 
 class SalesServiceImpl (alarmDao: AlarmDao,
   paymentTypeDao: PaymentTypeDao,
@@ -31,6 +36,8 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   mediator: ActorRef,
   db: Database)
   extends SalesService {
+
+  implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
 
   def createAlarm(): ServiceCall[CreateAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful(
@@ -610,39 +617,30 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
     ServiceCall { is =>
       Future.successful({
-        is.map(x => x) // inbound message...
-        import scala.concurrent.duration.Duration
-        import java.util.concurrent.TimeUnit
+        // reply/confirm to inbound message...
+        val replySource = is
+          .map(parseJson)
+          .map(x => x.event.map(unpack))
+          .map(x => x.map(dispatch))
+          .filter(_ => false) // to drainage
+          .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
 
-        implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
+        val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
+          512,
+          OverflowStrategy.dropHead)
+          .map({
+            case x: ShardingEntityCommand =>
+              EventEnvelope(
+                "",
+                x.entityId,
+                0,
+                Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+          })
+          .map(printer.print(_))
 
-        val queryCommand = QueryCommand(
-          Some(
-            FilterPredicate(
-              Connection(
-                LogicalConnectionVo(
-                  AND,
-                  Seq(
-                    FilterPredicate(
-                      Predicate(
-                        LogicalPredicateVo(
-                          PredicateType.GE,
-                          "occurredTime",
-                          Seq("offset")
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-            )
-          ),
-          Map(
-            "offset" -> offset.getOrElse("")
-          )
-        )
+        val queryCommand = queryForEventsCmd(offset)
 
-        Source.fromIterator(() => new Iterator[Seq[EventJournalVo]] {
+        val eventSource = Source.fromIterator(() => new Iterator[Seq[EventJournalVo]] {
           override def hasNext: Boolean = true
 
           override def next(): Seq[EventJournalVo] = db.withTransaction { implicit c =>
@@ -650,8 +648,63 @@ class SalesServiceImpl (alarmDao: AlarmDao,
           }
         })
           .throttle(1, duration)
-          .map(_.toString)
+          .flatMapMerge(2, x => Source(x.toList))
+          .map(x => EventEnvelope(
+            x.occurredTime,
+            x.persistenceId,
+            0,
+            Some(Any.of(s"type.googleapis.com/${x.metaData}", x.content)))
+          )
+          .map(printer.print(_))
+
+        Source.fromGraph(GraphDSL.create() { implicit builder =>
+          import akka.stream.scaladsl.GraphDSL.Implicits._
+          val replyShape = builder.add(replySource)
+          val eventShape = builder.add(eventSource)
+          val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe("realdata", actorRef))
+          val commandShape = builder.add(materializedCommandSource)
+
+          val merge = builder.add(Merge[String](3))
+
+          replyShape ~> merge
+          eventShape ~> merge
+          commandShape ~> merge
+
+          SourceShape(merge.out)
+        })
       })
     }
+  }
+
+  private def queryForEventsCmd(offset: _root_.scala.Option[_root_.scala.Predef.String]): QueryCommand = {
+    QueryCommand(
+      Some(
+        FilterPredicate(
+          Connection(
+            LogicalConnectionVo(
+              AND,
+              Seq(
+                FilterPredicate(
+                  Predicate(
+                    LogicalPredicateVo(
+                      PredicateType.GE,
+                      "occurredTime",
+                      Seq("offset")
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      ),
+      Map(
+        "offset" -> offset.getOrElse("")
+      )
+    )
+  }
+
+  private def dispatch: scala.Any => scala.Any = {
+    case _ =>
   }
 }
