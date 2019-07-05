@@ -638,13 +638,18 @@ class SalesServiceImpl (alarmDao: AlarmDao,
           })
           .map(printer.print(_))
 
-        val queryCommand = queryForEventsCmd(offset)
-
         val eventSource = Source.fromIterator(() => new Iterator[Seq[EventJournalVo]] {
+          var lastOffset: Option[String] = offset
+
           override def hasNext: Boolean = true
 
           override def next(): Seq[EventJournalVo] = db.withTransaction { implicit c =>
-            eventJournalDao.queryEventJournal(queryCommand)
+            println(lastOffset)
+            val result = eventJournalDao.queryEventJournal(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("occurredTime", OrderType.ASC))))
+            if (!result.isEmpty) {
+              lastOffset = Some(result.last.occurredTime)
+            }
+            result
           }
         })
           .throttle(1, duration)
@@ -687,7 +692,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
                 FilterPredicate(
                   Predicate(
                     LogicalPredicateVo(
-                      PredicateType.GE,
+                      PredicateType.GT,
                       "occurredTime",
                       Seq("offset")
                     )
