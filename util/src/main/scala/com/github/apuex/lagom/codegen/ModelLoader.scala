@@ -25,7 +25,7 @@ object ModelLoader {
 
   case class Field(name: String, _type: String, length: Int, scale: Int, required: Boolean, entity: String, keyField: String, valueField: String, keyType: String, valueType: String, aggregate: Boolean, transient: Boolean, comment: String)
 
-  case class PrimaryKey(name: String, fields: Seq[Field])
+  case class PrimaryKey(name: String, fields: Seq[Field], generated: Boolean = false)
 
   case class ForeignKeyField(name: String, refField: String, required: Boolean)
 
@@ -126,6 +126,7 @@ object ModelLoader {
     } else {
       val pk = pks.head
       val pkName = pk.\@("name")
+      val generated = if("true" == pk.\@("generated")) true else false
       val pkColumnNames = pk.child.filter(_.label == "field")
         .map(_.\@("name"))
 
@@ -140,7 +141,7 @@ object ModelLoader {
           fields.getOrElse(x, getReferencedColumn(x, foreignKeys, root).get)
         })
 
-      PrimaryKey(pkName, pkColumns)
+      PrimaryKey(pkName, pkColumns, generated)
     }
   }
 

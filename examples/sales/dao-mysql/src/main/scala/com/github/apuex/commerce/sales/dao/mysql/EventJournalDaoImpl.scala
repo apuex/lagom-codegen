@@ -26,14 +26,16 @@ class EventJournalDaoImpl() extends EventJournalDao {
     val rowsAffected = SQL(s"""
       |UPDATE sales.event_journal
       |  SET
+      |    event_journal.persistence_id = {persistenceId},
+      |    event_journal.occurred_time = {occurredTime},
       |    event_journal.meta_data = {metaData},
       |    event_journal.content = {content}
-      |  WHERE persistence_id = {persistenceId}
-      |    AND occurred_time = {occurredTime}
+      |  WHERE offset = {offset}
      """.stripMargin.trim)
     .on(
+      "offset" -> evt.offset,
       "persistenceId" -> evt.persistenceId,
-      "occurredTime" -> evt.occurredTime,
+      "occurredTime" -> scalapbToDate(evt.occurredTime),
       "metaData" -> evt.metaData,
       "content" -> evt.content.toByteArray
     ).executeUpdate()
@@ -53,8 +55,9 @@ class EventJournalDaoImpl() extends EventJournalDao {
         |  )
        """.stripMargin.trim)
       .on(
+        "offset" -> evt.offset,
         "persistenceId" -> evt.persistenceId,
-        "occurredTime" -> evt.occurredTime,
+        "occurredTime" -> scalapbToDate(evt.occurredTime),
         "metaData" -> evt.metaData,
         "content" -> evt.content.toByteArray
       ).executeUpdate()
@@ -64,17 +67,16 @@ class EventJournalDaoImpl() extends EventJournalDao {
   def retrieveEventJournal(cmd: RetrieveEventJournalCmd)(implicit conn: Connection): EventJournalVo = {
     SQL(s"""
       |SELECT
+      |    event_journal.offset,
       |    event_journal.persistence_id,
       |    event_journal.occurred_time,
       |    event_journal.meta_data,
       |    event_journal.content
       |  FROM sales.event_journal
-      |  WHERE persistence_id = {persistenceId}
-      |    AND occurred_time = {occurredTime}
+      |  WHERE offset = {offset}
      """.stripMargin.trim)
     .on(
-      "persistenceId" -> cmd.persistenceId,
-      "occurredTime" -> cmd.occurredTime
+      "offset" -> cmd.offset
     ).as(eventJournalParser.single)
   }
 
@@ -82,14 +84,16 @@ class EventJournalDaoImpl() extends EventJournalDao {
     SQL(s"""
       |UPDATE sales.event_journal
       |  SET
+      |    event_journal.persistence_id = {persistenceId},
+      |    event_journal.occurred_time = {occurredTime},
       |    event_journal.meta_data = {metaData},
       |    event_journal.content = {content}
-      |  WHERE persistence_id = {persistenceId}
-      |    AND occurred_time = {occurredTime}
+      |  WHERE offset = {offset}
      """.stripMargin.trim)
     .on(
+      "offset" -> evt.offset,
       "persistenceId" -> evt.persistenceId,
-      "occurredTime" -> evt.occurredTime,
+      "occurredTime" -> scalapbToDate(evt.occurredTime),
       "metaData" -> evt.metaData,
       "content" -> evt.content.toByteArray
     ).executeUpdate()
@@ -99,12 +103,10 @@ class EventJournalDaoImpl() extends EventJournalDao {
     SQL(s"""
       |DELETE
       |  FROM sales.event_journal
-      |  WHERE persistence_id = {persistenceId}
-      |    AND occurred_time = {occurredTime}
+      |  WHERE offset = {offset}
      """.stripMargin.trim)
     .on(
-      "persistenceId" -> evt.persistenceId,
-      "occurredTime" -> evt.occurredTime
+      "offset" -> evt.offset
     ).executeUpdate()
   }
 
@@ -112,6 +114,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
     val sqlStr = s"""
       |${selectEventJournalSql}
       |  ${whereClause.toWhereClause(cmd, 4)}
+      |  ORDER BY ${indent(if(!cmd.orderBy.isEmpty) whereClause.orderBy(cmd.orderBy, "t") else "", 4)}
      """.stripMargin.trim
     val stmt = SQL(sqlStr)
     val params = namedParams(cmd)
@@ -138,6 +141,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
   def retrieveEventJournalByRowid(rowid: String)(implicit conn: Connection): EventJournalVo = {
     SQL(s"""
       |SELECT
+      |    event_journal.offset,
       |    event_journal.persistence_id,
       |    event_journal.occurred_time,
       |    event_journal.meta_data,
@@ -153,6 +157,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
   private val selectEventJournalSql =
     s"""
       |SELECT
+      |    t.offset,
       |    t.persistence_id,
       |    t.occurred_time,
       |    t.meta_data,
@@ -161,6 +166,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
      """.stripMargin.trim
 
   private val fieldConverter: SymbolConverter = {
+    case "offset" => "offset"
     case "persistenceId" => "persistence_id"
     case "occurredTime" => "occurred_time"
     case "metaData" => "meta_data"
@@ -177,26 +183,30 @@ class EventJournalDaoImpl() extends EventJournalDao {
   }
 
   private def parseParam(fieldName: String, paramName:String, paramValue: String): NamedParameter = fieldName match {
+    case "offset" => paramName -> LongParser.parse(paramValue)
     case "persistenceId" => paramName -> paramValue
-    case "occurredTime" => paramName -> paramValue
+    case "occurredTime" => paramName -> DateParser.parse(paramValue)
     case "metaData" => paramName -> paramValue
   }
 
   private def parseParam(fieldName: String, paramName:String, paramValue: Seq[String]): NamedParameter = fieldName match {
+    case "offset" => paramName -> paramValue.map(LongParser.parse(_))
     case "persistenceId" => paramName -> paramValue
-    case "occurredTime" => paramName -> paramValue
+    case "occurredTime" => paramName -> paramValue.map(DateParser.parse(_))
     case "metaData" => paramName -> paramValue
   }
 
   private def eventJournalParser(implicit c: Connection): RowParser[EventJournalVo] = {
+    get[Long]("offset") ~ 
     get[String]("persistence_id") ~ 
-    get[String]("occurred_time") ~ 
+    get[Date]("occurred_time") ~ 
     get[String]("meta_data") ~ 
     get[InputStream]("content") map {
-      case persistenceId ~ occurredTime ~ metaData ~ content =>
+      case offset ~ persistenceId ~ occurredTime ~ metaData ~ content =>
         EventJournalVo(
+          offset,
           persistenceId,
-          occurredTime,
+          Some(toScalapbTimestamp(occurredTime)),
           metaData,
           ByteString.readFrom(content)
         )

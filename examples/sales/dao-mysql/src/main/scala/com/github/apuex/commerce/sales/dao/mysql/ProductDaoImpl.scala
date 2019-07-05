@@ -124,6 +124,7 @@ class ProductDaoImpl() extends ProductDao {
     val sqlStr = s"""
       |${selectProductSql}
       |  ${whereClause.toWhereClause(cmd, 4)}
+      |  ORDER BY ${indent(if(!cmd.orderBy.isEmpty) whereClause.orderBy(cmd.orderBy, "t") else "", 4)}
      """.stripMargin.trim
     val stmt = SQL(sqlStr)
     val params = namedParams(cmd)

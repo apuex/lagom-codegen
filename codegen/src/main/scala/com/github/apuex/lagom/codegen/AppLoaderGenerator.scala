@@ -27,6 +27,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${implSrcPackage}
        |
+       |import java.util.concurrent.TimeUnit
+       |
        |import akka.cluster.pubsub.DistributedPubSub
        |import ${apiSrcPackage}._
        |import ${apiSrcPackage}.dao.mysql._
@@ -37,6 +39,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |import com.softwaremill.macwire._
        |import play.api.db._
        |import play.api.libs.ws.ahc._
+       |
+       |import scala.concurrent.duration.Duration
        |
        |class ${cToPascal(appLoaderName)} extends LagomApplicationLoader {
        |
@@ -60,9 +64,9 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
        |    lazy val publishQueue = "instant-event-publish-queue"
+       |    implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
-       |    import daoModule._
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
        |
@@ -76,6 +80,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${implSrcPackage}
        |
+       |import java.util.concurrent.TimeUnit
+       |
        |import akka.cluster.pubsub.DistributedPubSub
        |import ${apiSrcPackage}._
        |import ${apiSrcPackage}.dao.mysql._
@@ -86,6 +92,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |import com.softwaremill.macwire._
        |import play.api.db._
        |import play.api.libs.ws.ahc._
+       |
+       |import scala.concurrent.duration.Duration
        |
        |class ${cToPascal(crudAppLoaderName)} extends LagomApplicationLoader {
        |
@@ -109,9 +117,9 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
        |    lazy val publishQueue = "instant-event-publish-queue"
+       |    implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
-       |    import daoModule._
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
        |

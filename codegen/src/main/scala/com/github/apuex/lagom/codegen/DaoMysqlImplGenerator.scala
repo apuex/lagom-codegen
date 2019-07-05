@@ -71,7 +71,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
     val calls = (
-      defCrud(name, fields, primaryKey.fields, foreignKeys) ++
+      defCrud(name, fields, primaryKey, foreignKeys) ++
         defSelectByFks(name, fields, foreignKeys) ++
         defDeleteByFks(name, fields, foreignKeys) ++
         defMessages(name, fields, primaryKey, aggregate.messages) ++
@@ -132,7 +132,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
     val calls = (
-      defCrud(name, fields, primaryKey.fields, foreignKeys) ++
+      defCrud(name, fields, primaryKey, foreignKeys) ++
         defSelectByFks(name, fields, foreignKeys) ++
         defDeleteByFks(name, fields, foreignKeys)
       )
@@ -424,6 +424,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val select =
       s"""$${select${cToPascal(name)}Sql}
          |$${whereClause.toWhereClause(cmd, 4)}
+         |ORDER BY $${indent(if(!cmd.orderBy.isEmpty) whereClause.orderBy(cmd.orderBy, "t") else "", 4)}
        """.stripMargin.trim
 
     s"""
@@ -558,16 +559,21 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def defCrud(name: String, fields: Seq[Field], pkFields: Seq[Field], fks: Seq[ForeignKey]): Seq[String] = Seq(
+  def filterGenerated(fields: Seq[Field], primaryKey: PrimaryKey): Seq[Field] = {
+    val generated = if(primaryKey.generated) primaryKey.fields.map(_.name).toSet else Set[String]()
+    fields.filter(x => !generated.contains(x.name))
+  }
+
+  def defCrud(name: String, fields: Seq[Field], primaryKey: PrimaryKey, fks: Seq[ForeignKey]): Seq[String] = Seq(
     s"""
        |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int = {
-       |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, pkFields), 2), 2)})
+       |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
        |  .on(
        |    ${indent(defFieldSubstitution(name, fields, "evt"), 4)}
        |  ).executeUpdate()
        |
        |  if(rowsAffected == 0)
-       |    SQL(${indentWithLeftMargin(blockQuote(insertSql(name, fields), 2), 4)})
+       |    SQL(${indentWithLeftMargin(blockQuote(insertSql(name, filterGenerated(fields, primaryKey)), 2), 4)})
        |    .on(
        |      ${indent(defFieldSubstitution(name, fields, "evt"), 6)}
        |    ).executeUpdate()
@@ -576,15 +582,15 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim,
     s"""
        |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
-       |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, pkFields), 2), 2)})
+       |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, primaryKey.fields), 2), 2)})
        |  .on(
-       |    ${indent(defFieldSubstitution(name, pkFields, "cmd"), 4)}
+       |    ${indent(defFieldSubstitution(name, primaryKey.fields, "cmd"), 4)}
        |  ).as(${cToCamel(name)}Parser.single)
        |}
      """.stripMargin.trim,
     s"""
        |def update${cToPascal(name)}(evt: Update${cToPascal(name)}Event)(implicit conn: Connection): Int = {
-       |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, pkFields), 2), 2)})
+       |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
        |  .on(
        |    ${indent(defFieldSubstitution(name, fields, "evt"), 4)}
        |  ).executeUpdate()
@@ -592,9 +598,9 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim,
     s"""
        |def delete${cToPascal(name)}(evt: Delete${cToPascal(name)}Event)(implicit conn: Connection): Int = {
-       |  SQL(${indentWithLeftMargin(blockQuote(deleteSql(name, pkFields), 2), 2)})
+       |  SQL(${indentWithLeftMargin(blockQuote(deleteSql(name, primaryKey.fields), 2), 2)})
        |  .on(
-       |    ${indent(defFieldSubstitution(name, pkFields, "evt"), 4)}
+       |    ${indent(defFieldSubstitution(name, primaryKey.fields, "evt"), 4)}
        |  ).executeUpdate()
        |}
      """.stripMargin.trim,

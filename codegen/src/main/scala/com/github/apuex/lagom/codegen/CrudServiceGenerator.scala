@@ -38,6 +38,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
         Seq(
           "publishQueue: String",
           "mediator: ActorRef",
+          "duration: FiniteDuration",
           "db: Database"
         )
       )
@@ -50,18 +51,29 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${crudImplSrcPackage}
        |
+       |import java.util.Date
+       |
        |import akka._
        |import akka.actor._
        |import akka.cluster.pubsub.DistributedPubSubMediator._
        |import akka.stream.scaladsl._
-       |import com.datastax.driver.core.utils.UUIDs.timeBased
+       |import akka.stream.{OverflowStrategy, SourceShape}
+       |import ${messageSrcPackage}.ScalapbJson._
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.dao._
+       |import com.github.apuex.events.play.EventEnvelope
+       |import com.github.apuex.springbootsolution.runtime.DateFormat._
+       |import com.github.apuex.springbootsolution.runtime.FilterPredicate.Clause.{Connection, Predicate}
+       |import com.github.apuex.springbootsolution.runtime.LogicalConnectionType.AND
        |import com.github.apuex.springbootsolution.runtime._
+       |import com.google.protobuf.any.Any
+       |import com.google.protobuf.timestamp.Timestamp
        |import com.lightbend.lagom.scaladsl.api._
        |import play.api.db.Database
+       |import scalapb.GeneratedMessage
        |
        |import scala.concurrent.Future
+       |import scala.concurrent.duration.FiniteDuration
        |
        |class ${cToPascal(modelName)}ServiceImpl (${indent(constructorParams, 2)})
        |  extends ${cToPascal(modelName)}Service {
@@ -70,8 +82,101 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |
        |  def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
        |    ServiceCall { is =>
-       |      Future.successful(is.map(x => x))
+       |      Future.successful({
+       |        // reply/confirm to inbound message...
+       |        val replySource = is
+       |          .map(parseJson)
+       |          .map(x => x.event.map(unpack))
+       |          .map(x => x.map(dispatch))
+       |          .filter(_ => false) // to drainage
+       |          .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
+       |
+       |        val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
+       |          512,
+       |          OverflowStrategy.dropHead)
+       |          .map({
+       |            case x: ShardingEntityCommand =>
+       |              EventEnvelope(
+       |                "",
+       |                x.entityId,
+       |                0,
+       |                Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+       |          })
+       |          .map(printer.print(_))
+       |
+       |        val eventSource = Source.fromIterator(() => new Iterator[Seq[${cToPascal(journalTable)}Vo]] {
+       |          var lastOffset: Option[String] = Some(offset.getOrElse("0"))
+       |
+       |          override def hasNext: Boolean = true
+       |
+       |          override def next(): Seq[${cToPascal(journalTable)}Vo] = db.withTransaction { implicit c =>
+       |            println(lastOffset)
+       |            val result = ${cToCamel(journalTable)}Dao.query${cToPascal(journalTable)}(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("offset", OrderType.ASC))))
+       |            if (!result.isEmpty) {
+       |              lastOffset = Some(result.last.offset.toString)
+       |            }
+       |            result
+       |          }
+       |        })
+       |          .throttle(1, duration)
+       |          .flatMapMerge(2, x => Source(x.toList))
+       |          .map(x => EventEnvelope(
+       |            x.occurredTime.map(formatTimestamp).getOrElse(""),
+       |            x.persistenceId,
+       |            0,
+       |            Some(Any.of(s"type.googleapis.com/$${x.metaData}", x.content)))
+       |          )
+       |          .map(printer.print(_))
+       |
+       |        Source.fromGraph(GraphDSL.create() { implicit builder =>
+       |          import akka.stream.scaladsl.GraphDSL.Implicits._
+       |          val replyShape = builder.add(replySource)
+       |          val eventShape = builder.add(eventSource)
+       |          val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe("realdata", actorRef))
+       |          val commandShape = builder.add(materializedCommandSource)
+       |
+       |          val merge = builder.add(Merge[String](3))
+       |
+       |          replyShape ~> merge
+       |          eventShape ~> merge
+       |          commandShape ~> merge
+       |
+       |          SourceShape(merge.out)
+       |        })
+       |      })
        |    }
+       |  }
+       |
+       |  private def queryForEventsCmd(offset: _root_.scala.Option[_root_.scala.Predef.String]): QueryCommand = {
+       |    QueryCommand(
+       |      Some(
+       |        FilterPredicate(
+       |          Connection(
+       |            LogicalConnectionVo(
+       |              AND,
+       |              Seq(
+       |                FilterPredicate(
+       |                  Predicate(
+       |                    LogicalPredicateVo(
+       |                      PredicateType.GT,
+       |                      "offset",
+       |                      Seq("offset")
+       |                    )
+       |                  )
+       |                )
+       |              )
+       |            )
+       |          )
+       |        )
+       |      ),
+       |      Map(
+       |        "offset" -> offset.getOrElse("")
+       |      )
+       |    )
+       |  }
+       |
+       |  private def dispatch: scala.Any => scala.Any = {
+       |    case _ =>
        |  }
        |}
      """.stripMargin.trim
@@ -115,7 +220,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
          |    db.withTransaction { implicit c =>
          |      val evt = Update${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.fields, "cmd")})
          |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-         |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
+         |        Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
          |      )
          |      mediator ! Publish(publishQueue, evt)
          |      ${cToCamel(name)}Dao.update${cToPascal(aggregate.name)}(evt)
@@ -132,7 +237,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |    db.withTransaction { implicit c =>
            |      val evt = Add${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.fields, "cmd")})
            |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
+           |        Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
            |      )
            |      mediator ! Publish(publishQueue, evt)
            |      ${cToCamel(name)}Dao.add${cToPascal(aggregate.name)}(evt)
@@ -145,7 +250,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |    db.withTransaction { implicit c =>
            |      val evt = Remove${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.primaryKey.fields, "cmd")})
            |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
+           |        Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
            |      )
            |      mediator ! Publish(publishQueue, evt)
            |      ${cToCamel(name)}Dao.remove${cToPascal(aggregate.name)}(evt)
@@ -160,7 +265,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |    db.withTransaction { implicit c =>
            |      val evt = Change${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.fields, "cmd")})
            |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-           |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
+           |        Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
            |      )
            |      mediator ! Publish(publishQueue, evt)
            |      ${cToCamel(name)}Dao.change${cToPascal(aggregate.name)}(evt)
@@ -229,7 +334,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       s"""
          |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
          |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-         |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
+         |  Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
          |)
          |mediator ! Publish(publishQueue, evt)
          |${returnType}(
@@ -240,7 +345,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       s"""
          |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
          |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-         |  Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
+         |  Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
          |)
          |mediator ! Publish(publishQueue, evt)
          |${cToCamel(parentName)}Dao.${cToCamel(message.name)}(evt)
@@ -268,7 +373,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |    db.withTransaction { implicit c =>
        |      val evt = Create${cToPascal(name)}Event(${substituteMethodParams(userField +: fields, "cmd")})
        |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
+       |        Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
        |      )
        |      mediator ! Publish(publishQueue, evt)
        |      ${cToCamel(name)}Dao.create${cToPascal(name)}(evt)
@@ -291,7 +396,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |    db.withTransaction { implicit c =>
        |      val evt = Update${cToPascal(name)}Event(${substituteMethodParams(userField +: fields, "cmd")})
        |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
+       |        Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
        |      )
        |      mediator ! Publish(publishQueue, evt)
        |      ${cToCamel(name)}Dao.update${cToPascal(name)}(evt)
@@ -305,7 +410,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |    db.withTransaction { implicit c =>
        |      val evt = Delete${cToPascal(name)}Event(${substituteMethodParams(userField +: primaryKey.fields, "cmd")})
        |      ${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-       |        Create${cToPascal(journalTable)}Event(cmd.userId, cmd.entityId, timeBased().toString, evt.getClass.getName, evt.toByteString)
+       |        Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
        |      )
        |      mediator ! Publish(publishQueue, evt)
        |      ${cToCamel(name)}Dao.delete${cToPascal(name)}(evt)

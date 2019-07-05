@@ -3,6 +3,8 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.impl
 
+import java.util.concurrent.TimeUnit
+
 import akka.cluster.pubsub.DistributedPubSub
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao.mysql._
@@ -13,6 +15,8 @@ import com.lightbend.lagom.scaladsl.server._
 import com.softwaremill.macwire._
 import play.api.db._
 import play.api.libs.ws.ahc._
+
+import scala.concurrent.duration.Duration
 
 class SalesAppLoader extends LagomApplicationLoader {
 
@@ -36,9 +40,9 @@ object SalesAppLoader {
     // Bind the service that this server provides
     lazy val db = dbApi.database("sales-db")
     lazy val publishQueue = "instant-event-publish-queue"
+    implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
     lazy val mediator = DistributedPubSub(actorSystem).mediator
     lazy val daoModule = wire[DaoModule]
-    import daoModule._
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
   }
 

@@ -68,8 +68,13 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
           .map(_.name)
           .reduceOption((l, r) => s"${l}, ${r}")
           .getOrElse("")
-        s"""
-           |ALTER TABLE ${modelDbSchema}.${x.name} ADD CONSTRAINT ${x.primaryKey.name} PRIMARY KEY(${keyFieldNames});
+        if (x.primaryKey.generated)
+          s"""
+             |ALTER TABLE ${modelDbSchema}.${x.name} ADD INDEX ${x.primaryKey.name}(${keyFieldNames}), MODIFY ${keyFieldNames} BIGINT NOT NULL AUTO_INCREMENT;
+         """.stripMargin.trim
+        else
+          s"""
+             |ALTER TABLE ${modelDbSchema}.${x.name} ADD CONSTRAINT ${x.primaryKey.name} PRIMARY KEY(${keyFieldNames});
          """.stripMargin.trim
       })
 

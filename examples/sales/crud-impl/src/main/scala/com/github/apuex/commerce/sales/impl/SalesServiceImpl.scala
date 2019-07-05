@@ -4,7 +4,6 @@
 package com.github.apuex.commerce.sales.impl
 
 import java.util.Date
-import java.util.concurrent.TimeUnit
 
 import akka._
 import akka.actor._
@@ -26,7 +25,7 @@ import play.api.db.Database
 import scalapb.GeneratedMessage
 
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 
 class SalesServiceImpl (alarmDao: AlarmDao,
   paymentTypeDao: PaymentTypeDao,
@@ -36,17 +35,16 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   eventJournalDao: EventJournalDao,
   publishQueue: String,
   mediator: ActorRef,
+  duration: FiniteDuration,
   db: Database)
   extends SalesService {
-
-  implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
 
   def createAlarm(): ServiceCall[CreateAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = CreateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         alarmDao.createAlarm(evt)
@@ -67,7 +65,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = UpdateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         alarmDao.updateAlarm(evt)
@@ -80,7 +78,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = DeleteAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         alarmDao.deleteAlarm(evt)
@@ -109,7 +107,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = BeginAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmDesc)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         alarmDao.beginAlarm(evt)
@@ -122,7 +120,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = EndAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         alarmDao.endAlarm(evt)
@@ -135,7 +133,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = CreatePaymentTypeEvent(cmd.userId, cmd.paymentTypeId, cmd.paymentTypeName, cmd.paymentTypeLabel)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         paymentTypeDao.createPaymentType(evt)
@@ -156,7 +154,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = UpdatePaymentTypeEvent(cmd.userId, cmd.paymentTypeId, cmd.paymentTypeName, cmd.paymentTypeLabel)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         paymentTypeDao.updatePaymentType(evt)
@@ -169,7 +167,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = DeletePaymentTypeEvent(cmd.userId, cmd.paymentTypeId)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         paymentTypeDao.deletePaymentType(evt)
@@ -198,7 +196,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.recordTime, cmd.quantitySold)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         productDao.createProduct(evt)
@@ -219,7 +217,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.recordTime, cmd.quantitySold)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         productDao.updateProduct(evt)
@@ -232,7 +230,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = DeleteProductEvent(cmd.userId, cmd.productId)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         productDao.deleteProduct(evt)
@@ -269,7 +267,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = UpdateProductSalesEvent(cmd.userId, cmd.productId, cmd.recordTime, cmd.quantitySold)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         productDao.updateProductSales(evt)
@@ -290,7 +288,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = ChangeProductNameEvent(cmd.userId, cmd.productId, cmd.productName)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         productDao.changeProductName(evt)
@@ -311,7 +309,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = ChangeProductUnitEvent(cmd.userId, cmd.productId, cmd.productUnit)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         productDao.changeProductUnit(evt)
@@ -332,7 +330,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = ChangeUnitPriceEvent(cmd.userId, cmd.productId, cmd.unitPrice)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         productDao.changeUnitPrice(evt)
@@ -345,7 +343,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = CreateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         orderDao.createOrder(evt)
@@ -366,7 +364,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = UpdateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         orderDao.updateOrder(evt)
@@ -379,7 +377,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = DeleteOrderEvent(cmd.userId, cmd.orderId)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         orderDao.deleteOrder(evt)
@@ -416,7 +414,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = AddOrderLinesEvent(cmd.userId, cmd.orderId, cmd.orderLines)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         orderDao.addOrderLines(evt)
@@ -429,7 +427,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = RemoveOrderLinesEvent(cmd.userId, cmd.orderId)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         orderDao.removeOrderLines(evt)
@@ -450,7 +448,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = ChangeOrderPaymentTypeEvent(cmd.userId, cmd.orderId, cmd.orderPaymentType)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         orderDao.changeOrderPaymentType(evt)
@@ -463,7 +461,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = CreateOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId, cmd.productName, cmd.itemUnit, cmd.unitPrice, cmd.orderQuantity)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         orderItemDao.createOrderItem(evt)
@@ -484,7 +482,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = UpdateOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId, cmd.productName, cmd.itemUnit, cmd.unitPrice, cmd.orderQuantity)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         orderItemDao.updateOrderItem(evt)
@@ -497,7 +495,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       db.withTransaction { implicit c =>
         val evt = DeleteOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         orderItemDao.deleteOrderItem(evt)
@@ -556,9 +554,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def createEventJournal(): ServiceCall[CreateEventJournalCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-        val evt = CreateEventJournalEvent(cmd.userId, cmd.persistenceId, cmd.occurredTime, cmd.metaData, cmd.content)
+        val evt = CreateEventJournalEvent(cmd.userId, cmd.offset, cmd.persistenceId, cmd.occurredTime, cmd.metaData, cmd.content)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         eventJournalDao.createEventJournal(evt)
@@ -577,9 +575,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updateEventJournal(): ServiceCall[UpdateEventJournalCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-        val evt = UpdateEventJournalEvent(cmd.userId, cmd.persistenceId, cmd.occurredTime, cmd.metaData, cmd.content)
+        val evt = UpdateEventJournalEvent(cmd.userId, cmd.offset, cmd.persistenceId, cmd.occurredTime, cmd.metaData, cmd.content)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         eventJournalDao.updateEventJournal(evt)
@@ -590,9 +588,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def deleteEventJournal(): ServiceCall[DeleteEventJournalCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-        val evt = DeleteEventJournalEvent(cmd.userId, cmd.persistenceId, cmd.occurredTime)
+        val evt = DeleteEventJournalEvent(cmd.userId, cmd.offset)
         eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
         mediator ! Publish(publishQueue, evt)
         eventJournalDao.deleteEventJournal(evt)
@@ -641,15 +639,15 @@ class SalesServiceImpl (alarmDao: AlarmDao,
           .map(printer.print(_))
 
         val eventSource = Source.fromIterator(() => new Iterator[Seq[EventJournalVo]] {
-          var lastOffset: Option[String] = if(offset.isDefined) offset else Some(formatTimestamp(Timestamp(0, 0)))
+          var lastOffset: Option[String] = Some(offset.getOrElse("0"))
 
           override def hasNext: Boolean = true
 
           override def next(): Seq[EventJournalVo] = db.withTransaction { implicit c =>
             println(lastOffset)
-            val result = eventJournalDao.queryEventJournal(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("occurredTime", OrderType.ASC))))
+            val result = eventJournalDao.queryEventJournal(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("offset", OrderType.ASC))))
             if (!result.isEmpty) {
-              lastOffset = result.last.occurredTime.map(formatTimestamp)
+              lastOffset = Some(result.last.offset.toString)
             }
             result
           }
@@ -695,7 +693,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
                   Predicate(
                     LogicalPredicateVo(
                       PredicateType.GT,
-                      "occurredTime",
+                      "offset",
                       Seq("offset")
                     )
                   )
