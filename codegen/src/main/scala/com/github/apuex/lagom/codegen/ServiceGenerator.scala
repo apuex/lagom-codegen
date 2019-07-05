@@ -45,6 +45,8 @@ class ServiceGenerator(modelLoader: ModelLoader) {
        |
        |  ${indent(calls(), 2)}
        |
+       |  def currentEvents(): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]]
+       |
        |  def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]]
        |
        |  override def descriptor: Descriptor = {
@@ -55,6 +57,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
        |
        |    named("${cToShell(modelName)}")
        |      .withCalls(
+       |        pathCall("/api/current-events", currentEvents _),
        |        pathCall("/api/events?offset", events _),
        |        ${indent(callDescs(), 8)}
        |      ).withAutoAcl(true)

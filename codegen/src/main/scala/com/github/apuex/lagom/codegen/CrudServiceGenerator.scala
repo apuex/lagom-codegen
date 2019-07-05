@@ -80,104 +80,11 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |
        |  ${indent(calls(), 2)}
        |
-       |  def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
-       |    ServiceCall { is =>
-       |      Future.successful({
-       |        // reply/confirm to inbound message...
-       |        val replySource = is
-       |          .map(parseJson)
-       |          .map(x => x.event.map(unpack))
-       |          .map(x => x.map(dispatch))
-       |          .filter(_ => false) // to drainage
-       |          .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
+       |  ${indent(defCurrentEvents(), 2)}
        |
-       |        val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
-       |          512,
-       |          OverflowStrategy.dropHead)
-       |          .map({
-       |            case x: ShardingEntityCommand =>
-       |              EventEnvelope(
-       |                "",
-       |                x.entityId,
-       |                0,
-       |                Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
-       |          })
-       |          .map(printer.print(_))
+       |  ${indent(defEvents(), 2)}
        |
-       |        val eventSource = Source.fromIterator(() => new Iterator[Seq[${cToPascal(journalTable)}Vo]] {
-       |          var lastOffset: Option[String] = Some(offset.getOrElse("0"))
-       |
-       |          override def hasNext: Boolean = true
-       |
-       |          override def next(): Seq[${cToPascal(journalTable)}Vo] = db.withTransaction { implicit c =>
-       |            println(lastOffset)
-       |            val result = ${cToCamel(journalTable)}Dao.query${cToPascal(journalTable)}(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("offset", OrderType.ASC))))
-       |            if (!result.isEmpty) {
-       |              lastOffset = Some(result.last.offset.toString)
-       |            }
-       |            result
-       |          }
-       |        })
-       |          .throttle(1, duration)
-       |          .flatMapMerge(2, x => Source(x.toList))
-       |          .map(x => EventEnvelope(
-       |            x.occurredTime.map(formatTimestamp).getOrElse(""),
-       |            x.persistenceId,
-       |            0,
-       |            Some(Any.of(s"type.googleapis.com/$${x.metaData}", x.content)))
-       |          )
-       |          .map(printer.print(_))
-       |
-       |        Source.fromGraph(GraphDSL.create() { implicit builder =>
-       |          import akka.stream.scaladsl.GraphDSL.Implicits._
-       |          val replyShape = builder.add(replySource)
-       |          val eventShape = builder.add(eventSource)
-       |          val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe("realdata", actorRef))
-       |          val commandShape = builder.add(materializedCommandSource)
-       |
-       |          val merge = builder.add(Merge[String](3))
-       |
-       |          replyShape ~> merge
-       |          eventShape ~> merge
-       |          commandShape ~> merge
-       |
-       |          SourceShape(merge.out)
-       |        })
-       |      })
-       |    }
-       |  }
-       |
-       |  private def queryForEventsCmd(offset: _root_.scala.Option[_root_.scala.Predef.String]): QueryCommand = {
-       |    QueryCommand(
-       |      Some(
-       |        FilterPredicate(
-       |          Connection(
-       |            LogicalConnectionVo(
-       |              AND,
-       |              Seq(
-       |                FilterPredicate(
-       |                  Predicate(
-       |                    LogicalPredicateVo(
-       |                      PredicateType.GT,
-       |                      "offset",
-       |                      Seq("offset")
-       |                    )
-       |                  )
-       |                )
-       |              )
-       |            )
-       |          )
-       |        )
-       |      ),
-       |      Map(
-       |        "offset" -> offset.getOrElse("")
-       |      )
-       |    )
-       |  }
-       |
-       |  private def dispatch: scala.Any => scala.Any = {
-       |    case _ =>
-       |  }
+       |  ${indent(defDispatchMessage(), 2)}
        |}
      """.stripMargin.trim
   }
@@ -472,6 +379,163 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |       ${cToCamel(name)}Dao.deleteBy${by}(${substituteMethodParams(keyFields)})
        |    }
        |  )
+       |}
+     """.stripMargin.trim
+  }
+
+  def defCurrentEvents(): String = {
+    s"""
+       |def currentEvents(): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
+       |  ServiceCall { is =>
+       |    Future.successful({
+       |      val replySource = is
+       |        .map(parseJson)
+       |        .map(x => x.event.map(unpack))
+       |        .map(x => x.map(dispatch))
+       |        .filter(_ => false) // to drainage
+       |        .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
+       |
+       |      val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
+       |        512,
+       |        OverflowStrategy.dropHead)
+       |        .map({
+       |          case x: Event =>
+       |            EventEnvelope(
+       |              "",
+       |              "",
+       |              0,
+       |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+       |          case _ => null
+       |        })
+       |        .filter(x => null != x)
+       |        .map(printer.print(_))
+       |
+       |      Source.fromGraph(GraphDSL.create() { implicit builder =>
+       |        import akka.stream.scaladsl.GraphDSL.Implicits._
+       |        val replyShape = builder.add(replySource)
+       |        val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe(publishQueue, actorRef))
+       |        val commandShape = builder.add(materializedCommandSource)
+       |
+       |        val merge = builder.add(Merge[String](2))
+       |
+       |        replyShape ~> merge
+       |        commandShape ~> merge
+       |
+       |        SourceShape(merge.out)
+       |      })
+       |    })
+       |  }
+       |}
+     """.stripMargin.trim
+  }
+
+  def defEvents(): String = {
+    s"""
+      |def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
+      |  ServiceCall { is =>
+      |    Future.successful({
+      |      // reply/confirm to inbound message...
+      |      val replySource = is
+      |        .map(parseJson)
+      |        .map(x => x.event.map(unpack))
+      |        .map(x => x.map(dispatch))
+      |        .filter(_ => false) // to drainage
+      |        .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
+      |
+      |      val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
+      |        512,
+      |        OverflowStrategy.dropHead)
+      |        .map({
+      |          case x: ShardingEntityCommand =>
+      |            EventEnvelope(
+      |              "",
+      |              x.entityId,
+      |              0,
+      |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+      |        })
+      |        .map(printer.print(_))
+      |
+      |      val eventSource = Source.fromIterator(() => new Iterator[Seq[${cToPascal(journalTable)}Vo]] {
+      |        var lastOffset: Option[String] = Some(offset.getOrElse("0"))
+      |
+      |        override def hasNext: Boolean = true
+      |
+      |        override def next(): Seq[${cToPascal(journalTable)}Vo] = db.withTransaction { implicit c =>
+      |          println(lastOffset)
+      |          val result = ${cToCamel(journalTable)}Dao.query${cToPascal(journalTable)}(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("offset", OrderType.ASC))))
+      |          if (!result.isEmpty) {
+      |            lastOffset = Some(result.last.offset.toString)
+      |          }
+      |          result
+      |        }
+      |      })
+      |        .throttle(1, duration)
+      |        .flatMapMerge(2, x => Source(x.toList))
+      |        .map(x => EventEnvelope(
+      |          x.occurredTime.map(formatTimestamp).getOrElse(""),
+      |          x.persistenceId,
+      |          0,
+      |          Some(Any.of(s"type.googleapis.com/$${x.metaData}", x.content)))
+      |        )
+      |        .map(printer.print(_))
+      |
+      |      Source.fromGraph(GraphDSL.create() { implicit builder =>
+      |        import akka.stream.scaladsl.GraphDSL.Implicits._
+      |        val replyShape = builder.add(replySource)
+      |        val eventShape = builder.add(eventSource)
+      |        val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe("realdata", actorRef))
+      |        val commandShape = builder.add(materializedCommandSource)
+      |
+      |        val merge = builder.add(Merge[String](3))
+      |
+      |        replyShape ~> merge
+      |        eventShape ~> merge
+      |        commandShape ~> merge
+      |
+      |        SourceShape(merge.out)
+      |      })
+      |    })
+      |  }
+      |}
+    """.stripMargin.trim
+  }
+
+  def defQueryForEvents(): String = {
+    s"""
+       |private def queryForEventsCmd(offset: _root_.scala.Option[_root_.scala.Predef.String]): QueryCommand = {
+       |  QueryCommand(
+       |    Some(
+       |      FilterPredicate(
+       |        Connection(
+       |          LogicalConnectionVo(
+       |            AND,
+       |            Seq(
+       |              FilterPredicate(
+       |                Predicate(
+       |                  LogicalPredicateVo(
+       |                    PredicateType.GT,
+       |                    "offset",
+       |                    Seq("offset")
+       |                  )
+       |                )
+       |              )
+       |            )
+       |          )
+       |        )
+       |      )
+       |    ),
+       |    Map(
+       |      "offset" -> offset.getOrElse("")
+       |    )
+       |  )
+       |}
+     """.stripMargin
+  }
+
+  def defDispatchMessage(): String = {
+    s"""
+       |private def dispatch: scala.Any => scala.Any = {
+       |  case _ =>
        |}
      """.stripMargin.trim
   }

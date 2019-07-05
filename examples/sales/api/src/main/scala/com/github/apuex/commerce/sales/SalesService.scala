@@ -123,6 +123,7 @@ trait SalesService extends Service {
 
   def retrieveEventJournalByRowid(rowid: String): ServiceCall[NotUsed, EventJournalVo]
 
+  def currentEvents(): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]]
   def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]]
 
   override def descriptor: Descriptor = {
@@ -196,6 +197,7 @@ trait SalesService extends Service {
 
     named("sales")
       .withCalls(
+        pathCall("/api/current-events", currentEvents _),
         pathCall("/api/events?offset", events _),
         pathCall("/api/alarm/create-alarm", createAlarm _),
         pathCall("/api/alarm/retrieve-alarm", retrieveAlarm _),
