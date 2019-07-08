@@ -5,7 +5,7 @@ package com.github.apuex.commerce.sales
 import com.google.protobuf.timestamp.Timestamp
 import com.github.apuex.springbootsolution.runtime.DateFormat._
 
-trait AlarmCommand extends ShardingEntityCommand {
+trait AlarmCommand extends Command {
   def alarmId: String
   def alarmBegin: Option[Timestamp]
   override def entityId: String = {

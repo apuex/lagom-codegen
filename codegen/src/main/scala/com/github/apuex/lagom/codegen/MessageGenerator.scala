@@ -29,11 +29,6 @@ class MessageGenerator(modelLoader: ModelLoader) {
       messageSrcDir
     )
     save(
-      "ShardingEntityCommand.scala",
-      s"${generateShardingEntityCommand(messageSrcPackage)}\n",
-      messageSrcDir
-    )
-    save(
       "Event.scala",
       s"${generateEvent(messageSrcPackage)}\n",
       messageSrcDir
@@ -357,6 +352,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
        |
        |trait Command {
        |  def userId: String
+       |  def entityId: String
        |}
      """.stripMargin.trim
   }
@@ -413,6 +409,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
   }
 
   def generateShardingEntityCommand(name: String, keyFields: Seq[Field], messageSrcPackage: String): String = {
+    val (_, entityIdFields) = generateEntityIdFields(name, keyFields)
     val (dependencies, entityId) = generateEntityId(name, keyFields)
     s"""
        |/*****************************************************
@@ -421,8 +418,8 @@ class MessageGenerator(modelLoader: ModelLoader) {
        |package ${messageSrcPackage}
        |${dependencies}
        |
-       |trait ${cToPascal(name)}Command extends ShardingEntityCommand {
-       |  ${indent(generateEntityIdFields(name, keyFields)._2, 2)}
+       |trait ${cToPascal(name)}Command extends Command {
+       |  ${indent(entityIdFields, 2)}
        |  override def entityId: String = {
        |    ${entityId}
        |  }
@@ -431,7 +428,8 @@ class MessageGenerator(modelLoader: ModelLoader) {
   }
 
   def generateShardingEntityEvent(name: String, keyFields: Seq[Field], messageSrcPackage: String): String = {
-    val (dependencies, entityIdFields) = generateEntityIdFields(name, keyFields)
+    val (_, entityIdFields) = generateEntityIdFields(name, keyFields)
+    val (dependencies, entityId) = generateEntityId(name, keyFields)
     s"""
        |/*****************************************************
        | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
@@ -441,19 +439,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
        |
        |trait ${cToPascal(name)}Event extends Event {
        |  ${indent(entityIdFields, 2)}
-       |}
-     """.stripMargin.trim
-  }
-
-  def generateShardingEntityCommand(messageSrcPackage: String): String = {
-    s"""
-       |/*****************************************************
-       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
-       | *****************************************************/
-       |package ${messageSrcPackage}
-       |
-       |trait ShardingEntityCommand extends Command {
-       |  def entityId: String
+       |  override def entityId: String = {
+       |    ${entityId}
+       |  }
        |}
      """.stripMargin.trim
   }
@@ -467,6 +455,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
        |
        |trait Event {
        |  def userId: String
+       |  def entityId: String
        |}
      """.stripMargin.trim
   }

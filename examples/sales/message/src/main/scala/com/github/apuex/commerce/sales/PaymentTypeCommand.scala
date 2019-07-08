@@ -4,7 +4,7 @@
 package com.github.apuex.commerce.sales
 
 
-trait PaymentTypeCommand extends ShardingEntityCommand {
+trait PaymentTypeCommand extends Command {
   def paymentTypeId: Int
   override def entityId: String = {
     s"paymentType_${paymentTypeId}"

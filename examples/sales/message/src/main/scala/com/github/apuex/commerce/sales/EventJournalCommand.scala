@@ -4,7 +4,7 @@
 package com.github.apuex.commerce.sales
 
 
-trait EventJournalCommand extends ShardingEntityCommand {
+trait EventJournalCommand extends Command {
   def offset: Long
   override def entityId: String = {
     s"eventJournal_${offset}"

@@ -662,6 +662,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         val replySource = is
           .map(parseJson)
           .map(x => x.event.map(unpack))
+          .filter(x => x.isInstanceOf[Event] || x.isInstanceOf[ValueObject]) // command(s) not accepted
           .map(x => x.map(dispatch))
           .filter(_ => false) // to drainage
           .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
@@ -669,9 +670,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
           512,
           OverflowStrategy.dropHead)
-          .filter(x => x.isInstanceOf[ShardingEntityCommand])
+          .filter(x => x.isInstanceOf[Command])
           .map({
-            case x: ShardingEntityCommand =>
+            case x: Command =>
               EventEnvelope(
                 "",
                 x.entityId,
