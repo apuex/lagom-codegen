@@ -25,7 +25,7 @@ import play.api.db.Database
 import scalapb.GeneratedMessage
 
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.Duration
 
 class SalesServiceImpl (alarmDao: AlarmDao,
   paymentTypeDao: PaymentTypeDao,
@@ -36,7 +36,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   eventApply: SalesEventApply,
   publishQueue: String,
   mediator: ActorRef,
-  duration: FiniteDuration,
+  duration: Duration,
   db: Database)
   extends SalesService {
 

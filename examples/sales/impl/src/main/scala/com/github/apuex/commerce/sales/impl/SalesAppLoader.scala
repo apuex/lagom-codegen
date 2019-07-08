@@ -40,7 +40,7 @@ object SalesAppLoader {
     // Bind the service that this server provides
     lazy val db = dbApi.database("sales-db")
     lazy val publishQueue = "instant-event-publish-queue"
-    implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
+    implicit val duration = config.getDuration("db.sales-db.event.query-interval")
     lazy val mediator = DistributedPubSub(actorSystem).mediator
     lazy val daoModule = wire[DaoModule]
     lazy val eventApply = wire[SalesEventApply]

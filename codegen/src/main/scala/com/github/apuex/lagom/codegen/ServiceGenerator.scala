@@ -67,6 +67,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   }
 
   def calls(): String = calls(xml)
+    .filter(x => "" != x)
     .reduceOption((l, r) => s"${l}\n\n${r}")
     .getOrElse("")
 
@@ -78,11 +79,13 @@ class ServiceGenerator(modelLoader: ModelLoader) {
         if(!exists) existing += x
         !exists
       })
+      .filter(x => "" != x)
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
   }
 
   def callDescs(): String = callDescs(xml)
+    .filter(x => "" != x)
     .reduceOption((l, r) => s"${l},\n${r}")
     .getOrElse("")
 
@@ -147,6 +150,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
         defMessageCalls(aggregate.messages) ++
         defCallsForEmbeddedAggregateMessages(aggregate.aggregates)
       )
+      .filter(x => "" != x)
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
   }
@@ -157,6 +161,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
       defCrudCalls(name) ++
         defByForeignKeyCalls(name, fields, foreignKeys)
       )
+      .filter(x => "" != x)
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
   }

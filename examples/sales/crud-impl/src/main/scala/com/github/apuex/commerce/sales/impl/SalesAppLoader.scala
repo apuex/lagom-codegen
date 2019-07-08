@@ -16,7 +16,7 @@ import com.softwaremill.macwire._
 import play.api.db._
 import play.api.libs.ws.ahc._
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 class SalesAppLoader extends LagomApplicationLoader {
 
@@ -40,7 +40,7 @@ object SalesAppLoader {
     // Bind the service that this server provides
     lazy val db = dbApi.database("sales-db")
     lazy val publishQueue = "instant-event-publish-queue"
-    implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
+    implicit val duration = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
     lazy val mediator = DistributedPubSub(actorSystem).mediator
     lazy val daoModule = wire[DaoModule]
     lazy val eventApply = wire[SalesEventApply]
