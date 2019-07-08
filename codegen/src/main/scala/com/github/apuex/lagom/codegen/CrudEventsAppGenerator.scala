@@ -66,12 +66,10 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
        |        .map(unpack)
        |        .map({
        |          case x: Event =>
-       |            if (ee.sequenceNr > 0 && "" != ee.offset && "0" != ee.offset) {
-       |              ${cToCamel(journalTable)}Dao.createEventJournal(
-       |                Create${cToPascal(journalTable)}Event(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
-       |              )
-       |              dispatch(x)
-       |            }
+       |            ${cToCamel(journalTable)}Dao.createEventJournal(
+       |              Create${cToPascal(journalTable)}Event(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
+       |            )
+       |            dispatch(x)
        |          case x: ValueObject =>
        |            mediator ! Publish(publishQueue, x)
        |        })

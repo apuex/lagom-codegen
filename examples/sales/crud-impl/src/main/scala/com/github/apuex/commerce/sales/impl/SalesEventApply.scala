@@ -31,12 +31,10 @@ class SalesEventApply(alarmDao: AlarmDao,
         .map(unpack)
         .map({
           case x: Event =>
-            if (ee.sequenceNr > 0 && "" != ee.offset && "0" != ee.offset) {
-              eventJournalDao.createEventJournal(
-                CreateEventJournalEvent(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
-              )
-              dispatch(x)
-            }
+            eventJournalDao.createEventJournal(
+              CreateEventJournalEvent(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
+            )
+            dispatch(x)
           case x: ValueObject =>
             mediator ! Publish(publishQueue, x)
         })
