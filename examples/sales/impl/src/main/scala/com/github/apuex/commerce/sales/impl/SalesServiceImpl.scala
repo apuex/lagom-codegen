@@ -627,6 +627,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
           512,
           OverflowStrategy.dropHead)
+          .filter(x => x.isInstanceOf[Event])
           .map({
             case x: Event =>
               EventEnvelope(
@@ -634,9 +635,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
                 "",
                 0,
                 Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
-            case _ => null
           })
-          .filter(x => null != x)
           .map(printer.print(_))
 
         Source.fromGraph(GraphDSL.create() { implicit builder =>
@@ -670,6 +669,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
           512,
           OverflowStrategy.dropHead)
+          .filter(x => x.isInstanceOf[ShardingEntityCommand])
           .map({
             case x: ShardingEntityCommand =>
               EventEnvelope(
@@ -677,9 +677,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
                 x.entityId,
                 0,
                 Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
-            case _ => null
           })
-          .filter(x => null != x)
           .map(printer.print(_))
 
         val eventSource = Source.fromIterator(() => new Iterator[Seq[EventJournalVo]] {

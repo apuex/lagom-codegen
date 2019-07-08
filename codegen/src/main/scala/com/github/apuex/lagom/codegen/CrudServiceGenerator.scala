@@ -400,6 +400,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |      val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
        |        512,
        |        OverflowStrategy.dropHead)
+       |        .filter(x => x.isInstanceOf[Event])
        |        .map({
        |          case x: Event =>
        |            EventEnvelope(
@@ -407,9 +408,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |              "",
        |              0,
        |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
-       |          case _ => null
        |        })
-       |        .filter(x => null != x)
        |        .map(printer.print(_))
        |
        |      Source.fromGraph(GraphDSL.create() { implicit builder =>
@@ -447,6 +446,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       |      val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
       |        512,
       |        OverflowStrategy.dropHead)
+      |        .filter(x => x.isInstanceOf[ShardingEntityCommand])
       |        .map({
       |          case x: ShardingEntityCommand =>
       |            EventEnvelope(
@@ -454,9 +454,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       |              x.entityId,
       |              0,
       |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
-      |          case _ => null
       |        })
-      |        .filter(x => null != x)
       |        .map(printer.print(_))
       |
       |      val eventSource = Source.fromIterator(() => new Iterator[Seq[${cToPascal(journalTable)}Vo]] {
