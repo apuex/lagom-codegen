@@ -686,7 +686,6 @@ class SalesServiceImpl (alarmDao: AlarmDao,
           override def hasNext: Boolean = true
 
           override def next(): Seq[EventJournalVo] = db.withTransaction { implicit c =>
-            println(lastOffset)
             val result = eventJournalDao.queryEventJournal(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("offset", OrderType.ASC))))
             if (!result.isEmpty) {
               lastOffset = Some(result.last.offset.toString)

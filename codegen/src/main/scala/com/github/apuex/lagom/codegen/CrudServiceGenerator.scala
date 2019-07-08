@@ -463,7 +463,6 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       |        override def hasNext: Boolean = true
       |
       |        override def next(): Seq[${cToPascal(journalTable)}Vo] = db.withTransaction { implicit c =>
-      |          println(lastOffset)
       |          val result = ${cToCamel(journalTable)}Dao.query${cToPascal(journalTable)}(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("offset", OrderType.ASC))))
       |          if (!result.isEmpty) {
       |            lastOffset = Some(result.last.offset.toString)
