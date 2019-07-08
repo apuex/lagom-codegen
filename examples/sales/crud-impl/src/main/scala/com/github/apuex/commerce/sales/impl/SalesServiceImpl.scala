@@ -697,7 +697,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
           .throttle(1, duration)
           .flatMapMerge(2, x => Source(x.toList))
           .map(x => EventEnvelope(
-            x.occurredTime.map(formatTimestamp).getOrElse(""),
+            x.offset.toString,
             x.persistenceId,
             0,
             Some(Any.of(s"type.googleapis.com/${x.metaData}", x.content)))
