@@ -15,6 +15,7 @@ object Main extends App {
       case "generate-entity" => EntityGenerator(args.drop(1)(0)).generate()
       case "generate-json-serializer" => JsonSerializerGenerator(args.drop(1)(0)).generate()
       case "generate-crud-service" => CrudServiceGenerator(args.drop(1)(0)).generate()
+      case "generate-crud-event-apply" => CrudEventsAppGenerator(args.drop(1)(0)).generate()
       case "generate-cqrs-service" => CqrsServiceGenerator(args.drop(1)(0)).generate()
       case "generate-service" => ServiceGenerator(args.drop(1)(0)).generate()
       case "generate-dao" => DaoGenerator(args.drop(1)(0)).generate()
@@ -40,6 +41,7 @@ object Main extends App {
     // TODO: NOT implemented.
     // CqrsServiceGenerator(modelLoader).generate()
     CrudServiceGenerator(modelLoader).generate()
+    CrudEventsAppGenerator(modelLoader).generate()
     DaoGenerator(modelLoader).generate()
     DaoMysqlImplGenerator(modelLoader).generate()
     MysqlSchemaGenerator(modelLoader).generate()

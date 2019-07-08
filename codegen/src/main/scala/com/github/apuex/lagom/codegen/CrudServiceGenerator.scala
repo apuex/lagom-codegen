@@ -8,7 +8,7 @@ import com.github.apuex.springbootsolution.runtime.TypeConverters.toJavaType
 import scala.xml.Node
 
 object CrudServiceGenerator {
-  def apply(fileName: String): CrudServiceGenerator = new CrudServiceGenerator(ModelLoader(fileName))
+  def apply(fileName: String): CrudServiceGenerator = CrudServiceGenerator(ModelLoader(fileName))
 
   def apply(modelLoader: ModelLoader): CrudServiceGenerator = new CrudServiceGenerator(modelLoader)
 }
@@ -36,6 +36,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       xml.child.filter(_.label == "entity").map(_.\@("name"))
         .map(x => s"${cToCamel(x)}Dao: ${cToPascal(x)}Dao") ++
         Seq(
+          s"eventApply: ${cToPascal(s"${modelName}_${event}_${apply}")}",
           "publishQueue: String",
           "mediator: ActorRef",
           "duration: FiniteDuration",
@@ -85,8 +86,6 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |  ${indent(defEvents(), 2)}
        |
        |  ${indent(defQueryForEvents(), 2)}
-       |
-       |  ${indent(defDispatchMessage(), 2)}
        |}
      """.stripMargin.trim
   }
@@ -392,8 +391,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |    Future.successful({
        |      val replySource = is
        |        .map(parseJson)
-       |        .map(x => x.event.map(unpack))
-       |        .map(x => x.map(dispatch))
+       |        .map(eventApply.on)
        |        .filter(_ => false) // to drainage
        |        .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
        |
@@ -438,9 +436,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       |      // reply/confirm to inbound message...
       |      val replySource = is
       |        .map(parseJson)
-      |        .map(x => x.event.map(unpack))
-      |        .filter(x => x.isInstanceOf[Event] || x.isInstanceOf[ValueObject]) // command(s) not accepted
-      |        .map(x => x.map(dispatch))
+      |        .map(eventApply.on)
       |        .filter(_ => false) // to drainage
       |        .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
       |
@@ -530,14 +526,6 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |      "offset" -> offset.getOrElse("")
        |    )
        |  )
-       |}
-     """.stripMargin.trim
-  }
-
-  def defDispatchMessage(): String = {
-    s"""
-       |private def dispatch: scala.Any => scala.Any = {
-       |  case _ =>
        |}
      """.stripMargin.trim
   }

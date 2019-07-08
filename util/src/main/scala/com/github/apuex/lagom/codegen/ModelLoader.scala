@@ -306,6 +306,8 @@ object ModelLoader {
 class ModelLoader(val xml: Node, val modelFileName: String) {
   val model = "model"
   val message = "message"
+  val event = "event"
+  val apply: String = "apply"
   val api = "api"
   val dao = "dao"
   val mysql = "mysql"

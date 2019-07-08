@@ -67,6 +67,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
+       |    lazy val eventApply = wire[${cToPascal(s"${modelName}_${event}_${apply}")}]
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
        |
@@ -120,6 +121,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
+       |    lazy val eventApply = wire[${cToPascal(s"${modelName}_${event}_${apply}")}]
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
        |

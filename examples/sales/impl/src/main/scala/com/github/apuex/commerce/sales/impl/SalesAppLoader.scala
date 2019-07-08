@@ -43,6 +43,7 @@ object SalesAppLoader {
     implicit val duration = Duration.apply(3, TimeUnit.SECONDS)
     lazy val mediator = DistributedPubSub(actorSystem).mediator
     lazy val daoModule = wire[DaoModule]
+    lazy val eventApply = wire[SalesEventApply]
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
   }
 

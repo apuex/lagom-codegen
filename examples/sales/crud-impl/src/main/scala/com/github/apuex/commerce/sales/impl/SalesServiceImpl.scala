@@ -33,6 +33,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   orderDao: OrderDao,
   orderItemDao: OrderItemDao,
   eventJournalDao: EventJournalDao,
+  eventApply: SalesEventApply,
   publishQueue: String,
   mediator: ActorRef,
   duration: FiniteDuration,
@@ -619,8 +620,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       Future.successful({
         val replySource = is
           .map(parseJson)
-          .map(x => x.event.map(unpack))
-          .map(x => x.map(dispatch))
+          .map(eventApply.on)
           .filter(_ => false) // to drainage
           .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
 
@@ -661,9 +661,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         // reply/confirm to inbound message...
         val replySource = is
           .map(parseJson)
-          .map(x => x.event.map(unpack))
-          .filter(x => x.isInstanceOf[Event] || x.isInstanceOf[ValueObject]) // command(s) not accepted
-          .map(x => x.map(dispatch))
+          .map(eventApply.on)
           .filter(_ => false) // to drainage
           .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
 
@@ -749,9 +747,5 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         "offset" -> offset.getOrElse("")
       )
     )
-  }
-
-  private def dispatch: scala.Any => scala.Any = {
-    case _ =>
   }
 }
