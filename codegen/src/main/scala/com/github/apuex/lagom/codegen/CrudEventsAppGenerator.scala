@@ -165,11 +165,11 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
     val key = primaryKey.fields.map(_.name).toSet
     val derived = parentFields.map(_.name).filter(!key.contains(_)).toSet
     val multiple = message.returnType.endsWith("*")
-    val returnType = if ("" == message.returnType) "Int"
+    val returnType = if ("" == message.returnType) ""
     else {
       val baseName = message.returnType.replace("*", "")
       if (multiple) {
-        if (isAggregateEntity(baseName)) s"${cToPascal(baseName)}ListVo]" else s"${cToPascal(baseName)}Vo"
+        if (isAggregateEntity(baseName)) s"${cToPascal(baseName)}ListVo" else s"${cToPascal(baseName)}Vo"
       } else {
         cToPascal(toJavaType(baseName))
       }
@@ -189,6 +189,9 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
          |${cToCamel(parentName)}Dao.${cToCamel(message.name)}(evt)
        """.stripMargin.trim
 
+    if (message.transient || message.fields.filter(x => derived.contains(x.name)).isEmpty)
+      ""
+    else
     s"""
        |case evt: ${cToPascal(message.name)}Event =>
        |  ${indent(daoCall, 6)}

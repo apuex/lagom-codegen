@@ -181,7 +181,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
     else {
       val baseName = message.returnType.replace("*", "")
       if (multiple) {
-        if (isAggregateEntity(baseName)) s"${cToPascal(baseName)}ListVo]" else s"${cToPascal(baseName)}Vo"
+        if (isAggregateEntity(baseName)) s"${cToPascal(baseName)}ListVo" else s"${cToPascal(baseName)}Vo"
       } else {
         cToPascal(toJavaType(baseName))
       }

@@ -238,6 +238,14 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
          |mediator ! Publish(publishQueue, cmd)
          |0
        """.stripMargin.trim
+    else if (message.transient || message.fields.filter(x => derived.contains(x.name)).isEmpty)
+      s"""
+         |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
+         |mediator ! Publish(publishQueue, evt)
+         |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+         |  Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+         |)
+       """.stripMargin.trim
     else if (multiple)
       s"""
          |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
