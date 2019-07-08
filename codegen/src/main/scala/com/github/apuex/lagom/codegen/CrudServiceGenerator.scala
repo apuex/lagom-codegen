@@ -404,9 +404,9 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |        .map({
        |          case x: Event =>
        |            EventEnvelope(
-       |              "",
-       |              "",
-       |              0,
+       |              "",          // offset
+       |              x.entityId,  // persistence_id
+       |              0L,          // sequence_nr
        |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
        |        })
        |        .map(printer.print(_))
@@ -451,9 +451,9 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       |        .map({
       |          case x: Command =>
       |            EventEnvelope(
-      |              "",
-      |              x.entityId,
-      |              0,
+      |              "",          // offset
+      |              x.entityId,  // persistence_id
+      |              0L,          // sequence_nr
       |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
       |        })
       |        .map(printer.print(_))

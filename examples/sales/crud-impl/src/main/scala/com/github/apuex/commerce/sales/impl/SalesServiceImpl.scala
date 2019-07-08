@@ -631,9 +631,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
           .map({
             case x: Event =>
               EventEnvelope(
-                "",
-                "",
-                0,
+                x.userId,
+                x.entityId,
+                0L,
                 Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
           })
           .map(printer.print(_))
@@ -674,9 +674,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
           .map({
             case x: Command =>
               EventEnvelope(
-                "",
+                x.userId,
                 x.entityId,
-                0,
+                0L,
                 Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
           })
           .map(printer.print(_))
