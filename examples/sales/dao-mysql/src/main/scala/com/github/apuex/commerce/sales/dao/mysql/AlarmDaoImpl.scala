@@ -160,18 +160,26 @@ class AlarmDaoImpl() extends AlarmDao {
       |    AND alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
+      "alarmId" -> evt.alarmId,
+      "alarmBegin" -> scalapbToDate(evt.alarmBegin),
       "alarmDesc" -> evt.alarmDesc
     ).executeUpdate()
   
     if(rowsAffected == 0)
       SQL(s"""
         |INSERT INTO sales.alarm(
+        |    alarm.alarm_id,
+        |    alarm.alarm_begin,
         |    alarm.alarm_desc
         |  ) VALUES (
+        |    {alarmId},
+        |    {alarmBegin},
         |    {alarmDesc}
         |  )
        """.stripMargin.trim)
       .on(
+        "alarmId" -> evt.alarmId,
+        "alarmBegin" -> scalapbToDate(evt.alarmBegin),
         "alarmDesc" -> evt.alarmDesc
       ).executeUpdate()
     else rowsAffected
@@ -187,6 +195,8 @@ class AlarmDaoImpl() extends AlarmDao {
       |    AND alarm_begin = {alarmBegin}
      """.stripMargin.trim)
     .on(
+      "alarmId" -> evt.alarmId,
+      "alarmBegin" -> scalapbToDate(evt.alarmBegin),
       "alarmEnd" -> scalapbToDate(evt.alarmEnd),
       "alarmDesc" -> evt.alarmDesc
     ).executeUpdate()
@@ -194,14 +204,20 @@ class AlarmDaoImpl() extends AlarmDao {
     if(rowsAffected == 0)
       SQL(s"""
         |INSERT INTO sales.alarm(
+        |    alarm.alarm_id,
+        |    alarm.alarm_begin,
         |    alarm.alarm_end,
         |    alarm.alarm_desc
         |  ) VALUES (
+        |    {alarmId},
+        |    {alarmBegin},
         |    {alarmEnd},
         |    {alarmDesc}
         |  )
        """.stripMargin.trim)
       .on(
+        "alarmId" -> evt.alarmId,
+        "alarmBegin" -> scalapbToDate(evt.alarmBegin),
         "alarmEnd" -> scalapbToDate(evt.alarmEnd),
         "alarmDesc" -> evt.alarmDesc
       ).executeUpdate()

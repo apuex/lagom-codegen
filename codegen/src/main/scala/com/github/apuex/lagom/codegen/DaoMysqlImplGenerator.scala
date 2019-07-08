@@ -616,8 +616,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   )
 
   def defMessage(root: String, rootFields: Seq[Field], primaryKey: PrimaryKey, message: Message): String = {
-    val key = primaryKey.fields.map(_.name).toSet
-    val derived = rootFields.map(_.name).filter(!key.contains(_)).toSet
+    val derived = rootFields.map(_.name).toSet
     val fields = message.fields.filter(x => derived.contains(x.name))
     val returnType = if ("" == message.returnType) "Int"
 
@@ -650,10 +649,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def defMessages(root: String, rootFields: Seq[Field], primaryKey: PrimaryKey, messages: Seq[Message]): Seq[String] = {
     val key = primaryKey.fields.map(_.name).toSet
-    val derived = rootFields.map(_.name).filter(!key.contains(_)).toSet
+    val derivedNonKey = rootFields.map(_.name).filter(!key.contains(_)).toSet
 
     messages
-      .filter(x => !x.transient && !x.fields.filter(f => derived.contains(f.name)).isEmpty)
+      .filter(x => !x.transient && !x.fields.filter(f => derivedNonKey.contains(f.name)).isEmpty)
       .map(defMessage(root, rootFields, primaryKey, _))
   }
 
