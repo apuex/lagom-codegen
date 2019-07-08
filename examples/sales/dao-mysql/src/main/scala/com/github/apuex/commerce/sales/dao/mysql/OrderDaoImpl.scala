@@ -22,6 +22,8 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
 
 class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
+  val log = Logger.of(getClass)
+
   def createOrder(evt: CreateOrderEvent)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
       |UPDATE sales.order
@@ -105,7 +107,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
     val stmt = SQL(sqlStr)
     val params = namedParams(cmd)
   
-    Logger.of(getClass).info(
+    if(log.isDebugEnabled) log.debug(
       s"""
       |[SQL statement] =>
       |  ${indent(sqlStr, 2)}

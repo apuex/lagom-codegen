@@ -22,6 +22,8 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
 
 class ProductDaoImpl() extends ProductDao {
+  val log = Logger.of(getClass)
+
   def createProduct(evt: CreateProductEvent)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
       |UPDATE sales.product
@@ -129,7 +131,7 @@ class ProductDaoImpl() extends ProductDao {
     val stmt = SQL(sqlStr)
     val params = namedParams(cmd)
   
-    Logger.of(getClass).info(
+    if(log.isDebugEnabled) log.debug(
       s"""
       |[SQL statement] =>
       |  ${indent(sqlStr, 2)}

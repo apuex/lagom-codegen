@@ -107,6 +107,8 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import ${daoSrcPackage}._
          |
          |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
+         |  val log = Logger.of(getClass)
+         |
          |  ${indent(calls, 2)}
          |
          |  ${indentWithLeftMargin(defSelectSql(name, fields), 2)}
@@ -166,6 +168,8 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import ${daoSrcPackage}._
          |
          |class ${className}(${defDaoDependencies(fields)}) extends ${traitName} {
+         |  val log = Logger.of(getClass)
+         |
          |  ${indent(calls, 2)}
          |
          |  ${indentWithLeftMargin(defSelectSql(name, fields), 2)}
@@ -433,7 +437,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
        |  val stmt = SQL(sqlStr)
        |  val params = namedParams(cmd)
        |
-       |  Logger.of(getClass).info(
+       |  if(log.isDebugEnabled) log.debug(
        |    ${indentWithLeftMargin(blockQuote(logSql, 0), 2)},
        |    params
        |  )

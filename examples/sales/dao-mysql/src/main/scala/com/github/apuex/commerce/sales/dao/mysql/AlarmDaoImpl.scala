@@ -22,6 +22,8 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
 
 class AlarmDaoImpl() extends AlarmDao {
+  val log = Logger.of(getClass)
+
   def createAlarm(evt: CreateAlarmEvent)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
       |UPDATE sales.alarm
@@ -117,7 +119,7 @@ class AlarmDaoImpl() extends AlarmDao {
     val stmt = SQL(sqlStr)
     val params = namedParams(cmd)
   
-    Logger.of(getClass).info(
+    if(log.isDebugEnabled) log.debug(
       s"""
       |[SQL statement] =>
       |  ${indent(sqlStr, 2)}

@@ -22,6 +22,8 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
 
 class PaymentTypeDaoImpl() extends PaymentTypeDao {
+  val log = Logger.of(getClass)
+
   def createPaymentType(evt: CreatePaymentTypeEvent)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
       |UPDATE sales.payment_type
@@ -105,7 +107,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
     val stmt = SQL(sqlStr)
     val params = namedParams(cmd)
   
-    Logger.of(getClass).info(
+    if(log.isDebugEnabled) log.debug(
       s"""
       |[SQL statement] =>
       |  ${indent(sqlStr, 2)}

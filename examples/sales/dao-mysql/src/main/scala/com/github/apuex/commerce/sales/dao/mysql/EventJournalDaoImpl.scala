@@ -22,6 +22,8 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
 
 class EventJournalDaoImpl() extends EventJournalDao {
+  val log = Logger.of(getClass)
+
   def createEventJournal(evt: CreateEventJournalEvent)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
       |UPDATE sales.event_journal
@@ -119,7 +121,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
     val stmt = SQL(sqlStr)
     val params = namedParams(cmd)
   
-    Logger.of(getClass).info(
+    if(log.isDebugEnabled) log.debug(
       s"""
       |[SQL statement] =>
       |  ${indent(sqlStr, 2)}
