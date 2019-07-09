@@ -233,12 +233,12 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       }
     }
 
-    val daoCall = if (message.transient || message.fields.filter(x => derived.contains(x.name)).isEmpty)
+    val daoCall = if (message.transient)
       s"""
          |mediator ! Publish(publishQueue, cmd)
          |0
        """.stripMargin.trim
-    else if (message.transient || message.fields.filter(x => derived.contains(x.name)).isEmpty)
+    else if (message.fields.filter(x => derived.contains(x.name)).isEmpty)
       s"""
          |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: message.fields, "cmd")})
          |mediator ! Publish(publishQueue, evt)
