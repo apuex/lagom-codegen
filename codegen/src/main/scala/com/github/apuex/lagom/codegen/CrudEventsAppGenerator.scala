@@ -25,6 +25,11 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
       content,
       crudImplSrcDir
     )
+    save(
+      s"${cToPascal(s"${modelName}_${event}_${apply}")}.scala",
+      content,
+      implSrcDir
+    )
   }
 
   def generateServiceImpl(): String = {
