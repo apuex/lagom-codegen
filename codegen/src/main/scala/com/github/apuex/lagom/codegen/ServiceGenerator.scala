@@ -76,7 +76,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
     jsonFormats(xml)
       .filter(x => {
         val exists = existing.contains(x)
-        if(!exists) existing += x
+        if (!exists) existing += x
         !exists
       })
       .filter(x => "" != x)
@@ -97,7 +97,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
         if (!enum && "" == aggregatesTo) generateCallsForAggregate(toAggregate(x, root))
         else {
           val valueObject = toValueObject(x, aggregatesTo, root)
-          generateCallsForValueObject(valueObject)
+          if(valueObject.transient) "" else generateCallsForValueObject(valueObject)
         }
       })
   }
@@ -145,8 +145,12 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   def generateCallsForAggregate(aggregate: Aggregate): String = {
     import aggregate._
     (
-      defCrudCalls(name) ++
-        defByForeignKeyCalls(name, fields, foreignKeys) ++
+      if (aggregate.transient)
+        Seq()
+      else {
+        defCrudCalls(name) ++
+          defByForeignKeyCalls(name, fields, foreignKeys)
+      } ++
         defMessageCalls(aggregate.messages) ++
         defCallsForEmbeddedAggregateMessages(aggregate.aggregates)
       )

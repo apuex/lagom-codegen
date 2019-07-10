@@ -30,18 +30,14 @@ class ProductDaoImpl() extends ProductDao {
       |  SET
       |    product.product_name = {productName},
       |    product.product_unit = {productUnit},
-      |    product.unit_price = {unitPrice},
-      |    product.record_time = {recordTime},
-      |    product.quantity_sold = {quantitySold}
+      |    product.unit_price = {unitPrice}
       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> evt.productId,
       "productName" -> evt.productName,
       "productUnit" -> evt.productUnit,
-      "unitPrice" -> evt.unitPrice,
-      "recordTime" -> scalapbToDate(evt.recordTime),
-      "quantitySold" -> evt.quantitySold
+      "unitPrice" -> evt.unitPrice
     ).executeUpdate()
   
     if(rowsAffected == 0)
@@ -50,25 +46,19 @@ class ProductDaoImpl() extends ProductDao {
         |    product.product_id,
         |    product.product_name,
         |    product.product_unit,
-        |    product.unit_price,
-        |    product.record_time,
-        |    product.quantity_sold
+        |    product.unit_price
         |  ) VALUES (
         |    {productId},
         |    {productName},
         |    {productUnit},
-        |    {unitPrice},
-        |    {recordTime},
-        |    {quantitySold}
+        |    {unitPrice}
         |  )
        """.stripMargin.trim)
       .on(
         "productId" -> evt.productId,
         "productName" -> evt.productName,
         "productUnit" -> evt.productUnit,
-        "unitPrice" -> evt.unitPrice,
-        "recordTime" -> scalapbToDate(evt.recordTime),
-        "quantitySold" -> evt.quantitySold
+        "unitPrice" -> evt.unitPrice
       ).executeUpdate()
     else rowsAffected
   }
@@ -79,9 +69,7 @@ class ProductDaoImpl() extends ProductDao {
       |    product.product_id,
       |    product.product_name,
       |    product.product_unit,
-      |    product.unit_price,
-      |    product.record_time,
-      |    product.quantity_sold
+      |    product.unit_price
       |  FROM sales.product
       |  WHERE product_id = {productId}
      """.stripMargin.trim)
@@ -96,18 +84,14 @@ class ProductDaoImpl() extends ProductDao {
       |  SET
       |    product.product_name = {productName},
       |    product.product_unit = {productUnit},
-      |    product.unit_price = {unitPrice},
-      |    product.record_time = {recordTime},
-      |    product.quantity_sold = {quantitySold}
+      |    product.unit_price = {unitPrice}
       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> evt.productId,
       "productName" -> evt.productName,
       "productUnit" -> evt.productUnit,
-      "unitPrice" -> evt.unitPrice,
-      "recordTime" -> scalapbToDate(evt.recordTime),
-      "quantitySold" -> evt.quantitySold
+      "unitPrice" -> evt.unitPrice
     ).executeUpdate()
   }
 
@@ -156,57 +140,13 @@ class ProductDaoImpl() extends ProductDao {
       |    product.product_id,
       |    product.product_name,
       |    product.product_unit,
-      |    product.unit_price,
-      |    product.record_time,
-      |    product.quantity_sold
+      |    product.unit_price
       |  FROM sales.product
       |  WHERE rowid = {rowid}
      """.stripMargin.trim)
     .on(
       "rowid" -> rowid
     ).as(productParser.single)
-  }
-
-  private def productSalesParser(implicit c: Connection): RowParser[ProductSalesVo] = {
-    get[String]("product_id") ~ 
-    get[Option[Date]]("record_time") ~ 
-    get[Option[Double]]("quantity_sold") map {
-      case productId ~ recordTime ~ quantitySold =>
-        ProductSalesVo(
-          productId,
-          recordTime.map(toScalapbTimestamp(_)),
-          quantitySold.getOrElse(0)
-        )
-    }
-  }
-  
-  def getProductSales(cmd: GetProductSalesCmd)(implicit conn: Connection): ProductSalesVo = {
-    SQL(s"""
-      |SELECT
-      |    product.product_id,
-      |    product.record_time,
-      |    product.quantity_sold
-      |  FROM sales.product
-      |  WHERE product_id = {productId}
-     """.stripMargin.trim)
-    .on(
-      "productId" -> cmd.productId
-    ).as(productSalesParser.single)
-  }
-  
-  def updateProductSales(evt: UpdateProductSalesEvent)(implicit conn: Connection): Int = {
-    SQL(s"""
-      |UPDATE sales.product
-      |  SET
-      |    product.record_time = {recordTime},
-      |    product.quantity_sold = {quantitySold}
-      |  WHERE product_id = {productId}
-     """.stripMargin.trim)
-    .on(
-      "productId" -> evt.productId,
-      "recordTime" -> scalapbToDate(evt.recordTime),
-      "quantitySold" -> evt.quantitySold
-    ).executeUpdate()
   }
 
   private def productNameParser(implicit c: Connection): RowParser[ProductNameVo] = {
@@ -355,8 +295,6 @@ class ProductDaoImpl() extends ProductDao {
     case "productName" => paramName -> paramValue
     case "productUnit" => paramName -> paramValue
     case "unitPrice" => paramName -> DoubleParser.parse(paramValue)
-    case "recordTime" => paramName -> DateParser.parse(paramValue)
-    case "quantitySold" => paramName -> DoubleParser.parse(paramValue)
   }
 
   private def parseParam(fieldName: String, paramName:String, paramValue: Seq[String]): NamedParameter = fieldName match {
@@ -364,8 +302,6 @@ class ProductDaoImpl() extends ProductDao {
     case "productName" => paramName -> paramValue
     case "productUnit" => paramName -> paramValue
     case "unitPrice" => paramName -> paramValue.map(DoubleParser.parse(_))
-    case "recordTime" => paramName -> paramValue.map(DateParser.parse(_))
-    case "quantitySold" => paramName -> paramValue.map(DoubleParser.parse(_))
   }
 
   private def productParser(implicit c: Connection): RowParser[ProductVo] = {

@@ -54,11 +54,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def generateDaoContent(xml: Node): Seq[(String, String)] = {
     xml.child.filter(_.label == "entity")
+      .filter(x => ("true" != x.\@("transient")))
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         val enum = if ("true" == x.\@("enum")) true else false
-        if (!enum && "" == aggregatesTo) generateDaoForAggregate(toAggregate(x, xml))
-        else {
+
+        if (!enum && "" == aggregatesTo) {
+          generateDaoForAggregate(toAggregate(x, xml))
+        } else {
           val valueObject = toValueObject(x, aggregatesTo, xml)
           generateDaoForValueObject(valueObject)
         }
@@ -223,52 +226,54 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def paramParser(fields: Seq[Field]): String = {
     val cases = fields
+      .filter(!_.transient)
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .filter(x => "text" != x._type && "blob" != x._type && "clob" != x._type)
       .map(x => {
-      val javaType = cToPascal(toJavaType(x._type))
-      if (isEnum(x._type))
-        s"""
-           |case "${cToCamel(x.name)}" => paramName -> EnumParser(${cToPascal(x._type)}).parse(paramValue).value
+        val javaType = cToPascal(toJavaType(x._type))
+        if (isEnum(x._type))
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> EnumParser(${cToPascal(x._type)}).parse(paramValue).value
          """.stripMargin.trim
-      else if ("String" == javaType)
-        s"""
-           |case "${cToCamel(x.name)}" => paramName -> paramValue
+        else if ("String" == javaType)
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> paramValue
          """.stripMargin.trim
-      else if ("Timestamp" == javaType)
-        s"""
-           |case "${cToCamel(x.name)}" => paramName -> DateParser.parse(paramValue)
+        else if ("Timestamp" == javaType)
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> DateParser.parse(paramValue)
          """.stripMargin.trim
-      else
-        s"""
-           |case "${cToCamel(x.name)}" => paramName -> ${javaType}Parser.parse(paramValue)
+        else
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> ${javaType}Parser.parse(paramValue)
          """.stripMargin.trim
-    })
+      })
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
 
     val arrayCases = fields
+      .filter(!_.transient)
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .filter(x => "text" != x._type && "blob" != x._type && "clob" != x._type)
       .map(x => {
-      val javaType = cToPascal(toJavaType(x._type))
-      if (isEnum(x._type))
-        s"""
-           |case "${cToCamel(x.name)}" => paramName -> paramValue.map(EnumParser(${cToPascal(x._type)}).parse(_).value)
+        val javaType = cToPascal(toJavaType(x._type))
+        if (isEnum(x._type))
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> paramValue.map(EnumParser(${cToPascal(x._type)}).parse(_).value)
          """.stripMargin.trim
-      else if ("String" == javaType)
-        s"""
-           |case "${cToCamel(x.name)}" => paramName -> paramValue
+        else if ("String" == javaType)
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> paramValue
          """.stripMargin.trim
-      else if ("Timestamp" == javaType)
-        s"""
-           |case "${cToCamel(x.name)}" => paramName -> paramValue.map(DateParser.parse(_))
+        else if ("Timestamp" == javaType)
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> paramValue.map(DateParser.parse(_))
          """.stripMargin.trim
-      else
-        s"""
-           |case "${cToCamel(x.name)}" => paramName -> paramValue.map(${javaType}Parser.parse(_))
+        else
+          s"""
+             |case "${cToCamel(x.name)}" => paramName -> paramValue.map(${javaType}Parser.parse(_))
          """.stripMargin.trim
-    })
+      })
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")
 
@@ -564,66 +569,78 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   }
 
   def filterGenerated(fields: Seq[Field], primaryKey: PrimaryKey): Seq[Field] = {
-    val generated = if(primaryKey.generated) primaryKey.fields.map(_.name).toSet else Set[String]()
+    val generated = if (primaryKey.generated) primaryKey.fields.map(_.name).toSet else Set[String]()
     fields.filter(x => !generated.contains(x.name))
   }
 
-  def defCrud(name: String, fields: Seq[Field], primaryKey: PrimaryKey, fks: Seq[ForeignKey]): Seq[String] = Seq(
-    s"""
-       |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int = {
-       |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
-       |  .on(
-       |    ${indent(defFieldSubstitution(name, fields, "evt"), 4)}
-       |  ).executeUpdate()
-       |
-       |  if(rowsAffected == 0)
-       |    SQL(${indentWithLeftMargin(blockQuote(insertSql(name, filterGenerated(fields, primaryKey)), 2), 4)})
-       |    .on(
-       |      ${indent(defFieldSubstitution(name, fields, "evt"), 6)}
-       |    ).executeUpdate()
-       |  else rowsAffected
-       |}
+  def defCrud(name: String, fields: Seq[Field], primaryKey: PrimaryKey, fks: Seq[ForeignKey]): Seq[String] = {
+    val keyFieldNames = primaryKey.fields.map(_.name).toSet
+    val persistFields = fields.filter(!_.transient)
+    val nonKeyPersistFields = persistFields.filter(x => !keyFieldNames.contains(x.name))
+    if (persistFields.isEmpty) {
+      Seq()
+    } else {
+      Seq(
+        s"""
+           |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int = {
+           |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, persistFields, primaryKey.fields), 2), 2)})
+           |  .on(
+           |    ${indent(defFieldSubstitution(name, persistFields, "evt"), 4)}
+           |  ).executeUpdate()
+           |
+           |  if(rowsAffected == 0)
+           |    SQL(${indentWithLeftMargin(blockQuote(insertSql(name, filterGenerated(persistFields, primaryKey)), 2), 4)})
+           |    .on(
+           |      ${indent(defFieldSubstitution(name, persistFields, "evt"), 6)}
+           |    ).executeUpdate()
+           |  else rowsAffected
+           |}
      """.stripMargin.trim,
-    s"""
-       |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
-       |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, primaryKey.fields), 2), 2)})
-       |  .on(
-       |    ${indent(defFieldSubstitution(name, primaryKey.fields, "cmd"), 4)}
-       |  ).as(${cToCamel(name)}Parser.single)
-       |}
+        s"""
+           |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
+           |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, persistFields, primaryKey.fields), 2), 2)})
+           |  .on(
+           |    ${indent(defFieldSubstitution(name, primaryKey.fields, "cmd"), 4)}
+           |  ).as(${cToCamel(name)}Parser.single)
+           |}
      """.stripMargin.trim,
-    s"""
-       |def update${cToPascal(name)}(evt: Update${cToPascal(name)}Event)(implicit conn: Connection): Int = {
-       |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, fields, primaryKey.fields), 2), 2)})
-       |  .on(
-       |    ${indent(defFieldSubstitution(name, fields, "evt"), 4)}
-       |  ).executeUpdate()
-       |}
+        if (nonKeyPersistFields.isEmpty)
+          ""
+        else
+          s"""
+             |def update${cToPascal(name)}(evt: Update${cToPascal(name)}Event)(implicit conn: Connection): Int = {
+             |  SQL(${indentWithLeftMargin(blockQuote(updateSql(name, persistFields, primaryKey.fields), 2), 2)})
+             |  .on(
+             |    ${indent(defFieldSubstitution(name, persistFields, "evt"), 4)}
+             |  ).executeUpdate()
+             |}
      """.stripMargin.trim,
-    s"""
-       |def delete${cToPascal(name)}(evt: Delete${cToPascal(name)}Event)(implicit conn: Connection): Int = {
-       |  SQL(${indentWithLeftMargin(blockQuote(deleteSql(name, primaryKey.fields), 2), 2)})
-       |  .on(
-       |    ${indent(defFieldSubstitution(name, primaryKey.fields, "evt"), 4)}
-       |  ).executeUpdate()
-       |}
+        s"""
+           |def delete${cToPascal(name)}(evt: Delete${cToPascal(name)}Event)(implicit conn: Connection): Int = {
+           |  SQL(${indentWithLeftMargin(blockQuote(deleteSql(name, primaryKey.fields), 2), 2)})
+           |  .on(
+           |    ${indent(defFieldSubstitution(name, primaryKey.fields, "evt"), 4)}
+           |  ).executeUpdate()
+           |}
      """.stripMargin.trim,
-    defQuery(name),
-    s"""
-       |def retrieve${cToPascal(name)}ByRowid(rowid: String)(implicit conn: Connection): ${cToPascal(name)}Vo = {
-       |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, fields, Seq(rowidField)), 2), 2)})
-       |  .on(
-       |    ${indent(defFieldSubstitution(name, Seq(rowidField), ""), 4)}
-       |  ).as(${cToCamel(name)}Parser.single)
-       |}
+        defQuery(name),
+        s"""
+           |def retrieve${cToPascal(name)}ByRowid(rowid: String)(implicit conn: Connection): ${cToPascal(name)}Vo = {
+           |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(name, persistFields, Seq(rowidField)), 2), 2)})
+           |  .on(
+           |    ${indent(defFieldSubstitution(name, Seq(rowidField), ""), 4)}
+           |  ).as(${cToCamel(name)}Parser.single)
+           |}
      """.stripMargin.trim
-  )
+      )
+    }
+  }
 
   def defMessage(root: String, rootFields: Seq[Field], primaryKey: PrimaryKey, message: Message): String = {
     val derived = rootFields.map(_.name).toSet
     val fields = message.fields.filter(x => derived.contains(x.name))
-    val returnType = if ("" == message.returnType) "Int"
 
+    val returnType = if ("" == message.returnType) "Int"
     else {
       val baseName = message.returnType.replace("*", "")
       val multiple = message.returnType.endsWith("*")
@@ -656,7 +673,11 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val derivedNonKey = rootFields.map(_.name).filter(!key.contains(_)).toSet
 
     messages
-      .filter(x => !x.transient && !x.fields.filter(f => derivedNonKey.contains(f.name)).isEmpty)
+      .filter(x => !x.transient
+        && !x.fields
+        .filter(!_.transient)
+        .filter(f => derivedNonKey.contains(f.name))
+        .isEmpty)
       .map(defMessage(root, rootFields, primaryKey, _))
   }
 
@@ -664,13 +685,16 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val nonKeyFieldCount = aggregate.fields.length - aggregate.primaryKey.fields.length
     val keyFieldNames = aggregate.primaryKey.fields.map(_.name).toSet
     val nonKeyFields = aggregate.fields.filter(x => !keyFieldNames.contains(x.name))
+    val persistFields = aggregate.fields.filter(!_.transient)
+    val nonKeyPersistFields = persistFields.filter(x => !keyFieldNames.contains(x.name))
 
     import aggregate._
     val parser = rowParser(name, fields, primaryKey.fields)
+
     val get = if (nonKeyFieldCount > 1)
       s"""
          |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
-         |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
+         |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(aggregateRoot, persistFields, primaryKey.fields), 2), 2)})
          |  .on(
          |    ${indent(defFieldSubstitution(aggregateRoot, primaryKey.fields, "cmd"), 4)}
          |  ).as(${cToCamel(name)}Parser.single)
@@ -695,7 +719,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       } else {
         s"""
            |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
-           |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
+           |  SQL(${indentWithLeftMargin(blockQuote(retrieveSql(aggregateRoot, persistFields, primaryKey.fields), 2), 2)})
            |  .on(
            |    ${indent(defFieldSubstitution(aggregateRoot, primaryKey.fields, "cmd"), 4)}
            |  ).as(${cToCamel(name)}Parser.single)
@@ -711,9 +735,9 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val update = if (nonKeyFieldCount > 1)
       s"""
          |def update${cToPascal(aggregate.name)}(evt: Update${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
-         |  SQL(${indentWithLeftMargin(blockQuote(updateSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
+         |  SQL(${indentWithLeftMargin(blockQuote(updateSql(aggregateRoot, persistFields, primaryKey.fields), 2), 2)})
          |  .on(
-         |    ${indent(defFieldSubstitution(aggregateRoot, fields, "evt"), 4)}
+         |    ${indent(defFieldSubstitution(aggregateRoot, persistFields, "evt"), 4)}
          |  ).executeUpdate()
          |}
      """.stripMargin.trim
@@ -772,9 +796,9 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       } else // one-to-one relationship is not supported. simple JDBC fields only.
         s"""
            |def change${cToPascal(aggregate.name)}(evt: Change${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
-           |  SQL(${indentWithLeftMargin(blockQuote(updateSql(aggregateRoot, fields, primaryKey.fields), 2), 2)})
+           |  SQL(${indentWithLeftMargin(blockQuote(updateSql(aggregateRoot, persistFields, primaryKey.fields), 2), 2)})
            |  .on(
-           |    ${indent(defFieldSubstitution(aggregateRoot, fields, "evt"), 4)}
+           |    ${indent(defFieldSubstitution(aggregateRoot, persistFields, "evt"), 4)}
            |  ).executeUpdate()
            |}
      """.stripMargin.trim
@@ -794,7 +818,15 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   }
 
   def defEmbeddedAggregateMessages(aggregateRoot: String, aggregates: Seq[Aggregate]): Seq[String] = {
-    aggregates.map(defEmbeddedAggregateMessage(aggregateRoot, _))
+    aggregates
+      .filter(!_.transient)
+      .filter(x => {
+        val keyFieldNames = x.primaryKey.fields.map(_.name).toSet
+        !x.fields.filter(!_.transient)
+          .filter(x => !keyFieldNames.contains(x.name))
+          .isEmpty
+      })
+      .map(defEmbeddedAggregateMessage(aggregateRoot, _))
   }
 
   def defSelectByFks(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {

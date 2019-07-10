@@ -86,13 +86,21 @@ class MessageGenerator(modelLoader: ModelLoader) {
           if (enum) {
             val enumration = toEnumeration(x, aggregatesTo, xml)
             valueObjects ++
-              generateCrudCmd(valueObject.name, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage) ++
-              generateCrudEvt(valueObject.name, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage) ++
+              generateCrudCmd(valueObject.name, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage) ++ (
+              if (valueObject.transient)
+                Seq()
+              else
+                generateCrudEvt(valueObject.name, valueObject.name, valueObject.fields.filter(!_.transient), valueObject.primaryKey.fields, messageSrcPackage)
+              ) ++
               generateEnumeration(enumration.name, enumration.options, messageSrcPackage)
           } else {
             valueObjects ++
-              generateCrudCmd(aggregatesTo, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage) ++
-              generateCrudEvt(aggregatesTo, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage)
+              generateCrudCmd(aggregatesTo, valueObject.name, valueObject.fields, valueObject.primaryKey.fields, messageSrcPackage) ++ (
+              if (valueObject.transient)
+                Seq()
+              else
+                generateCrudEvt(aggregatesTo, valueObject.name, valueObject.fields.filter(!_.transient), valueObject.primaryKey.fields, messageSrcPackage)
+              )
           }
         }
       })
@@ -111,6 +119,9 @@ class MessageGenerator(modelLoader: ModelLoader) {
     val nonKeyFieldCount = entity.fields.length - entity.primaryKey.fields.length
     val keyFieldNames = entity.primaryKey.fields.map(_.name).toSet
     val nonKeyFields = entity.fields.filter(x => !keyFieldNames.contains(x.name))
+    val nonKeyPersistFields = entity.fields
+      .filter(!_.transient)
+      .filter(x => !keyFieldNames.contains(x.name))
     val messages = if (nonKeyFieldCount > 1) Seq(
       s"""
          |message Get${cToPascal(entity.name)}Cmd {
@@ -124,16 +135,19 @@ class MessageGenerator(modelLoader: ModelLoader) {
          |  ${indent(generateFields(userField +: entity.fields), 2)}
          |}
        """.stripMargin.trim,
-      s"""
-         |message Update${cToPascal(entity.name)}Event{
-         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
-         |  ${indent(generateFields(userField +: entity.fields), 2)}
-         |}
+      if (nonKeyPersistFields.isEmpty)
+        ""
+      else
+        s"""
+           |message Update${cToPascal(entity.name)}Event{
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+           |  ${indent(generateFields(userField +: entity.fields), 2)}
+           |}
        """.stripMargin.trim
     )
     else if (nonKeyFieldCount == 1) {
       val field = nonKeyFields.head
-      if("array" == field._type || "map" == field._type) Seq(
+      if ("array" == field._type || "map" == field._type) Seq(
         s"""
            |message Get${cToPascal(entity.name)}Cmd {
            |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Command";
@@ -146,11 +160,14 @@ class MessageGenerator(modelLoader: ModelLoader) {
            |  ${indent(generateFields(userField +: entity.fields), 2)}
            |}
        """.stripMargin.trim,
-        s"""
-           |message Add${cToPascal(entity.name)}Event{
-           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
-           |  ${indent(generateFields(userField +: entity.fields), 2)}
-           |}
+        if (nonKeyPersistFields.isEmpty)
+          ""
+        else
+          s"""
+             |message Add${cToPascal(entity.name)}Event{
+             |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+             |  ${indent(generateFields(userField +: entity.fields), 2)}
+             |}
        """.stripMargin.trim,
         s"""
            |message Remove${cToPascal(entity.name)}Cmd {
@@ -158,11 +175,14 @@ class MessageGenerator(modelLoader: ModelLoader) {
            |  ${indent(generateFields(userField +: entity.fields), 2)}
            |}
        """.stripMargin.trim,
-        s"""
-           |message Remove${cToPascal(entity.name)}Event{
-           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
-           |  ${indent(generateFields(userField +: entity.fields), 2)}
-           |}
+        if (nonKeyPersistFields.isEmpty)
+          ""
+        else
+          s"""
+             |message Remove${cToPascal(entity.name)}Event{
+             |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+             |  ${indent(generateFields(userField +: entity.fields), 2)}
+             |}
        """.stripMargin.trim
       )
       else Seq(
@@ -178,17 +198,21 @@ class MessageGenerator(modelLoader: ModelLoader) {
            |  ${indent(generateFields(userField +: entity.fields), 2)}
            |}
        """.stripMargin.trim,
-        s"""
-           |message Change${cToPascal(entity.name)}Event{
-           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
-           |  ${indent(generateFields(userField +: entity.fields), 2)}
-           |}
+        if (nonKeyPersistFields.isEmpty)
+          ""
+        else
+          s"""
+             |message Change${cToPascal(entity.name)}Event{
+             |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
+             |  ${indent(generateFields(userField +: entity.fields), 2)}
+             |}
        """.stripMargin.trim
       )
     } else { // this cannot be happen.
       Seq()
     }
-    generateValueObject(entity.name, entity.fields, messageSrcPackage) ++ messages
+    generateValueObject(entity.name, entity.fields, messageSrcPackage) ++
+      messages.filter("" != _)
   }
 
   def generateMessagesForAggregate(entity: Aggregate, messageSrcPackage: String): Seq[String] = {
@@ -213,7 +237,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
     s"""
        |message ${cToPascal(message.name)}Event {
        |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(name)}Event";
-       |  ${indent(generateFields(userField +: message.fields), 2)}
+       |  ${indent(generateFields(userField +: message.fields.filter(!_.transient)), 2)}
        |}
      """.stripMargin.trim
   }
@@ -226,6 +250,13 @@ class MessageGenerator(modelLoader: ModelLoader) {
   def generateEvents(messages: Seq[Message], name: String, messageSrcPackage: String): Seq[String] = {
     messages
       .filter(!_.transient)
+      .filter(x => {
+        val keyFieldNames = x.primaryKey.fields.map(_.name).toSet
+        !x.fields
+          .filter(!_.transient)
+          .filter(x => !keyFieldNames.contains(x.name))
+          .isEmpty
+      })
       .map(x => generateEvent(x, name, messageSrcPackage))
   }
 

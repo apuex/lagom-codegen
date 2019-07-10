@@ -21,10 +21,6 @@ trait ProductDao {
 
   def retrieveProductByRowid(rowid: String)(implicit conn: Connection): ProductVo
 
-  def getProductSales(cmd: GetProductSalesCmd)(implicit conn: Connection): ProductSalesVo
-
-  def updateProductSales(evt: UpdateProductSalesEvent)(implicit conn: Connection): Int
-
   def getProductName(cmd: GetProductNameCmd)(implicit conn: Connection): ProductNameVo
 
   def changeProductName(evt: ChangeProductNameEvent)(implicit conn: Connection): Int

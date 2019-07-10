@@ -114,6 +114,9 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |    url = "jdbc:mysql://"$${db.${cToShell(modelDbSchema)}-db.dbhost}"/${modelDbSchema}?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&verifyServerCertificate=false"
          |    username = ${modelDbSchema}
          |    password = password
+         |    event {
+         |      query-interval = 3 seconds
+         |    }
          |  }
          |}
          |

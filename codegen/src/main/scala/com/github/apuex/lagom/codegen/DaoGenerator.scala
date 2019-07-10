@@ -24,11 +24,13 @@ class DaoGenerator(modelLoader: ModelLoader) {
 
   def generateDaoContent(xml: Node): Seq[(String, String)] = {
     xml.child.filter(_.label == "entity")
+      .filter(x => ("true" != x.\@("transient")))
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         val enum = if ("true" == x.\@("enum")) true else false
-        if (!enum && "" == aggregatesTo) generateDaoForAggregate(toAggregate(x, xml))
-        else {
+        if (!enum && "" == aggregatesTo) {
+          generateDaoForAggregate(toAggregate(x, xml))
+        } else {
           val valueObject = toValueObject(x, aggregatesTo, xml)
           generateDaoForValueObject(valueObject)
         }
@@ -69,7 +71,9 @@ class DaoGenerator(modelLoader: ModelLoader) {
   }
 
   def defEmbeddedAggregateMessages(aggregates: Seq[Aggregate]): Seq[String] = {
-    aggregates.map(defEmbeddedAggregateMessage(_))
+    aggregates
+      .filter(!_.transient)
+      .map(defEmbeddedAggregateMessage(_))
   }
 
   def generateDaoForAggregate(aggregate: Aggregate): (String, String) = {
@@ -155,7 +159,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
     val key = primaryKey.fields.map(_.name).toSet
     val derived = parentFields.map(_.name).filter(!key.contains(_)).toSet
     messages
-      .filter(x => !x.transient && !x.fields.filter(f => derived.contains(f.name)).isEmpty)
+      .filter(x => !x.transient && !x.fields.filter(!_.transient).filter(f => derived.contains(f.name)).isEmpty)
       .map(defMessage(_))
   }
 

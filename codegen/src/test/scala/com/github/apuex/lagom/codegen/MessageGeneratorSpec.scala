@@ -54,14 +54,6 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  double quantitySold = 4; // 销量
          |}
          |
-         |message UpdateProductSalesEvent{
-         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
-         |  string userId = 1; // 用户ID
-         |  string productId = 2; // 商品编号
-         |  google.protobuf.Timestamp recordTime = 3; // 销量最后更新时间
-         |  double quantitySold = 4; // 销量
-         |}
-         |
          |message ProductNameVo {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
          |  string productId = 1; // 商品编号
@@ -194,14 +186,6 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |
          |message UpdateProductSalesCmd {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
-         |  string userId = 1; // 用户ID
-         |  string productId = 2; // 商品编号
-         |  google.protobuf.Timestamp recordTime = 3; // 销量最后更新时间
-         |  double quantitySold = 4; // 销量
-         |}
-         |
-         |message UpdateProductSalesEvent{
-         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
          |  string userId = 1; // 用户ID
          |  string productId = 2; // 商品编号
          |  google.protobuf.Timestamp recordTime = 3; // 销量最后更新时间

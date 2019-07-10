@@ -38,9 +38,7 @@ CREATE TABLE sales.product (
   product_id VARCHAR(64) NOT NULL,
   product_name VARCHAR(64) NOT NULL,
   product_unit VARCHAR(64) NOT NULL,
-  unit_price DOUBLE NOT NULL,
-  record_time DATETIME,
-  quantity_sold DOUBLE
+  unit_price DOUBLE NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE sales.order (

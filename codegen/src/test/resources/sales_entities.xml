@@ -47,7 +47,7 @@
     <primaryKey name="product_pk">
       <field name="product_id"/>
     </primaryKey>
-    <aggregate name="product_sales">
+    <aggregate name="product_sales" transient="true">
       <field name="record_time"/>
       <field name="quantity_sold"/>
     </aggregate>

@@ -97,19 +97,35 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
     root.child.filter(_.label == "entity")
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
+        val transient = if ("true" == x.\@("transient")) true else false
         val enum = if ("true" == x.\@("enum")) true else false
-        if (!enum && "" == aggregatesTo) generateCallsForAggregate(toAggregate(x, root))
-        else {
-          val valueObject = toValueObject(x, aggregatesTo, root)
-          generateCallsForValueObject(valueObject)
+        if (transient) {
+          ""
+        } else {
+          if (!enum && "" == aggregatesTo) {
+            val aggregate = toAggregate(x, root)
+            if (aggregate.fields.filter(!_.transient).isEmpty)
+              ""
+            else
+              generateCallsForAggregate(aggregate)
+          }
+          else {
+            val valueObject = toValueObject(x, aggregatesTo, root)
+            if (valueObject.fields.filter(!_.transient).isEmpty)
+              ""
+            else
+              generateCallsForValueObject(valueObject)
+          }
         }
       })
   }
 
   def defCallsForEmbeddedAggregateMessage(name: String, aggregate: Aggregate): String = {
-    val nonKeyFieldCount = aggregate.fields.length - aggregate.primaryKey.fields.length
+    val persistFields = aggregate.fields.filter(!_.transient)
+    val nonKeyFieldCount = persistFields.length - aggregate.primaryKey.fields.length
     val keyFieldNames = aggregate.primaryKey.fields.map(_.name).toSet
-    val nonKeyFields = aggregate.fields.filter(x => !keyFieldNames.contains(x.name))
+    val nonKeyFields = persistFields
+      .filter(x => !keyFieldNames.contains(x.name))
     val update = if (nonKeyFieldCount > 1)
       s"""
          |case evt: Update${cToPascal(aggregate.name)}Event =>
@@ -180,7 +196,10 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
       }
     }
 
-    val daoCall = if (message.transient || message.fields.filter(x => derived.contains(x.name)).isEmpty)
+    val hasPersistField = message.fields
+      .filter(!_.transient)
+      .filter(x => derived.contains(x.name)).isEmpty
+    val daoCall = if (message.transient || hasPersistField)
       s"""
        """.stripMargin.trim
     else if (multiple)
@@ -194,12 +213,12 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
          |${cToCamel(parentName)}Dao.${cToCamel(message.name)}(evt)
        """.stripMargin.trim
 
-    if (message.transient || message.fields.filter(x => derived.contains(x.name)).isEmpty)
+    if (message.transient || hasPersistField)
       ""
     else
-    s"""
-       |case evt: ${cToPascal(message.name)}Event =>
-       |  ${indent(daoCall, 6)}
+      s"""
+         |case evt: ${cToPascal(message.name)}Event =>
+         |  ${indent(daoCall, 6)}
      """.stripMargin.trim
   }
 

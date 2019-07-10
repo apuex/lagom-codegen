@@ -8,8 +8,10 @@ import java.util.Date
 import akka._
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSubMediator._
+import akka.pattern.ask
 import akka.stream.scaladsl._
 import akka.stream.{OverflowStrategy, SourceShape}
+import akka.util.Timeout
 import com.github.apuex.commerce.sales.ScalapbJson._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
@@ -39,6 +41,8 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   duration: FiniteDuration,
   db: Database)
   extends SalesService {
+
+  implicit val timeout = Timeout(duration)
 
   def createAlarm(): ServiceCall[CreateAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful(
@@ -195,7 +199,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def createProduct(): ServiceCall[CreateProductCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-        val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.recordTime, cmd.quantitySold)
+        val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice)
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
@@ -216,7 +220,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updateProduct(): ServiceCall[UpdateProductCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-        val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.recordTime, cmd.quantitySold)
+        val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice)
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
@@ -256,24 +260,15 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   }
 
   def getProductSales(): ServiceCall[GetProductSalesCmd, ProductSalesVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-         productDao.getProductSales(cmd)
-      }
-    )
+    mediator.ask(Publish(publishQueue, cmd))(Timeout(duration))
+      .mapTo[ProductSalesVo]
   }
 
   def updateProductSales(): ServiceCall[UpdateProductSalesCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = UpdateProductSalesEvent(cmd.userId, cmd.productId, cmd.recordTime, cmd.quantitySold)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        productDao.updateProductSales(evt)
-      }
-    )
+    Future.successful({
+      mediator ! Publish(publishQueue, cmd)
+      0
+    })
   }
 
   def getProductName(): ServiceCall[GetProductNameCmd, ProductNameVo] = ServiceCall { cmd =>

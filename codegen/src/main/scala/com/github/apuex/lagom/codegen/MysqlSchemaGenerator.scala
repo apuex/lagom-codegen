@@ -113,6 +113,7 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
 
   def defTableFields(fields: Seq[ModelLoader.Field]): String = {
     fields
+      .filter(!_.transient)
       .filter(x => "array" != x._type && "map" != x._type)
       .map(x => {
         val fieldType = toMysqlType(x._type, x.length, x.scale)
