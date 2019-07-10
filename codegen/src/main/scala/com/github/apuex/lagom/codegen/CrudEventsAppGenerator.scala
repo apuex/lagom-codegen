@@ -226,20 +226,29 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
     messages.map(defMessageCall(_, parentName, parentFields, primaryKey))
   }
 
-  def defCrudCalls(name: String, fields: Seq[Field], primaryKey: PrimaryKey): Seq[String] = Seq(
-    s"""
-       |case evt: Create${cToPascal(name)}Event =>
-       |  ${cToCamel(name)}Dao.create${cToPascal(name)}(evt)
+  def defCrudCalls(name: String, fields: Seq[Field], primaryKey: PrimaryKey): Seq[String] = {
+    val keyFieldNames = primaryKey.fields.map(_.name).toSet
+    val persistFields = fields.filter(!_.transient)
+    val nonKeyPersistFields = persistFields.filter(x => !keyFieldNames.contains(x.name))
+
+    Seq(
+      s"""
+         |case evt: Create${cToPascal(name)}Event =>
+         |  ${cToCamel(name)}Dao.create${cToPascal(name)}(evt)
      """.stripMargin.trim,
-    s"""
-       |case evt: Update${cToPascal(name)}Event =>
-       |  ${cToCamel(name)}Dao.update${cToPascal(name)}(evt)
+      if (nonKeyPersistFields.isEmpty)
+        ""
+      else
+        s"""
+           |case evt: Update${cToPascal(name)}Event =>
+           |  ${cToCamel(name)}Dao.update${cToPascal(name)}(evt)
      """.stripMargin.trim,
-    s"""
-       |case evt: Delete${cToPascal(name)}Event =>
-       |  ${cToCamel(name)}Dao.delete${cToPascal(name)}(evt)
+      s"""
+         |case evt: Delete${cToPascal(name)}Event =>
+         |  ${cToCamel(name)}Dao.delete${cToPascal(name)}(evt)
      """.stripMargin.trim
-  )
+    )
+  }
 
   def defByForeignKeyCalls(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
     foreignKeys

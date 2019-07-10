@@ -81,7 +81,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
     val className = s"${cToPascal(aggregate.name)}Dao"
     val fileName = s"${className}.scala"
     val calls = (
-      defCrud(name) ++
+      defCrud(name, fields, primaryKey) ++
         defByForeignKeys(name, fields, foreignKeys) ++
         defMessages(aggregate.messages, aggregate.fields, aggregate.primaryKey) ++
         defEmbeddedAggregateMessages(aggregate.aggregates)
@@ -114,7 +114,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
     val className = s"${cToPascal(valueObject.name)}Dao"
     val fileName = s"${className}.scala"
     val calls = (
-      defCrud(name) ++
+      defCrud(name, fields, primaryKey) ++
         defByForeignKeys(name, fields, foreignKeys)
       )
       .reduceOption((l, r) => s"${l}\n\n${r}")
@@ -163,26 +163,40 @@ class DaoGenerator(modelLoader: ModelLoader) {
       .map(defMessage(_))
   }
 
-  def defCrud(name: String): Seq[String] = Seq(
-    s"""
-       |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int
+  def defCrud(name: String, fields: Seq[Field], primaryKey: PrimaryKey): Seq[String] = {
+    val keyFieldNames = primaryKey.fields.map(_.name).toSet
+    val persistFields = fields.filter(!_.transient)
+    val nonKeyPersistFields = persistFields.filter(x => !keyFieldNames.contains(x.name))
+
+    val update = if (nonKeyPersistFields.isEmpty) {
+      s"""
+         |
+         """.stripMargin.trim
+    } else {
+      s"""
+         |def update${cToPascal(name)}(evt: Update${cToPascal(name)}Event)(implicit conn: Connection): Int
+         """.stripMargin.trim
+    }
+
+    Seq(
+      s"""
+         |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int
      """.stripMargin.trim,
-    s"""
-       |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo
+      s"""
+         |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo
      """.stripMargin.trim,
-    s"""
-       |def update${cToPascal(name)}(evt: Update${cToPascal(name)}Event)(implicit conn: Connection): Int
+      update,
+      s"""
+         |def delete${cToPascal(name)}(evt: Delete${cToPascal(name)}Event)(implicit conn: Connection): Int
      """.stripMargin.trim,
-    s"""
-       |def delete${cToPascal(name)}(evt: Delete${cToPascal(name)}Event)(implicit conn: Connection): Int
+      s"""
+         |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
      """.stripMargin.trim,
-    s"""
-       |def query${cToPascal(name)}(cmd: QueryCommand)(implicit conn: Connection): Seq[${cToPascal(name)}Vo]
-     """.stripMargin.trim,
-    s"""
-       |def retrieve${cToPascal(name)}ByRowid(rowid: String)(implicit conn: Connection): ${cToPascal(name)}Vo
+      s"""
+         |def retrieve${cToPascal(name)}ByRowid(rowid: String)(implicit conn: Connection): ${cToPascal(name)}Vo
      """.stripMargin.trim
-  )
+    )
+  }
 
   def defByForeignKeys(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
     foreignKeys
@@ -194,7 +208,8 @@ class DaoGenerator(modelLoader: ModelLoader) {
         val fkFields = fields
           .filter(x => fieldNames.contains(x.name))
         defByForeignKey(name, fkFields)
-      })
+      }
+    )
   }
 
   def defByForeignKey(name: String, keyFields: Seq[Field]): String = {

@@ -287,6 +287,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       s"""
          |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
          |${publish}
+         |0
        """.stripMargin.trim
     else if (multiple)
       s"""
@@ -334,7 +335,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
     val nonKeyPersistFields = persistFields
       .filter(x => !keyFieldNames.contains(x.name))
 
-    if (transient || nonKeyPersistFields.isEmpty)
+    if (transient)
       Seq()
     else
       Seq(
@@ -358,16 +359,21 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |  )
            |}
      """.stripMargin.trim,
-        s"""
-           |def update${cToPascal(name)}(): ServiceCall[Update${cToPascal(name)}Cmd, Int] = ServiceCall { cmd =>
-           |  Future.successful(
-           |    db.withTransaction { implicit c =>
-           |      val evt = Update${cToPascal(name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-           |      ${indent(defPublishCmdOrEvent(transient, nonKeyPersistFields.isEmpty), 6)}
-           |      ${cToCamel(name)}Dao.update${cToPascal(name)}(evt)
-           |    }
-           |  )
-           |}
+        if (nonKeyPersistFields.isEmpty)
+          s"""
+             |
+           """.stripMargin.trim
+        else
+          s"""
+             |def update${cToPascal(name)}(): ServiceCall[Update${cToPascal(name)}Cmd, Int] = ServiceCall { cmd =>
+             |  Future.successful(
+             |    db.withTransaction { implicit c =>
+             |      val evt = Update${cToPascal(name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
+             |      ${indent(defPublishCmdOrEvent(transient, nonKeyPersistFields.isEmpty), 6)}
+             |      ${cToCamel(name)}Dao.update${cToPascal(name)}(evt)
+             |    }
+             |  )
+             |}
      """.stripMargin.trim,
         s"""
            |def delete${cToPascal(name)}(): ServiceCall[Delete${cToPascal(name)}Cmd, Int] = ServiceCall { cmd =>
@@ -402,19 +408,19 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
   }
 
   def defByForeignKeyCalls(transient: Boolean, name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
-    if(transient)
+    if (transient)
       Seq()
     else
-    foreignKeys
-      .map(x => {
-        val fieldNames = x.fields
-          .map(_.name)
-          .toSet
+      foreignKeys
+        .map(x => {
+          val fieldNames = x.fields
+            .map(_.name)
+            .toSet
 
-        val fkFields = fields
-          .filter(x => fieldNames.contains(x.name))
-        defByForeignKeyCall(name, fkFields)
-      })
+          val fkFields = fields
+            .filter(x => fieldNames.contains(x.name))
+          defByForeignKeyCall(name, fkFields)
+        })
   }
 
   def defByForeignKeyCall(name: String, keyFields: Seq[Field]): String = {

@@ -260,26 +260,35 @@ class MessageGenerator(modelLoader: ModelLoader) {
       .map(x => generateEvent(x, name, messageSrcPackage))
   }
 
-  def generateCrudEvt(aggregate: String, name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
-    s"""
-       |message Create${cToPascal(name)}Event {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Event";
-       |  ${indent(generateFields(userField +: fields), 2)}
-       |}
+  def generateCrudEvt(aggregate: String, name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = {
+    val keyFieldNames = pkFields.map(_.name).toSet
+    val persistFields = fields.filter(!_.transient)
+    val nonKeyPersistFields = persistFields.filter(x => !keyFieldNames.contains(x.name))
+
+    Seq(
+      s"""
+         |message Create${cToPascal(name)}Event {
+         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Event";
+         |  ${indent(generateFields(userField +: fields), 2)}
+         |}
      """.stripMargin.trim,
-    s"""
-       |message Update${cToPascal(name)}Event {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Event";
-       |  ${indent(generateFields(userField +: fields), 2)}
-       |}
+      if (nonKeyPersistFields.isEmpty)
+        ""
+      else
+        s"""
+           |message Update${cToPascal(name)}Event {
+           |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Event";
+           |  ${indent(generateFields(userField +: fields), 2)}
+           |}
      """.stripMargin.trim,
-    s"""
-       |message Delete${cToPascal(name)}Event {
-       |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Event";
-       |  ${indent(generateFields(userField +: pkFields), 2)}
-       |}
+      s"""
+         |message Delete${cToPascal(name)}Event {
+         |  option (scalapb.message).extends = "${messageSrcPackage}.${cToPascal(aggregate)}Event";
+         |  ${indent(generateFields(userField +: pkFields), 2)}
+         |}
      """.stripMargin.trim
-  )
+    )
+  }
 
   def generateCrudCmd(aggregate: String, name: String, fields: Seq[Field], pkFields: Seq[Field], messageSrcPackage: String): Seq[String] = Seq(
     s"""

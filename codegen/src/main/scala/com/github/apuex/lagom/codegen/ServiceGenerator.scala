@@ -97,7 +97,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
         if (!enum && "" == aggregatesTo) generateCallsForAggregate(toAggregate(x, root))
         else {
           val valueObject = toValueObject(x, aggregatesTo, root)
-          if(valueObject.transient) "" else generateCallsForValueObject(valueObject)
+          if (valueObject.transient) "" else generateCallsForValueObject(valueObject)
         }
       })
   }
@@ -148,7 +148,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
       if (aggregate.transient)
         Seq()
       else {
-        defCrudCalls(name) ++
+        defCrudCalls(name, fields, primaryKey) ++
           defByForeignKeyCalls(name, fields, foreignKeys)
       } ++
         defMessageCalls(aggregate.messages) ++
@@ -162,7 +162,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   def generateCallsForValueObject(valueObject: ValueObject): String = {
     import valueObject._
     (
-      defCrudCalls(name) ++
+      defCrudCalls(name, fields, primaryKey) ++
         defByForeignKeyCalls(name, fields, foreignKeys)
       )
       .filter(x => "" != x)
@@ -190,26 +190,40 @@ class ServiceGenerator(modelLoader: ModelLoader) {
     messages.map(defMessageCall(_))
   }
 
-  def defCrudCalls(name: String): Seq[String] = Seq(
-    s"""
-       |def create${cToPascal(name)}(): ServiceCall[Create${cToPascal(name)}Cmd, Int]
+  def defCrudCalls(name: String, fields: Seq[Field], primaryKey: PrimaryKey): Seq[String] = {
+    val keyFieldNames = primaryKey.fields.map(_.name).toSet
+    val persistFields = fields.filter(!_.transient)
+    val nonKeyPersistFields = persistFields.filter(x => !keyFieldNames.contains(x.name))
+
+    val update = if (nonKeyPersistFields.isEmpty) {
+      s"""
+         |
+         """.stripMargin.trim
+    } else {
+      s"""
+         |def update${cToPascal(name)}(): ServiceCall[Update${cToPascal(name)}Cmd, Int]
+         """.stripMargin.trim
+    }
+
+    Seq(
+      s"""
+         |def create${cToPascal(name)}(): ServiceCall[Create${cToPascal(name)}Cmd, Int]
      """.stripMargin.trim,
-    s"""
-       |def retrieve${cToPascal(name)}(): ServiceCall[Retrieve${cToPascal(name)}Cmd, ${cToPascal(name)}Vo]
+      s"""
+         |def retrieve${cToPascal(name)}(): ServiceCall[Retrieve${cToPascal(name)}Cmd, ${cToPascal(name)}Vo]
      """.stripMargin.trim,
-    s"""
-       |def update${cToPascal(name)}(): ServiceCall[Update${cToPascal(name)}Cmd, Int]
+      update,
+      s"""
+         |def delete${cToPascal(name)}(): ServiceCall[Delete${cToPascal(name)}Cmd, Int]
      """.stripMargin.trim,
-    s"""
-       |def delete${cToPascal(name)}(): ServiceCall[Delete${cToPascal(name)}Cmd, Int]
+      s"""
+         |def query${cToPascal(name)}(): ServiceCall[QueryCommand, ${cToPascal(name)}ListVo]
      """.stripMargin.trim,
-    s"""
-       |def query${cToPascal(name)}(): ServiceCall[QueryCommand, ${cToPascal(name)}ListVo]
-     """.stripMargin.trim,
-    s"""
-       |def retrieve${cToPascal(name)}ByRowid(rowid: String): ServiceCall[NotUsed, ${cToPascal(name)}Vo]
+      s"""
+         |def retrieve${cToPascal(name)}ByRowid(rowid: String): ServiceCall[NotUsed, ${cToPascal(name)}Vo]
      """.stripMargin.trim
-  )
+    )
+  }
 
   def defByForeignKeyCalls(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
     foreignKeys
@@ -297,7 +311,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   def generateCallDescsForAggregate(aggregate: Aggregate): Seq[String] = {
     import aggregate._
     (
-      defCrudCallDescs(name) ++
+      defCrudCallDescs(name, fields, primaryKey) ++
         defByForeignKeyCallDescs(name, fields, foreignKeys) ++
         defMessageCallDescs(aggregate.name, aggregate.messages) ++
         defCallDescsForEmbeddedAggregateMessages(aggregate.aggregates)
@@ -307,7 +321,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   def generateCallDescsForValueObject(valueObject: ValueObject): Seq[String] = {
     import valueObject._
     (
-      defCrudCallDescs(name) ++
+      defCrudCallDescs(name, fields, primaryKey) ++
         defByForeignKeyCallDescs(name, fields, foreignKeys)
       )
   }
@@ -322,26 +336,40 @@ class ServiceGenerator(modelLoader: ModelLoader) {
     messages.map(defMessageCallDesc(name, _))
   }
 
-  def defCrudCallDescs(name: String): Seq[String] = Seq(
-    s"""
-       |pathCall("/api/${cToShell(name)}/create-${cToShell(name)}", create${cToPascal(name)} _)
+  def defCrudCallDescs(name: String, fields: Seq[Field], primaryKey: PrimaryKey): Seq[String] = {
+    val keyFieldNames = primaryKey.fields.map(_.name).toSet
+    val persistFields = fields.filter(!_.transient)
+    val nonKeyPersistFields = persistFields.filter(x => !keyFieldNames.contains(x.name))
+
+    val update = if (nonKeyPersistFields.isEmpty) {
+      s"""
+         |
+         """.stripMargin.trim
+    } else {
+      s"""
+         |pathCall("/api/${cToShell(name)}/update-${cToShell(name)}", update${cToPascal(name)} _)
+         """.stripMargin.trim
+    }
+
+    Seq(
+      s"""
+         |pathCall("/api/${cToShell(name)}/create-${cToShell(name)}", create${cToPascal(name)} _)
      """.stripMargin.trim,
-    s"""
-       |pathCall("/api/${cToShell(name)}/retrieve-${cToShell(name)}", retrieve${cToPascal(name)} _)
+      s"""
+         |pathCall("/api/${cToShell(name)}/retrieve-${cToShell(name)}", retrieve${cToPascal(name)} _)
      """.stripMargin.trim,
-    s"""
-       |pathCall("/api/${cToShell(name)}/update-${cToShell(name)}", update${cToPascal(name)} _)
+      update,
+      s"""
+         |pathCall("/api/${cToShell(name)}/delete-${cToShell(name)}", delete${cToPascal(name)} _)
      """.stripMargin.trim,
-    s"""
-       |pathCall("/api/${cToShell(name)}/delete-${cToShell(name)}", delete${cToPascal(name)} _)
+      s"""
+         |pathCall("/api/${cToShell(name)}/query-${cToShell(name)}", query${cToPascal(name)} _)
      """.stripMargin.trim,
-    s"""
-       |pathCall("/api/${cToShell(name)}/query-${cToShell(name)}", query${cToPascal(name)} _)
-     """.stripMargin.trim,
-    s"""
-       |pathCall("/api/${cToShell(name)}/retrieve-${cToShell(name)}-by-rowid/:rowid", retrieve${cToPascal(name)}ByRowid _)
+      s"""
+         |pathCall("/api/${cToShell(name)}/retrieve-${cToShell(name)}-by-rowid/:rowid", retrieve${cToPascal(name)}ByRowid _)
      """.stripMargin.trim
-  )
+    )
+  }
 
   def defByForeignKeyCallDescs(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
     foreignKeys
@@ -452,14 +480,14 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   def generateFormatsForAggregate(aggregate: Aggregate): Seq[String] = {
     import aggregate._
     generateFormatForValueObject(name) ++
-      defCrudFormats(name) ++
+      defCrudFormats(name, fields, primaryKey) ++
       defMessageFormats(aggregate.messages) ++
       defFormatsForEmbeddedAggregateMessages(aggregate.aggregates)
   }
 
   def generateFormatsForValueObject(valueObject: ValueObject): Seq[String] = {
     import valueObject._
-    generateFormatForValueObject(name) ++ defCrudFormats(name)
+    generateFormatForValueObject(name) ++ defCrudFormats(name, fields, primaryKey)
   }
 
   def defMessageFormat(message: Message): Seq[String] = {
@@ -475,23 +503,37 @@ class ServiceGenerator(modelLoader: ModelLoader) {
       .flatMap(x => x)
   }
 
-  def defCrudFormats(name: String): Seq[String] = Seq(
-    s"""
-       |implicit val create${cToPascal(name)}CmdFormat = jsonFormat[Create${cToPascal(name)}Cmd]
+  def defCrudFormats(name: String, fields: Seq[Field], primaryKey: PrimaryKey): Seq[String] = {
+    val keyFieldNames = primaryKey.fields.map(_.name).toSet
+    val persistFields = fields.filter(!_.transient)
+    val nonKeyPersistFields = persistFields.filter(x => !keyFieldNames.contains(x.name))
+
+    val update = if (nonKeyPersistFields.isEmpty) {
+      s"""
+         |
+         """.stripMargin.trim
+    } else {
+      s"""
+         |implicit val update${cToPascal(name)}CmdFormat = jsonFormat[Update${cToPascal(name)}Cmd]
+         """.stripMargin.trim
+    }
+
+    Seq(
+      s"""
+         |implicit val create${cToPascal(name)}CmdFormat = jsonFormat[Create${cToPascal(name)}Cmd]
      """.stripMargin.trim,
-    s"""
-       |implicit val retrieve${cToPascal(name)}CmdFormat = jsonFormat[Retrieve${cToPascal(name)}Cmd]
+      s"""
+         |implicit val retrieve${cToPascal(name)}CmdFormat = jsonFormat[Retrieve${cToPascal(name)}Cmd]
      """.stripMargin.trim,
-    s"""
-       |implicit val update${cToPascal(name)}CmdFormat = jsonFormat[Update${cToPascal(name)}Cmd]
+      update,
+      s"""
+         |implicit val delete${cToPascal(name)}CmdFormat = jsonFormat[Delete${cToPascal(name)}Cmd]
      """.stripMargin.trim,
-    s"""
-       |implicit val delete${cToPascal(name)}CmdFormat = jsonFormat[Delete${cToPascal(name)}Cmd]
-     """.stripMargin.trim,
-    s"""
-       |implicit val queryCommandFormat = jsonFormat[QueryCommand]
+      s"""
+         |implicit val queryCommandFormat = jsonFormat[QueryCommand]
      """.stripMargin.trim
-  )
+    )
+  }
 
 
 }
