@@ -64,7 +64,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
        |    lazy val publishQueue = "instant-event-publish-queue"
-       |    implicit val duration = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
+       |    implicit val duration = Duration(config.getString("db.${cToShell(modelDbSchema)}-db.event.query-interval")).asInstanceOf[FiniteDuration]
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
        |    lazy val eventApply = wire[${cToPascal(s"${modelName}_${event}_${apply}")}]
@@ -118,7 +118,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
        |    lazy val publishQueue = "instant-event-publish-queue"
-       |    implicit val duration = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
+       |    implicit val duration = Duration(config.getString("db.${cToShell(modelDbSchema)}-db.event.query-interval")).asInstanceOf[FiniteDuration]
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
        |    lazy val eventApply = wire[${cToPascal(s"${modelName}_${event}_${apply}")}]
