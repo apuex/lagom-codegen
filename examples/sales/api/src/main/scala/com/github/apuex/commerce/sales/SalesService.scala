@@ -69,6 +69,10 @@ trait SalesService extends Service {
 
   def changeUnitPrice(): ServiceCall[ChangeUnitPriceCmd, Int]
 
+  def getProductDesc(): ServiceCall[GetProductDescCmd, ProductDescVo]
+
+  def changeProductDesc(): ServiceCall[ChangeProductDescCmd, Int]
+
   def createOrder(): ServiceCall[CreateOrderCmd, Int]
 
   def retrieveOrder(): ServiceCall[RetrieveOrderCmd, OrderVo]
@@ -168,6 +172,10 @@ trait SalesService extends Service {
     implicit val unitPriceListVoFormat = jsonFormat[UnitPriceListVo]
     implicit val getUnitPriceCmdFormat = jsonFormat[GetUnitPriceCmd]
     implicit val changeUnitPriceCmdFormat = jsonFormat[ChangeUnitPriceCmd]
+    implicit val productDescVoFormat = jsonFormat[ProductDescVo]
+    implicit val productDescListVoFormat = jsonFormat[ProductDescListVo]
+    implicit val getProductDescCmdFormat = jsonFormat[GetProductDescCmd]
+    implicit val changeProductDescCmdFormat = jsonFormat[ChangeProductDescCmd]
     implicit val orderVoFormat = jsonFormat[OrderVo]
     implicit val orderListVoFormat = jsonFormat[OrderListVo]
     implicit val createOrderCmdFormat = jsonFormat[CreateOrderCmd]
@@ -228,6 +236,8 @@ trait SalesService extends Service {
         pathCall("/api/product-unit/change-product-unit", changeProductUnit _),
         pathCall("/api/unit-price/get-unit-price", getUnitPrice _),
         pathCall("/api/unit-price/change-unit-price", changeUnitPrice _),
+        pathCall("/api/product-desc/get-product-desc", getProductDesc _),
+        pathCall("/api/product-desc/change-product-desc", changeProductDesc _),
         pathCall("/api/order/create-order", createOrder _),
         pathCall("/api/order/retrieve-order", retrieveOrder _),
         pathCall("/api/order/update-order", updateOrder _),

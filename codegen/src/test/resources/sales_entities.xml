@@ -44,6 +44,7 @@
     <field name="unit_price" type="double" required="true" aggregate="true" comment="单价"/>
     <field name="record_time" type="timestamp" transient="true" comment="销量最后更新时间"/>
     <field name="quantity_sold" type="double" transient="true" comment="销量"/>
+    <field name="product_desc" type="string" length="64" required="true" aggregate="true" comment="商品描述"/>
     <primaryKey name="product_pk">
       <field name="product_id"/>
     </primaryKey>

@@ -199,7 +199,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def createProduct(): ServiceCall[CreateProductCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-        val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice)
+        val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
@@ -220,7 +220,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   def updateProduct(): ServiceCall[UpdateProductCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
-        val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice)
+        val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
         eventJournalDao.createEventJournal(
           CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
         )
@@ -330,6 +330,27 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         )
         mediator ! Publish(publishQueue, evt)
         productDao.changeUnitPrice(evt)
+      }
+    )
+  }
+
+  def getProductDesc(): ServiceCall[GetProductDescCmd, ProductDescVo] = ServiceCall { cmd =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         productDao.getProductDesc(cmd)
+      }
+    )
+  }
+
+  def changeProductDesc(): ServiceCall[ChangeProductDescCmd, Int] = ServiceCall { cmd =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+        val evt = ChangeProductDescEvent(cmd.userId, cmd.productId, cmd.productDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+        )
+        mediator ! Publish(publishQueue, evt)
+        productDao.changeProductDesc(evt)
       }
     )
   }

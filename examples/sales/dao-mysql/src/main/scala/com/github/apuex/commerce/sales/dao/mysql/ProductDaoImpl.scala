@@ -30,14 +30,16 @@ class ProductDaoImpl() extends ProductDao {
       |  SET
       |    product.product_name = {productName},
       |    product.product_unit = {productUnit},
-      |    product.unit_price = {unitPrice}
+      |    product.unit_price = {unitPrice},
+      |    product.product_desc = {productDesc}
       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> evt.productId,
       "productName" -> evt.productName,
       "productUnit" -> evt.productUnit,
-      "unitPrice" -> evt.unitPrice
+      "unitPrice" -> evt.unitPrice,
+      "productDesc" -> evt.productDesc
     ).executeUpdate()
   
     if(rowsAffected == 0)
@@ -46,19 +48,22 @@ class ProductDaoImpl() extends ProductDao {
         |    product.product_id,
         |    product.product_name,
         |    product.product_unit,
-        |    product.unit_price
+        |    product.unit_price,
+        |    product.product_desc
         |  ) VALUES (
         |    {productId},
         |    {productName},
         |    {productUnit},
-        |    {unitPrice}
+        |    {unitPrice},
+        |    {productDesc}
         |  )
        """.stripMargin.trim)
       .on(
         "productId" -> evt.productId,
         "productName" -> evt.productName,
         "productUnit" -> evt.productUnit,
-        "unitPrice" -> evt.unitPrice
+        "unitPrice" -> evt.unitPrice,
+        "productDesc" -> evt.productDesc
       ).executeUpdate()
     else rowsAffected
   }
@@ -69,7 +74,8 @@ class ProductDaoImpl() extends ProductDao {
       |    product.product_id,
       |    product.product_name,
       |    product.product_unit,
-      |    product.unit_price
+      |    product.unit_price,
+      |    product.product_desc
       |  FROM sales.product
       |  WHERE product_id = {productId}
      """.stripMargin.trim)
@@ -84,14 +90,16 @@ class ProductDaoImpl() extends ProductDao {
       |  SET
       |    product.product_name = {productName},
       |    product.product_unit = {productUnit},
-      |    product.unit_price = {unitPrice}
+      |    product.unit_price = {unitPrice},
+      |    product.product_desc = {productDesc}
       |  WHERE product_id = {productId}
      """.stripMargin.trim)
     .on(
       "productId" -> evt.productId,
       "productName" -> evt.productName,
       "productUnit" -> evt.productUnit,
-      "unitPrice" -> evt.unitPrice
+      "unitPrice" -> evt.unitPrice,
+      "productDesc" -> evt.productDesc
     ).executeUpdate()
   }
 
@@ -140,7 +148,8 @@ class ProductDaoImpl() extends ProductDao {
       |    product.product_id,
       |    product.product_name,
       |    product.product_unit,
-      |    product.unit_price
+      |    product.unit_price,
+      |    product.product_desc
       |  FROM sales.product
       |  WHERE rowid = {rowid}
      """.stripMargin.trim)
@@ -260,6 +269,43 @@ class ProductDaoImpl() extends ProductDao {
     ).executeUpdate()
   }
 
+  private def productDescParser(implicit c: Connection): RowParser[ProductDescVo] = {
+    get[String]("product_id") ~ 
+    get[String]("product_desc") map {
+      case productId ~ productDesc =>
+        ProductDescVo(
+          productId,
+          productDesc
+        )
+    }
+  }
+  
+  def getProductDesc(cmd: GetProductDescCmd)(implicit conn: Connection): ProductDescVo = {
+    SQL(s"""
+      |SELECT
+      |    product.product_id,
+      |    product.product_desc
+      |  FROM sales.product
+      |  WHERE product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "productId" -> cmd.productId
+    ).as(productDescParser.single)
+  }
+  
+  def changeProductDesc(evt: ChangeProductDescEvent)(implicit conn: Connection): Int = {
+    SQL(s"""
+      |UPDATE sales.product
+      |  SET
+      |    product.product_desc = {productDesc}
+      |  WHERE product_id = {productId}
+     """.stripMargin.trim)
+    .on(
+      "productId" -> evt.productId,
+      "productDesc" -> evt.productDesc
+    ).executeUpdate()
+  }
+
   private val selectProductSql =
     s"""
       |SELECT
@@ -267,8 +313,7 @@ class ProductDaoImpl() extends ProductDao {
       |    t.product_name,
       |    t.product_unit,
       |    t.unit_price,
-      |    t.record_time,
-      |    t.quantity_sold
+      |    t.product_desc
       |  FROM sales.product t
      """.stripMargin.trim
 
@@ -277,8 +322,7 @@ class ProductDaoImpl() extends ProductDao {
     case "productName" => "product_name"
     case "productUnit" => "product_unit"
     case "unitPrice" => "unit_price"
-    case "recordTime" => "record_time"
-    case "quantitySold" => "quantity_sold"
+    case "productDesc" => "product_desc"
     case x: String => camelToC(x)
   }
 
@@ -295,6 +339,7 @@ class ProductDaoImpl() extends ProductDao {
     case "productName" => paramName -> paramValue
     case "productUnit" => paramName -> paramValue
     case "unitPrice" => paramName -> DoubleParser.parse(paramValue)
+    case "productDesc" => paramName -> paramValue
   }
 
   private def parseParam(fieldName: String, paramName:String, paramValue: Seq[String]): NamedParameter = fieldName match {
@@ -302,6 +347,7 @@ class ProductDaoImpl() extends ProductDao {
     case "productName" => paramName -> paramValue
     case "productUnit" => paramName -> paramValue
     case "unitPrice" => paramName -> paramValue.map(DoubleParser.parse(_))
+    case "productDesc" => paramName -> paramValue
   }
 
   private def productParser(implicit c: Connection): RowParser[ProductVo] = {
@@ -309,16 +355,16 @@ class ProductDaoImpl() extends ProductDao {
     get[String]("product_name") ~ 
     get[String]("product_unit") ~ 
     get[Double]("unit_price") ~ 
-    get[Option[Date]]("record_time") ~ 
-    get[Option[Double]]("quantity_sold") map {
-      case productId ~ productName ~ productUnit ~ unitPrice ~ recordTime ~ quantitySold =>
+    get[String]("product_desc") map {
+      case productId ~ productName ~ productUnit ~ unitPrice ~ productDesc =>
         ProductVo(
           productId,
           productName,
           productUnit,
           unitPrice,
-          recordTime.map(toScalapbTimestamp(_)),
-          quantitySold.getOrElse(0)
+          None,
+          0,
+          productDesc
         )
     }
   }

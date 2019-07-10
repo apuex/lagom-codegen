@@ -84,6 +84,9 @@ class SalesEventApply(alarmDao: AlarmDao,
     case evt: ChangeUnitPriceEvent =>
       productDao.changeUnitPrice(evt)
 
+    case evt: ChangeProductDescEvent =>
+      productDao.changeProductDesc(evt)
+
     case evt: CreateOrderEvent =>
       orderDao.createOrder(evt)
 

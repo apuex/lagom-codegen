@@ -164,12 +164,14 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
              |def add${cToPascal(aggregate.name)}(): ServiceCall[Add${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
              |  Future.successful({
              |    ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
+             |    0
              |  })
              |}
              |
              |def remove${cToPascal(aggregate.name)}(): ServiceCall[Remove${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
              |  Future.successful({
              |    ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
+             |    0
              |  })
              |}
            """.stripMargin.trim
@@ -201,6 +203,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
              |def change${cToPascal(aggregate.name)}(): ServiceCall[Change${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
              |  Future.successful({
              |    ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
+             |    0
              |  })
              |}
            """.stripMargin.trim

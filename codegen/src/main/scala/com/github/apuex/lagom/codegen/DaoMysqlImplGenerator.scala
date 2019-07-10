@@ -73,11 +73,13 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val traitName = s"${cToPascal(aggregate.name)}Dao"
     val className = s"${traitName}Impl"
     val fileName = s"${className}.scala"
+    val persistFields = fields.filter(!_.transient)
+
     val calls = (
       defCrud(name, fields, primaryKey, foreignKeys) ++
-        defSelectByFks(name, fields, foreignKeys) ++
-        defDeleteByFks(name, fields, foreignKeys) ++
-        defMessages(name, fields, primaryKey, aggregate.messages) ++
+        defSelectByFks(name, persistFields, foreignKeys) ++
+        defDeleteByFks(name, persistFields, foreignKeys) ++
+        defMessages(name, persistFields, primaryKey, aggregate.messages) ++
         defEmbeddedAggregateMessages(name, aggregate.aggregates)
       )
       .map(indentWithLeftMargin(_, 2))
@@ -114,13 +116,13 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |
          |  ${indent(calls, 2)}
          |
-         |  ${indentWithLeftMargin(defSelectSql(name, fields), 2)}
+         |  ${indentWithLeftMargin(defSelectSql(name, persistFields), 2)}
          |
-         |  ${indent(fieldConverter(fields), 2)}
+         |  ${indent(fieldConverter(persistFields), 2)}
          |
          |  ${indent(whereClause(), 2)}
          |
-         |  ${indent(paramParser(fields), 2)}
+         |  ${indent(paramParser(persistFields), 2)}
          |
          |  ${indent(rowParser(name, fields, primaryKey.fields), 2)}
          |
@@ -344,9 +346,25 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     case _ => ""
   }
 
+  def wrapDefaultValue(valueType: String, required: Boolean): String = valueType match {
+    case "bool" => "false"
+    case "short" => "0"
+    case "byte" => "0"
+    case "int" => "0"
+    case "long" => "0"
+    case "decimal" => "0"
+    case "string" => "\"\""
+    case "timestamp" => "None"
+    case "float" => "0"
+    case "double" => "0"
+    case "blob" => "None"
+    case _ => ""
+  }
+
   def rowParser(name: String, fields: Seq[Field], keyFields: Seq[Field]): String = {
+    val persistFields = fields.filter(!_.transient)
     val keyFieldNames = keyFields.map(_.name).toSet
-    val gets = fields
+    val gets = persistFields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x => {
       val required = x.required || keyFieldNames.contains(x.name)
@@ -366,7 +384,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .reduceOption((l, r) => s"${l} ~ \n${r}")
       .getOrElse("")
 
-    val pattern = fields
+    val pattern = persistFields
       .filter(x => isJdbcType(x._type) || isEnum(x._type)) // enums treated as ints
       .map(x => cToCamel(x.name))
       .reduceOption((l, r) => s"${l} ~ ${r}")
@@ -375,14 +393,35 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val constructorParam = fields
       .map(x => {
         val required = x.required || keyFieldNames.contains(x.name)
-        if (isJdbcType(x._type)) {
-          wrapOptionValue(x._type, s"${cToCamel(x.name)}", required)
-        }
-        else if (isEnum(x._type)) if (required) s"${cToPascal(x._type)}.fromValue(${cToCamel(x.name)})" else s"${cToCamel(x.name)}.map(x => ${cToPascal(x._type)}.fromValue(x)).getOrElse(${cToPascal(x._type)}.fromValue(0))"
-        else { // array, map or value object type,
-          s"""
-             |${selectComposite(x, keyFields)}
+        if(x.transient) {
+          if (isJdbcType(x._type)) {
+            wrapDefaultValue(x._type, required)
+          }
+          else if (isEnum(x._type)) s"${cToPascal(x._type)}.fromValue(0)"
+          else { // array, map or value object type,
+            if("array" == x._type)
+              s"""
+                 |Seq()
            """.stripMargin.trim
+            else if("array" == x._type)
+              s"""
+                 |Map()
+           """.stripMargin.trim
+            else
+              s"""
+                 |
+           """.stripMargin.trim
+          }
+        } else {
+          if (isJdbcType(x._type)) {
+            wrapOptionValue(x._type, s"${cToCamel(x.name)}", required)
+          }
+          else if (isEnum(x._type)) if (required) s"${cToPascal(x._type)}.fromValue(${cToCamel(x.name)})" else s"${cToCamel(x.name)}.map(x => ${cToPascal(x._type)}.fromValue(x)).getOrElse(${cToPascal(x._type)}.fromValue(0))"
+          else { // array, map or value object type,
+            s"""
+               |${selectComposite(x, keyFields)}
+           """.stripMargin.trim
+          }
         }
       })
       .reduceOption((l, r) => s"${l},\n${r}")
@@ -689,7 +728,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val nonKeyPersistFields = persistFields.filter(x => !keyFieldNames.contains(x.name))
 
     import aggregate._
-    val parser = rowParser(name, fields, primaryKey.fields)
+    val parser = rowParser(name, persistFields, primaryKey.fields)
 
     val get = if (nonKeyFieldCount > 1)
       s"""

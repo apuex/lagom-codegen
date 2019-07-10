@@ -146,6 +146,37 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productId = 2; // 商品编号
          |  double unitPrice = 3; // 单价
          |}
+         |
+         |message ProductDescVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  string productId = 1; // 商品编号
+         |  string productDesc = 2; // 商品描述
+         |}
+         |
+         |message ProductDescListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated ProductDescVo items = 1;
+         |}
+         |
+         |message GetProductDescCmd {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+         |  string userId = 1; // 用户ID
+         |  string productId = 2; // 商品编号
+         |}
+         |
+         |message ChangeProductDescCmd {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+         |  string userId = 1; // 用户ID
+         |  string productId = 2; // 商品编号
+         |  string productDesc = 3; // 商品描述
+         |}
+         |
+         |message ChangeProductDescEvent{
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
+         |  string userId = 1; // 用户ID
+         |  string productId = 2; // 商品编号
+         |  string productDesc = 3; // 商品描述
+         |}
        """.stripMargin.trim)
   }
 
@@ -285,6 +316,37 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  double unitPrice = 3; // 单价
          |}
          |
+         |message ProductDescVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  string productId = 1; // 商品编号
+         |  string productDesc = 2; // 商品描述
+         |}
+         |
+         |message ProductDescListVo {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
+         |  repeated ProductDescVo items = 1;
+         |}
+         |
+         |message GetProductDescCmd {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+         |  string userId = 1; // 用户ID
+         |  string productId = 2; // 商品编号
+         |}
+         |
+         |message ChangeProductDescCmd {
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductCommand";
+         |  string userId = 1; // 用户ID
+         |  string productId = 2; // 商品编号
+         |  string productDesc = 3; // 商品描述
+         |}
+         |
+         |message ChangeProductDescEvent{
+         |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ProductEvent";
+         |  string userId = 1; // 用户ID
+         |  string productId = 2; // 商品编号
+         |  string productDesc = 3; // 商品描述
+         |}
+         |
          |message ProductVo {
          |  option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
          |  string productId = 1; // 商品编号
@@ -293,6 +355,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  double unitPrice = 4; // 单价
          |  google.protobuf.Timestamp recordTime = 5; // 销量最后更新时间
          |  double quantitySold = 6; // 销量
+         |  string productDesc = 7; // 商品描述
          |}
          |
          |message ProductListVo {
@@ -309,6 +372,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  double unitPrice = 5; // 单价
          |  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
          |  double quantitySold = 7; // 销量
+         |  string productDesc = 8; // 商品描述
          |}
          |
          |message RetrieveProductCmd {
@@ -326,6 +390,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  double unitPrice = 5; // 单价
          |  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
          |  double quantitySold = 7; // 销量
+         |  string productDesc = 8; // 商品描述
          |}
          |
          |message DeleteProductCmd {
@@ -341,8 +406,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productName = 3; // 商品名称
          |  string productUnit = 4; // 计价单位
          |  double unitPrice = 5; // 单价
-         |  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
-         |  double quantitySold = 7; // 销量
+         |  string productDesc = 6; // 商品描述
          |}
          |
          |message UpdateProductEvent {
@@ -352,8 +416,7 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
          |  string productName = 3; // 商品名称
          |  string productUnit = 4; // 计价单位
          |  double unitPrice = 5; // 单价
-         |  google.protobuf.Timestamp recordTime = 6; // 销量最后更新时间
-         |  double quantitySold = 7; // 销量
+         |  string productDesc = 6; // 商品描述
          |}
          |
          |message DeleteProductEvent {

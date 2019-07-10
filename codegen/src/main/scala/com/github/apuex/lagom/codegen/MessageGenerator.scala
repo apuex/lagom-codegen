@@ -219,7 +219,7 @@ class MessageGenerator(modelLoader: ModelLoader) {
     entity.aggregates.map(generateMessagesForEmbeddedAggregate(_, entity.name, messageSrcPackage)).flatMap(x => x) ++
       generateValueObject(entity.name, entity.fields, messageSrcPackage) ++
       generateCrudCmd(entity.name, entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage) ++
-      (if (entity.transient) Seq() else generateCrudEvt(entity.name, entity.name, entity.fields, entity.primaryKey.fields, messageSrcPackage)) ++
+      (if (entity.transient) Seq() else generateCrudEvt(entity.name, entity.name, entity.fields.filter(!_.transient), entity.primaryKey.fields, messageSrcPackage)) ++
       generateMessages(entity.messages, entity.name, messageSrcPackage) ++
       (if (entity.transient) Seq() else generateEvents(entity.messages, entity.name, messageSrcPackage))
   }

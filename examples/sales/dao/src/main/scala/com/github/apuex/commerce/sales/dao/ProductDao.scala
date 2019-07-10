@@ -32,4 +32,8 @@ trait ProductDao {
   def getUnitPrice(cmd: GetUnitPriceCmd)(implicit conn: Connection): UnitPriceVo
 
   def changeUnitPrice(evt: ChangeUnitPriceEvent)(implicit conn: Connection): Int
+
+  def getProductDesc(cmd: GetProductDescCmd)(implicit conn: Connection): ProductDescVo
+
+  def changeProductDesc(evt: ChangeProductDescEvent)(implicit conn: Connection): Int
 }
