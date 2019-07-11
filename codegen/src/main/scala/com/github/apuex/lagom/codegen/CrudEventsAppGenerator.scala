@@ -83,6 +83,7 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
        |
        |  def dispatch(msg: Any)(implicit conn: Connection): Any = msg match {
        |    ${indent(calls(), 4)}
+       |    case _ => None
        |  }
        |}
      """.stripMargin.trim
