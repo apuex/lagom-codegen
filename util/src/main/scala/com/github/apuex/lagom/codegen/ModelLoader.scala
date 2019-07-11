@@ -287,6 +287,12 @@ object ModelLoader {
     )
   }
 
+  def depends(x: Node, y: Node): Boolean = {
+    !x.child.filter(_.label == "foreignKey")
+      .filter(p => p.\@("refEntity") == y.\@("name"))
+      .isEmpty
+  }
+
   def substituteMethodParams(fields: Seq[Field], alias: String = ""): String = {
     val t = if ("" == alias) "" else s"${alias}."
     fields
@@ -309,6 +315,9 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val event = "event"
   val apply: String = "apply"
   val api = "api"
+  val domain = "domain"
+  val cluster = "cluster"
+  val shard = "shard"
   val dao = "dao"
   val mysql = "mysql"
   val service = "service"
@@ -328,16 +337,24 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val modelProjectName = s"${cToShell(modelName)}-${model}"
   val modelProjectDir = s"${rootProjectDir}/${model}"
   val modelSrcPackage = s"${modelPackage}"
-  val modelTestSrcDir = s"${modelProjectDir}/src/test/scala/${modelPackage.replace('.', '/')}"
+  val modelTestSrcDir = s"${modelProjectDir}/src/test/scala/${modelSrcPackage.replace('.', '/')}"
   val messageProjectName = s"${cToShell(modelName)}-${message}"
   val messageProjectDir = s"${rootProjectDir}/${message}"
   val messageSrcPackage = s"${modelPackage}"
-  val messageSrcDir = s"${messageProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
+  val messageSrcDir = s"${messageProjectDir}/src/main/scala/${messageSrcPackage.replace('.', '/')}"
   val messageProtoDir = s"${messageProjectDir}/src/main/protobuf"
   val apiProjectName = s"${cToShell(modelName)}-${api}"
   val apiProjectDir = s"${rootProjectDir}/${api}"
   val apiSrcPackage = s"${modelPackage}"
-  val apiSrcDir = s"${apiProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
+  val apiSrcDir = s"${apiProjectDir}/src/main/scala/${apiSrcPackage.replace('.', '/')}"
+  val domainProjectName = s"${cToShell(modelName)}-${domain}"
+  val domainProjectDir = s"${rootProjectDir}/${domain}"
+  val domainSrcPackage = s"${modelPackage}"
+  val domainSrcDir = s"${domainProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
+  val clusterProjectName = s"${cToShell(modelName)}-${cluster}"
+  val clusterProjectDir = s"${rootProjectDir}/${cluster}"
+  val clusterSrcPackage = s"${modelPackage}.${shard}"
+  val clusterSrcDir = s"${clusterProjectDir}/src/main/scala/${clusterSrcPackage.replace('.', '/')}"
   val daoProjectName = s"${cToShell(modelName)}-${dao}"
   val daoProjectDir = s"${rootProjectDir}/${dao}"
   val daoSrcPackage = s"${modelPackage}.${dao}"

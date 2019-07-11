@@ -105,12 +105,6 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
   }
 
-  def depends(x: Node, y: Node): Boolean = {
-    !x.child.filter(_.label == "foreignKey")
-      .filter(p => p.\@("refEntity") == y.\@("name"))
-      .isEmpty
-  }
-
   def defTableFields(fields: Seq[ModelLoader.Field]): String = {
     fields
       .filter(!_.transient)
