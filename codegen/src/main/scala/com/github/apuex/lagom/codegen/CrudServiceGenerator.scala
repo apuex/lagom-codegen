@@ -504,7 +504,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |        .filter(_ => false) // to drainage
        |        .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
        |
-      |      val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
+       |      val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
        |        512,
        |        OverflowStrategy.dropHead)
        |        .filter(x => x.isInstanceOf[Command])
@@ -518,12 +518,12 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |        })
        |        .map(printer.print(_))
        |
-      |      val eventSource = Source.fromIterator(() => new Iterator[Seq[${cToPascal(journalTable)}Vo]] {
+       |      val eventSource = Source.fromIterator(() => new Iterator[Seq[${cToPascal(journalTable)}Vo]] {
        |        var lastOffset: Option[String] = Some(offset.getOrElse("0"))
        |
-      |        override def hasNext: Boolean = true
+       |        override def hasNext: Boolean = true
        |
-      |        override def next(): Seq[${cToPascal(journalTable)}Vo] = db.withTransaction { implicit c =>
+       |        override def next(): Seq[${cToPascal(journalTable)}Vo] = db.withTransaction { implicit c =>
        |          val result = ${cToCamel(journalTable)}Dao.query${cToPascal(journalTable)}(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("offset", OrderType.ASC))))
        |          if (!result.isEmpty) {
        |            lastOffset = Some(result.last.offset.toString)
@@ -541,20 +541,20 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |        )
        |        .map(printer.print(_))
        |
-      |      Source.fromGraph(GraphDSL.create() { implicit builder =>
+       |      Source.fromGraph(GraphDSL.create() { implicit builder =>
        |        import akka.stream.scaladsl.GraphDSL.Implicits._
        |        val replyShape = builder.add(replySource)
        |        val eventShape = builder.add(eventSource)
        |        val materializedCommandSource = commandSource.mapMaterializedValue(actorRef => mediator ! Subscribe(publishQueue, actorRef))
        |        val commandShape = builder.add(materializedCommandSource)
        |
-      |        val merge = builder.add(Merge[String](3))
+       |        val merge = builder.add(Merge[String](3))
        |
-      |        replyShape ~> merge
+       |        replyShape ~> merge
        |        eventShape ~> merge
        |        commandShape ~> merge
        |
-      |        SourceShape(merge.out)
+       |        SourceShape(merge.out)
        |      })
        |    })
        |  }
