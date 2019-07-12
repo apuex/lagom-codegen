@@ -518,7 +518,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
     case "timestamp" => "None"
     case "float" => "0"
     case "double" => "0"
-    case "blob" => "None"
+    case "blob" => "ByteString.EMPTY"
     case x => if (isEnum(x)) s"${cToPascal(x)}.fromValue(0)" else ""
   }
 
