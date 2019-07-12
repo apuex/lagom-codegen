@@ -90,6 +90,7 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |    }
          |  }
          |
+         |//  Uncomment in multi-node cluster deployments.
          |//  remote {
          |//    netty.tcp {
          |//      hostname = "localhost" // default to the first seed node
@@ -142,6 +143,20 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |          max-buffer-size = 100000
          |        }
          |      }
+         |    }
+         |  }
+         |}
+         |
+         |db {
+         |  ${cToShell(modelDbSchema)}-db {
+         |    driver = com.mysql.cj.jdbc.Driver
+         |    dbhost = "localhost"
+         |    dbhost = $${? DBHOST}
+         |    url = "jdbc:mysql://"$${db.${cToShell(modelDbSchema)}-db.dbhost}"/${modelDbSchema}?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&verifyServerCertificate=false"
+         |    username = ${modelDbSchema}
+         |    password = password
+         |    event {
+         |      query-interval = 3 seconds
          |    }
          |  }
          |}
