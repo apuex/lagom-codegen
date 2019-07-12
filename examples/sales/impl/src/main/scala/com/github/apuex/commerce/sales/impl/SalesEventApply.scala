@@ -122,5 +122,6 @@ class SalesEventApply(alarmDao: AlarmDao,
 
     case evt: DeleteEventJournalEvent =>
       eventJournalDao.deleteEventJournal(evt)
+    case _ => None
   }
 }

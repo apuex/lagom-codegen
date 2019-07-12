@@ -19,6 +19,8 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     modelProjectSettings()
     messageProjectSettings()
     apiProjectSettings()
+    domainProjectSettings()
+    clusterProjectSettings()
     daoProjectSettings()
     daoMysqlProjectSettings()
     implProjectSettings()
@@ -116,6 +118,69 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     printWriter.close()
   }
 
+  def domainProjectSettings(): Unit = {
+    new File(domainProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${domainProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
+         |import Dependencies._
+         |
+         |name         := "${domainProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    akkaPersistenceCassandra,
+         |    akkaPersistence,
+         |    akkaPersistenceQuery,
+         |    macwireMacros          % Provided,
+         |    macrosakka             % Provided,
+         |    macwireUtil,
+         |    macwireProxy,
+         |    scalaTest              % Test
+         |  )
+         |}
+       """.stripMargin.trim
+    )
+    printWriter.close()
+  }
+
+  def clusterProjectSettings(): Unit = {
+    new File(clusterProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${clusterProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
+         |import Dependencies._
+         |
+         |name         := "${clusterProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    akkaClusterSharding,
+         |    macwireMacros          % Provided,
+         |    macrosakka             % Provided,
+         |    macwireUtil,
+         |    macwireProxy,
+         |    scalaTest              % Test
+         |  )
+         |}
+       """.stripMargin.trim
+    )
+    printWriter.close()
+  }
 
   def daoProjectSettings(): Unit = {
     new File(daoProjectDir).mkdirs()
@@ -500,6 +565,8 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |    `${model}`,
          |    `${message}`,
          |    `${api}`,
+         |    `${domain}`,
+         |    `${cluster}`,
          |    `${impl}`,
          |    `${app}`,
          |    `${dao}`,
@@ -514,12 +581,17 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |lazy val `${api}` = (project in file("${api}"))
          |  .dependsOn(`${message}`)
          |  .enablePlugins(LagomScala)
+         |lazy val `${domain}` = (project in file("${domain}"))
+         |  .dependsOn(`${message}`)
+         |lazy val `${cluster}` = (project in file("${cluster}"))
+         |  .dependsOn(`${domain}`)
          |lazy val `${dao}` = (project in file("${dao}"))
          |  .dependsOn(`message`)
          |lazy val `${dao}-${mysql}` = (project in file("${dao}-${mysql}"))
          |  .dependsOn(`${dao}`)
          |lazy val `${impl}` = (project in file("${impl}"))
          |  .dependsOn(`${api}`)
+         |  .dependsOn(`${cluster}`)
          |  .dependsOn(`${dao}-${mysql}`)
          |lazy val `${crud}-${impl}` = (project in file("${crud}-${impl}"))
          |  .dependsOn(`${api}`)

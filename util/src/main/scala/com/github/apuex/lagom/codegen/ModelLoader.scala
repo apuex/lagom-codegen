@@ -349,7 +349,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val apiSrcDir = s"${apiProjectDir}/src/main/scala/${apiSrcPackage.replace('.', '/')}"
   val domainProjectName = s"${cToShell(modelName)}-${domain}"
   val domainProjectDir = s"${rootProjectDir}/${domain}"
-  val domainSrcPackage = s"${modelPackage}"
+  val domainSrcPackage = s"${modelPackage}.${domain}"
   val domainSrcDir = s"${domainProjectDir}/src/main/scala/${modelPackage.replace('.', '/')}"
   val clusterProjectName = s"${cToShell(modelName)}-${cluster}"
   val clusterProjectDir = s"${rootProjectDir}/${cluster}"

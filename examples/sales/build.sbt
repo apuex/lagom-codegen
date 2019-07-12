@@ -14,6 +14,8 @@ lazy val root = (project in file("."))
     `model`,
     `message`,
     `api`,
+    `domain`,
+    `cluster`,
     `impl`,
     `app`,
     `dao`,
@@ -28,12 +30,17 @@ lazy val `message` = (project in file("message"))
 lazy val `api` = (project in file("api"))
   .dependsOn(`message`)
   .enablePlugins(LagomScala)
+lazy val `domain` = (project in file("domain"))
+  .dependsOn(`message`)
+lazy val `cluster` = (project in file("cluster"))
+  .dependsOn(`domain`)
 lazy val `dao` = (project in file("dao"))
   .dependsOn(`message`)
 lazy val `dao-mysql` = (project in file("dao-mysql"))
   .dependsOn(`dao`)
 lazy val `impl` = (project in file("impl"))
   .dependsOn(`api`)
+  .dependsOn(`cluster`)
   .dependsOn(`dao-mysql`)
 lazy val `crud-impl` = (project in file("crud-impl"))
   .dependsOn(`api`)

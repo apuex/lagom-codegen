@@ -25,14 +25,14 @@ class ShardActorGenerator(modelLoader: ModelLoader) {
       .foreach(x => save(
         x._1,
         x._2,
-        clusterSrcPackage
+        clusterSrcDir
       ))
   }
 
   def generateShardActor(aggregate: Aggregate): (String, String) = {
     import aggregate._
 
-    val className = s"${cToPascal(name)}"
+    val className = s"${cToPascal(name)}Actor"
     val shardingClassName = s"Sharding${cToPascal(name)}"
     val fileName = s"${shardingClassName}.scala"
 
@@ -45,9 +45,11 @@ class ShardActorGenerator(modelLoader: ModelLoader) {
          |
          |import akka.actor._
          |import akka.cluster.sharding._
-         |package ${messageSrcPackage}._
+         |import ${messageSrcPackage}._
+         |import ${domainSrcPackage}._
          |import scala.collection.convert.ImplicitConversions._
          |
+         |import scala.math.Numeric.IntIsIntegral._
          |
          |object ${shardingClassName} {
          |  def props = Props[${shardingClassName}]
@@ -57,12 +59,12 @@ class ShardActorGenerator(modelLoader: ModelLoader) {
          |  var defaultNumberOfShards = 100
          |
          |  val extractEntityId: ShardRegion.ExtractEntityId = {
-         |    case cmd: ShardingEntityCommand =>
+         |    case cmd: Command =>
          |      (cmd.entityId.toString, cmd)
          |  }
          |
          |  val extractShardId: ShardRegion.ExtractShardId = {
-         |    case cmd: ShardingEntityCommand =>
+         |    case cmd: Command =>
          |      (abs(cmd.entityId.hashCode) % defaultNumberOfShards).toString
          |  }
          |}

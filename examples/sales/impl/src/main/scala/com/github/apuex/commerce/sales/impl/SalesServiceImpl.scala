@@ -643,12 +643,18 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         val commandSource: Source[String, ActorRef] = Source.actorRef[scala.Any](
           512,
           OverflowStrategy.dropHead)
-          .filter(x => x.isInstanceOf[Event])
+          .filter(x => x.isInstanceOf[Event] || x.isInstanceOf[ValueObject])
           .map({
             case x: Event =>
               EventEnvelope(
                 "",          // offset
                 x.entityId,  // persistence_id
+                0L,          // sequence_nr
+                Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+            case x: ValueObject =>
+              EventEnvelope(
+                "",          // offset
+                "",          // persistence_id
                 0L,          // sequence_nr
                 Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
           })

@@ -25,14 +25,14 @@ class ActorGenerator(modelLoader: ModelLoader) {
       .foreach(x => save(
         x._1,
         x._2,
-        clusterSrcPackage
+        domainSrcDir
       ))
   }
 
   def generateActor(aggregate: Aggregate): (String, String) = {
     import aggregate._
 
-    val className = s"Sharding${cToPascal(name)}"
+    val className = s"${cToPascal(name)}Actor"
     val fileName = s"${className}.scala"
 
     val content =
@@ -42,7 +42,7 @@ class ActorGenerator(modelLoader: ModelLoader) {
          | *****************************************************/
          |package ${domainSrcPackage}
          |
-         |package ${messageSrcPackage}._
+         |import ${messageSrcPackage}._
          |import com.google.protobuf.timestamp.Timestamp
          |import akka.actor._
          |import akka.event._

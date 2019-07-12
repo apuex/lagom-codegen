@@ -24,11 +24,6 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       content,
       crudImplSrcDir
     )
-    save(
-      s"${cToPascal(s"${modelName}_${service}_${impl}")}.scala",
-      content,
-      implSrcDir
-    )
   }
 
   def generateServiceImpl(): String = {

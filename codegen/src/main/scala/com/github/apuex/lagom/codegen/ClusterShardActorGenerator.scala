@@ -25,7 +25,7 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
       .foreach(x => save(
         x._1,
         x._2,
-        clusterSrcPackage
+        clusterSrcDir
       ))
   }
 
@@ -46,7 +46,8 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |
          |import akka.actor._
          |import akka.cluster.sharding._
-         |package ${messageSrcPackage}._
+         |import ${messageSrcPackage}._
+         |import com.typesafe.config._
          |import scala.collection.convert.ImplicitConversions._
          |
          |
@@ -55,10 +56,9 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |  def name: String = "${facadeClassName}"
          |}
          |
-         |class ${facadeClassName} () extends Actor with ActorLogging {
+         |class ${facadeClassName} (config: Config) extends Actor with ActorLogging {
          |
-         |  val settings = Settings(context.system)
-         |  ${shardingClassName}.defaultNumberOfShards = settings.entity.numberOfShards
+         |  ${shardingClassName}.defaultNumberOfShards = config.getInt("sales.entity.number-of-shards")
          |
          |  def ${sharding}(): ActorRef = {
          |    ClusterSharding(context.system).shardRegion(${shardingClassName}.shardName)
