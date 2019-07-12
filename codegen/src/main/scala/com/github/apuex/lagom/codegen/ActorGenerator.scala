@@ -42,19 +42,18 @@ class ActorGenerator(modelLoader: ModelLoader) {
          | *****************************************************/
          |package ${domainSrcPackage}
          |
-         |import ${messageSrcPackage}._
-         |import com.google.protobuf.timestamp.Timestamp
          |import akka.actor._
          |import akka.event._
          |import akka.pattern._
          |import akka.persistence._
-         |import akka.util._
          |import akka.util.Timeout._
+         |import akka.util._
+         |import ${messageSrcPackage}._
+         |import com.google.protobuf.timestamp.Timestamp
+         |import com.typesafe.config._
          |
-         |import scala.collection.convert.ImplicitConversions._
          |import scala.concurrent.ExecutionContext
          |import scala.concurrent.duration._
-         |import scala.util._
          |
          |
          |object ${className} {
@@ -62,9 +61,9 @@ class ActorGenerator(modelLoader: ModelLoader) {
          |  def name: String = "${className}"
          |}
          |
-         |class ${className} () extends PersistentActor with ActorLogging {
+         |class ${className} (config: Config) extends PersistentActor with ActorLogging {
          |  override def persistenceId: String = s"$${self.path.name}"
-         |  implicit def requestTimeout: Timeout = FiniteDuration(20, SECONDS)
+         |  implicit def requestTimeout: Timeout = Duration(config.getString("db.${cToShell(modelDbSchema)}-db.event.query-interval")).asInstanceOf[FiniteDuration]
          |  implicit def executionContext: ExecutionContext = context.dispatcher
          |
          |

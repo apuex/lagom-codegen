@@ -32,6 +32,14 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |
          |# https://www.playframework.com/documentation/latest/Configuration
          |
+         |${modelName} {
+         |  request-time-out = 30 seconds
+         |  entity {
+         |    // default number of shards
+         |    number-of-shards = 100
+         |  }
+         |}
+         |
          |play {
          |  application {
          |    loader = "${implSrcPackage}.${cToPascal(s"${modelName}_${app}_${loader}")}"

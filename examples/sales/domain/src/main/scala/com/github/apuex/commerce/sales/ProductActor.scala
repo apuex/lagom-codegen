@@ -3,19 +3,18 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.domain
 
-import com.github.apuex.commerce.sales._
-import com.google.protobuf.timestamp.Timestamp
 import akka.actor._
 import akka.event._
 import akka.pattern._
 import akka.persistence._
-import akka.util._
 import akka.util.Timeout._
+import akka.util._
+import com.github.apuex.commerce.sales._
+import com.google.protobuf.timestamp.Timestamp
+import com.typesafe.config._
 
-import scala.collection.convert.ImplicitConversions._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.util._
 
 
 object ProductActor {
@@ -23,9 +22,9 @@ object ProductActor {
   def name: String = "ProductActor"
 }
 
-class ProductActor () extends PersistentActor with ActorLogging {
+class ProductActor (config: Config) extends PersistentActor with ActorLogging {
   override def persistenceId: String = s"${self.path.name}"
-  implicit def requestTimeout: Timeout = FiniteDuration(20, SECONDS)
+  implicit def requestTimeout: Timeout = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
   implicit def executionContext: ExecutionContext = context.dispatcher
 
 
