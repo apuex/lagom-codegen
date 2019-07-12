@@ -2,9 +2,6 @@ package com.github.apuex.lagom.codegen
 
 import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
-import com.github.apuex.springbootsolution.runtime.TextUtils.indent
-
-import scala.xml.Node
 
 object ClusterShardActorGenerator {
   def apply(fileName: String): ClusterShardActorGenerator = new ClusterShardActorGenerator(ModelLoader(fileName))
@@ -18,7 +15,7 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     xml.child.filter(_.label == "entity")
-      .filter(x => "true" != x.\@("enum") && "true" != x.\@("aggregatesTo"))
+      .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo"))
       .sortWith((x, y) => depends(x, y))
       .map(x => toAggregate(x, xml))
       .map(generateClusterShardActor)
@@ -32,9 +29,8 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
   def generateClusterShardActor(aggregate: Aggregate): (String, String) = {
     import aggregate._
 
-    val facadeClassName = s"Sharding${cToPascal(name)}s"
-    val sharding = s"sharding${cToPascal(name)}s"
-    val shardingClassName = s"Sharding${cToPascal(name)}"
+    val facadeClassName = s"${cToPascal(s"${shard}_${name}s")}"
+    val className = s"${cToPascal(name)}Actor"
     val fileName = s"${facadeClassName}.scala"
 
     val content =
@@ -47,9 +43,10 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |import akka.actor._
          |import akka.cluster.sharding._
          |import ${messageSrcPackage}._
+         |import ${domainSrcPackage}._
          |import com.typesafe.config._
-         |import scala.collection.convert.ImplicitConversions._
          |
+         |import scala.math.Numeric.IntIsIntegral._
          |
          |object ${facadeClassName} {
          |  def props = Props[${facadeClassName}]
@@ -57,24 +54,34 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |}
          |
          |class ${facadeClassName} (config: Config) extends Actor with ActorLogging {
+         |  val defaultNumberOfShards = config.getInt("sales.entity.number-of-shards")
+         |  val shardName: String = "${cToShell(s"${shard}_${name}")}"
          |
-         |  ${shardingClassName}.defaultNumberOfShards = config.getInt("sales.entity.number-of-shards")
+         |  val extractEntityId: ShardRegion.ExtractEntityId = {
+         |    case cmd: Command =>
+         |      (cmd.entityId.toString, cmd)
+         |  }
          |
-         |  def ${sharding}(): ActorRef = {
-         |    ClusterSharding(context.system).shardRegion(${shardingClassName}.shardName)
+         |  val extractShardId: ShardRegion.ExtractShardId = {
+         |    case cmd: Command =>
+         |      (abs(cmd.entityId.hashCode) % defaultNumberOfShards).toString
          |  }
          |
          |  ClusterSharding(context.system).start(
-         |    ${shardingClassName}.shardName,
-         |    ${shardingClassName}.props,
+         |    shardName,
+         |    ${className}.props,
          |    ClusterShardingSettings(context.system),
-         |    ${shardingClassName}.extractEntityId,
-         |    ${shardingClassName}.extractShardId
+         |    extractEntityId,
+         |    extractShardId
          |  )
+         |
+         |  def ${shard}(): ActorRef = {
+         |    ClusterSharding(context.system).shardRegion(shardName)
+         |  }
          |
          |  override def receive: Receive = {
          |    case cmd: Command =>
-         |      ${sharding}() forward cmd
+         |      ${shard}() forward cmd
          |    case x => log.info("unhandled COMMAND: {} {}", this, x)
          |  }
          |}

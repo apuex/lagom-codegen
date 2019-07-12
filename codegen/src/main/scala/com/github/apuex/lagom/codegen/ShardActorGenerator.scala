@@ -18,7 +18,7 @@ class ShardActorGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     xml.child.filter(_.label == "entity")
-      .filter(x => "true" != x.\@("enum") && "true" != x.\@("aggregatesTo"))
+      .filter(x => "true" != x.\@("enum") && "" != x.\@("aggregatesTo"))
       .sortWith((x, y) => depends(x, y))
       .map(x => toAggregate(x, xml))
       .map(generateShardActor)
@@ -33,7 +33,7 @@ class ShardActorGenerator(modelLoader: ModelLoader) {
     import aggregate._
 
     val className = s"${cToPascal(name)}Actor"
-    val shardingClassName = s"Sharding${cToPascal(name)}"
+    val shardingClassName = s"${cToPascal(s"${shard}_${name}")}"
     val fileName = s"${shardingClassName}.scala"
 
     val content =

@@ -17,7 +17,6 @@ object Main extends App {
       case "generate-crud-service" => CrudServiceGenerator(args.drop(1)(0)).generate()
       case "generate-crud-event-apply" => CrudEventsAppGenerator(args.drop(1)(0)).generate()
       case "generate-actor" => ActorGenerator(args.drop(1)(0)).generate()
-      case "generate-shard-actor" => ShardActorGenerator(args.drop(1)(0)).generate()
       case "generate-cluster-shard-actor" => ClusterShardActorGenerator(args.drop(1)(0)).generate()
       case "generate-cqrs-service" => CqrsServiceGenerator(args.drop(1)(0)).generate()
       case "generate-service" => ServiceGenerator(args.drop(1)(0)).generate()
@@ -42,7 +41,6 @@ object Main extends App {
     JsonSerializerGenerator(modelLoader).generate()
     ServiceGenerator(modelLoader).generate()
     ActorGenerator(modelLoader).generate()
-    ShardActorGenerator(modelLoader).generate()
     ClusterShardActorGenerator(modelLoader).generate()
     // TODO: NOT implemented.
     CqrsServiceGenerator(modelLoader).generate()

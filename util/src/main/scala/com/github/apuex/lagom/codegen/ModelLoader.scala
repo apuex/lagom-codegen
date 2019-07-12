@@ -317,7 +317,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val api = "api"
   val domain = "domain"
   val cluster = "cluster"
-  val shard = "shard"
+  val shard = "sharding"
   val dao = "dao"
   val mysql = "mysql"
   val service = "service"
