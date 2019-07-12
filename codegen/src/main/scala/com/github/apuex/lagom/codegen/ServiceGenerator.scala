@@ -148,8 +148,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
       if (aggregate.transient)
         Seq()
       else {
-        defCrudCalls(name, fields, primaryKey) ++
-          defByForeignKeyCalls(name, fields, foreignKeys)
+        defCrudCalls(name, fields, primaryKey)
       } ++
         defMessageCalls(aggregate.messages) ++
         defCallsForEmbeddedAggregateMessages(aggregate.aggregates)
@@ -161,10 +160,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def generateCallsForValueObject(valueObject: ValueObject): String = {
     import valueObject._
-    (
-      defCrudCalls(name, fields, primaryKey) ++
-        defByForeignKeyCalls(name, fields, foreignKeys)
-      )
+    defCrudCalls(name, fields, primaryKey)
       .filter(x => "" != x)
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
@@ -223,32 +219,6 @@ class ServiceGenerator(modelLoader: ModelLoader) {
          |def retrieve${cToPascal(name)}ByRowid(rowid: String): ServiceCall[NotUsed, ${cToPascal(name)}Vo]
      """.stripMargin.trim
     )
-  }
-
-  def defByForeignKeyCalls(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
-    foreignKeys
-      .map(x => {
-        val fieldNames = x.fields
-          .map(_.name)
-          .toSet
-
-        val fkFields = fields
-          .filter(x => fieldNames.contains(x.name))
-        defByForeignKeyCall(name, fkFields)
-      })
-  }
-
-  def defByForeignKeyCall(name: String, keyFields: Seq[Field]): String = {
-    val by = keyFields
-      .map(x => cToPascal(x.name))
-      .reduceOption((x, y) => s"${x}${y}")
-      .getOrElse("")
-
-    s"""
-       |def select${cToPascal(name)}By${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, ${cToPascal(name)}ListVo]
-       |
-       |def delete${cToPascal(name)}By${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, Int]
-     """.stripMargin.trim
   }
 
   def callDescs(root: Node): Seq[String] = {
@@ -312,7 +282,6 @@ class ServiceGenerator(modelLoader: ModelLoader) {
     import aggregate._
     (
       defCrudCallDescs(name, fields, primaryKey) ++
-        defByForeignKeyCallDescs(name, fields, foreignKeys) ++
         defMessageCallDescs(aggregate.name, aggregate.messages) ++
         defCallDescsForEmbeddedAggregateMessages(aggregate.aggregates)
       )
@@ -320,10 +289,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def generateCallDescsForValueObject(valueObject: ValueObject): Seq[String] = {
     import valueObject._
-    (
-      defCrudCallDescs(name, fields, primaryKey) ++
-        defByForeignKeyCallDescs(name, fields, foreignKeys)
-      )
+    defCrudCallDescs(name, fields, primaryKey)
   }
 
   def defMessageCallDesc(name: String, message: Message): String = {
@@ -368,41 +334,6 @@ class ServiceGenerator(modelLoader: ModelLoader) {
       s"""
          |pathCall("/api/${cToShell(name)}/retrieve-${cToShell(name)}-by-rowid/:rowid", retrieve${cToPascal(name)}ByRowid _)
      """.stripMargin.trim
-    )
-  }
-
-  def defByForeignKeyCallDescs(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
-    foreignKeys
-      .map(x => {
-        val fieldNames = x.fields
-          .map(_.name)
-          .toSet
-
-        val fkFields = fields
-          .filter(x => fieldNames.contains(x.name))
-        defByForeignKeyCallDesc(name, fkFields)
-      })
-      .flatMap(x => x)
-  }
-
-  def defByForeignKeyCallDesc(name: String, keyFields: Seq[Field]): Seq[String] = {
-    val byMethod = keyFields
-      .map(x => cToPascal(x.name))
-      .reduceOption((x, y) => s"${x}-${y}")
-      .getOrElse("")
-
-    val byPath = keyFields
-      .map(x => cToShell(x.name))
-      .reduceOption((x, y) => s"${x}-${y}")
-      .getOrElse("")
-
-    Seq(
-      s"""
-         |pathCall("/api/${cToShell(name)}/select-${cToShell(name)}-by-${byPath}?${defQueryParams(keyFields)}", select${cToPascal(name)}By${byMethod} _)
-     """.stripMargin.trim,
-      s"""
-         |pathCall("/api/${cToShell(name)}/delete-${cToShell(name)}-by-${byPath}?${defQueryParams(keyFields)}", delete${cToPascal(name)}By${byMethod} _)
-     """.stripMargin.trim,
     )
   }
 

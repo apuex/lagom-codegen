@@ -107,14 +107,6 @@ trait SalesService extends Service {
 
   def retrieveOrderItemByRowid(rowid: String): ServiceCall[NotUsed, OrderItemVo]
 
-  def selectOrderItemByOrderId(orderId: String): ServiceCall[NotUsed, OrderItemListVo]
-
-  def deleteOrderItemByOrderId(orderId: String): ServiceCall[NotUsed, Int]
-
-  def selectOrderItemByProductId(productId: String): ServiceCall[NotUsed, OrderItemListVo]
-
-  def deleteOrderItemByProductId(productId: String): ServiceCall[NotUsed, Int]
-
   def createEventJournal(): ServiceCall[CreateEventJournalCmd, Int]
 
   def retrieveEventJournal(): ServiceCall[RetrieveEventJournalCmd, EventJournalVo]
@@ -255,10 +247,6 @@ trait SalesService extends Service {
         pathCall("/api/order-item/delete-order-item", deleteOrderItem _),
         pathCall("/api/order-item/query-order-item", queryOrderItem _),
         pathCall("/api/order-item/retrieve-order-item-by-rowid/:rowid", retrieveOrderItemByRowid _),
-        pathCall("/api/order-item/select-order-item-by-order-id?orderId", selectOrderItemByOrderId _),
-        pathCall("/api/order-item/delete-order-item-by-order-id?orderId", deleteOrderItemByOrderId _),
-        pathCall("/api/order-item/select-order-item-by-product-id?productId", selectOrderItemByProductId _),
-        pathCall("/api/order-item/delete-order-item-by-product-id?productId", deleteOrderItemByProductId _),
         pathCall("/api/event-journal/create-event-journal", createEventJournal _),
         pathCall("/api/event-journal/retrieve-event-journal", retrieveEventJournal _),
         pathCall("/api/event-journal/update-event-journal", updateEventJournal _),
