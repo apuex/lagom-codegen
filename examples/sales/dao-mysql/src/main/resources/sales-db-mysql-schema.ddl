@@ -26,8 +26,8 @@ CREATE TABLE sales.payment_type (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE sales.order_item (
-  order_id VARCHAR(64),
-  product_id VARCHAR(64),
+  order_id VARCHAR(64) NOT NULL,
+  product_id VARCHAR(64) NOT NULL,
   product_name VARCHAR(64) NOT NULL,
   item_unit VARCHAR(64) NOT NULL,
   unit_price DOUBLE NOT NULL,

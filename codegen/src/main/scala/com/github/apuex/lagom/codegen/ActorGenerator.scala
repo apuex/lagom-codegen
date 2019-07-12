@@ -4,8 +4,6 @@ import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime.TextUtils.indent
 
-import scala.xml.Node
-
 object ActorGenerator {
   def apply(fileName: String): ActorGenerator = new ActorGenerator(ModelLoader(fileName))
 
@@ -18,7 +16,7 @@ class ActorGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     xml.child.filter(_.label == "entity")
-      .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo"))
+      .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .sortWith((x, y) => depends(x, y))
       .map(x => toAggregate(x, xml))
       .map(generateActor)
@@ -66,6 +64,7 @@ class ActorGenerator(modelLoader: ModelLoader) {
          |  implicit def requestTimeout: Timeout = Duration(config.getString("db.${cToShell(modelDbSchema)}-db.event.query-interval")).asInstanceOf[FiniteDuration]
          |  implicit def executionContext: ExecutionContext = context.dispatcher
          |
+         |  ${indent(defEntityFields(fields), 2)}
          |
          |  override def receiveRecover: Receive = {
          |    case evt: Event =>
@@ -84,7 +83,7 @@ class ActorGenerator(modelLoader: ModelLoader) {
          |  }
          |
          |  private def isValid(): Boolean = {
-         |    true
+         |    ${checkValid(primaryKey)}
          |  }
          |
          |  private def replyToSender(msg: Any) = {
@@ -94,5 +93,25 @@ class ActorGenerator(modelLoader: ModelLoader) {
        """.stripMargin.trim
 
     (fileName, content)
+  }
+
+  def defEntityField(field: Field): String = {
+    s"""
+       |var ${cToCamel(field.name)}: ${defFieldType(field)} = ${defaultValue(field)}
+     """.stripMargin.trim
+  }
+
+  def defEntityFields(fields: Seq[Field]): String = {
+    fields
+      .map(defEntityField)
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
+  }
+
+  def checkValid(primaryKey: PrimaryKey): String = {
+    primaryKey.fields
+      .map(x => s"${cToCamel(x.name)} != ${defaultValue(x)}")
+      .reduceOption((l, r) => s"${l} && ${r}")
+      .getOrElse("")
   }
 }

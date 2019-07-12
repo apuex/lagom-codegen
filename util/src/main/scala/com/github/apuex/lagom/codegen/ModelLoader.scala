@@ -126,7 +126,7 @@ object ModelLoader {
     } else {
       val pk = pks.head
       val pkName = pk.\@("name")
-      val generated = if("true" == pk.\@("generated")) true else false
+      val generated = if ("true" == pk.\@("generated")) true else false
       val pkColumnNames = pk.child.filter(_.label == "field")
         .map(_.\@("name"))
 
@@ -140,6 +140,7 @@ object ModelLoader {
         .map(x => {
           fields.getOrElse(x, getReferencedColumn(x, foreignKeys, root).get)
         })
+        .map(x => Field(x.name, x._type, x.length, x.scale, true, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, x.aggregate, x.transient, x.comment))
 
       PrimaryKey(pkName, pkColumns, generated)
     }
@@ -241,10 +242,21 @@ object ModelLoader {
 
   def toAggregate(node: Node, root: Node): Aggregate = {
     val primaryKey = getPrimaryKey(node, root)
+    val primaryKeyNames = primaryKey.fields.map(_.name).toSet
     val fields = shuffleFields(getFields(node, root), primaryKey.fields)
+      .map(x => if (primaryKeyNames.contains(x.name)) Field(x.name, x._type, x.length, x.scale, true, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, x.aggregate, x.transient, x.comment) else x)
     val aggregates = node.child.filter(_.label == "aggregate").map(toAggregate(_, fields, primaryKey, root)) ++
       fields.filter(_.aggregate)
         .map(x => toAggregate(x, primaryKey, root))
+    val foreignKeys = getForeignKeys(node)
+      .map(f => {
+        ForeignKey(
+          f.name,
+          f.refEntity,
+          f.fields.map(x => if (primaryKeyNames.contains(x.name)) ForeignKeyField(x.name, x.refField, true) else x)
+        )
+      })
+
     Aggregate(
       node.\@("name"),
       if ("true" == node.\@("root")) true else false,
@@ -252,18 +264,30 @@ object ModelLoader {
       aggregates,
       node.child.filter(_.label == "message").map(toMessage(_, fields, primaryKey, root)),
       primaryKey,
-      getForeignKeys(node),
+      foreignKeys,
       if ("true" == node.\@("transient")) true else false
     )
   }
 
   def toValueObject(node: Node, aggregatesTo: String, root: Node): ValueObject = {
     val primaryKey = getPrimaryKey(node, root)
+    val primaryKeyNames = primaryKey.fields.map(_.name).toSet
+    val fields = shuffleFields(getFields(node, root), primaryKey.fields)
+      .map(x => if (primaryKeyNames.contains(x.name)) Field(x.name, x._type, x.length, x.scale, true, x.entity, x.keyField, x.valueField, x.keyType, x.valueType, x.aggregate, x.transient, x.comment) else x)
+    val foreignKeys = getForeignKeys(node)
+      .map(f => {
+        ForeignKey(
+          f.name,
+          f.refEntity,
+          f.fields.map(x => if (primaryKeyNames.contains(x.name)) ForeignKeyField(x.name, x.refField, true) else x)
+        )
+      })
+
     ValueObject(
       node.\@("name"),
-      shuffleFields(getFields(node, root), primaryKey.fields),
+      fields,
       primaryKey,
-      getForeignKeys(node),
+      foreignKeys,
       if ("true" == node.\@("transient")) true else false
     )
   }
@@ -291,6 +315,37 @@ object ModelLoader {
     !x.child.filter(_.label == "foreignKey")
       .filter(p => p.\@("refEntity") == y.\@("name"))
       .isEmpty
+  }
+
+
+  def wrapOption(name: String, required: Boolean): String = {
+    if (required) name else s"Option[${name}]"
+  }
+
+  def wrapOptionValue(valueType: String, value: String, required: Boolean): String = valueType match {
+    case "bool" =>
+      if (required) value else s"${value}.getOrElse(false)"
+    case "short" =>
+      if (required) value else s"${value}.getOrElse(0)"
+    case "byte" =>
+      if (required) value else s"${value}.getOrElse(0)"
+    case "int" =>
+      if (required) value else s"${value}.getOrElse(0)"
+    case "long" =>
+      if (required) value else s"${value}.getOrElse(0)"
+    case "decimal" =>
+      if (required) value else s"${value}.getOrElse(0)"
+    case "string" =>
+      if (required) value else s"""${value}.getOrElse("")"""
+    case "timestamp" =>
+      if (required) s"Some(toScalapbTimestamp(${value}))" else s"${value}.map(toScalapbTimestamp(_))"
+    case "float" =>
+      if (required) value else s"${value}.getOrElse(0)"
+    case "double" =>
+      if (required) value else s"${value}.getOrElse(0)"
+    case "blob" =>
+      if (required) s"ByteString.readFrom(${value})" else s"${value}.map(ByteString.readFrom(_)).getOrElse(ByteString.EMPTY)"
+    case _ => ""
   }
 
   def substituteMethodParams(fields: Seq[Field], alias: String = ""): String = {
@@ -416,12 +471,55 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
     if ("array" == field._type)
       s"""
          |Seq[${defFieldType(field.valueType)}]
-       """.stripMargin
+       """.stripMargin.trim
     else if ("map" == field._type)
       s"""
          |Map[${defFieldType(field.valueType)}, ${defFieldType(field.valueType)}]
-       """.stripMargin
-    else defFieldType(field._type)
+       """.stripMargin.trim
+    else if ("any" == field._type)
+      s"Option[${defFieldType(field._type)}]"
+    else if ("timestamp" == field._type)
+      s"Option[${defFieldType(field._type)}]"
+    else if (isEnum(field._type))
+      cToPascal(field._type)
+    else {
+      if (field.required)
+        defFieldType(field._type)
+      else
+        s"Option[${defFieldType(field._type)}]"
+    }
+  }
+
+  def defaultValue(field: Field): String = {
+    if ("array" == field._type)
+      "Seq()"
+    else if ("map" == field._type)
+      "Map()"
+    else if ("any" == field._type)
+      "None"
+    else if ("timestamp" == field._type)
+      "None"
+    else {
+      if (field.required) {
+        defaultValue(field._type)
+      } else
+        s"None"
+    }
+  }
+
+  def defaultValue(valueType: String): String = valueType match {
+    case "bool" => "false"
+    case "short" => "0"
+    case "byte" => "0"
+    case "int" => "0"
+    case "long" => "0"
+    case "decimal" => "0"
+    case "string" => "\"\""
+    case "timestamp" => "None"
+    case "float" => "0"
+    case "double" => "0"
+    case "blob" => "None"
+    case x => if (isEnum(x)) s"${cToPascal(x)}.fromValue(0)" else ""
   }
 
   def defMethodParams(fields: Seq[Field]): String = {

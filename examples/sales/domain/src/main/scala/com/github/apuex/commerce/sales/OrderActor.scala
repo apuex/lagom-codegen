@@ -27,6 +27,10 @@ class OrderActor (config: Config) extends PersistentActor with ActorLogging {
   implicit def requestTimeout: Timeout = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
   implicit def executionContext: ExecutionContext = context.dispatcher
 
+  var orderId: String = ""
+  var orderTime: Option[Timestamp] = None
+  var orderLines: Seq[OrderItemVo] = Seq()
+  var orderPaymentType: PaymentType = PaymentType.fromValue(0)
 
   override def receiveRecover: Receive = {
     case evt: Event =>
@@ -45,7 +49,7 @@ class OrderActor (config: Config) extends PersistentActor with ActorLogging {
   }
 
   private def isValid(): Boolean = {
-    true
+    orderId != ""
   }
 
   private def replyToSender(msg: Any) = {

@@ -316,51 +316,6 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     }
   }
 
-  def wrapOption(name: String, required: Boolean): String = {
-    if (required) name else s"Option[${name}]"
-  }
-
-  def wrapOptionValue(valueType: String, value: String, required: Boolean): String = valueType match {
-    case "bool" =>
-      if (required) value else s"${value}.getOrElse(false)"
-    case "short" =>
-      if (required) value else s"${value}.getOrElse(0)"
-    case "byte" =>
-      if (required) value else s"${value}.getOrElse(0)"
-    case "int" =>
-      if (required) value else s"${value}.getOrElse(0)"
-    case "long" =>
-      if (required) value else s"${value}.getOrElse(0)"
-    case "decimal" =>
-      if (required) value else s"${value}.getOrElse(0)"
-    case "string" =>
-      if (required) value else s"""${value}.getOrElse("")"""
-    case "timestamp" =>
-      if (required) s"Some(toScalapbTimestamp(${value}))" else s"${value}.map(toScalapbTimestamp(_))"
-    case "float" =>
-      if (required) value else s"${value}.getOrElse(0)"
-    case "double" =>
-      if (required) value else s"${value}.getOrElse(0)"
-    case "blob" =>
-      if (required) s"ByteString.readFrom(${value})" else s"${value}.map(ByteString.readFrom(_)).getOrElse(ByteString.EMPTY)"
-    case _ => ""
-  }
-
-  def wrapDefaultValue(valueType: String, required: Boolean): String = valueType match {
-    case "bool" => "false"
-    case "short" => "0"
-    case "byte" => "0"
-    case "int" => "0"
-    case "long" => "0"
-    case "decimal" => "0"
-    case "string" => "\"\""
-    case "timestamp" => "None"
-    case "float" => "0"
-    case "double" => "0"
-    case "blob" => "None"
-    case _ => ""
-  }
-
   def rowParser(name: String, fields: Seq[Field], keyFields: Seq[Field]): String = {
     val persistFields = fields.filter(!_.transient)
     val keyFieldNames = keyFields.map(_.name).toSet
@@ -395,7 +350,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         val required = x.required || keyFieldNames.contains(x.name)
         if(x.transient) {
           if (isJdbcType(x._type)) {
-            wrapDefaultValue(x._type, required)
+            defaultValue(x._type)
           }
           else if (isEnum(x._type)) s"${cToPascal(x._type)}.fromValue(0)"
           else { // array, map or value object type,

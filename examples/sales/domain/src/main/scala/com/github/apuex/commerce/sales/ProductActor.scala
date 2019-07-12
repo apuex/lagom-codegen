@@ -27,6 +27,13 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
   implicit def requestTimeout: Timeout = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
   implicit def executionContext: ExecutionContext = context.dispatcher
 
+  var productId: String = ""
+  var productName: String = ""
+  var productUnit: String = ""
+  var unitPrice: Double = 0
+  var recordTime: Option[Timestamp] = None
+  var quantitySold: Option[Double] = None
+  var productDesc: String = ""
 
   override def receiveRecover: Receive = {
     case evt: Event =>
@@ -45,7 +52,7 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
   }
 
   private def isValid(): Boolean = {
-    true
+    productId != ""
   }
 
   private def replyToSender(msg: Any) = {

@@ -27,6 +27,10 @@ class AlarmActor (config: Config) extends PersistentActor with ActorLogging {
   implicit def requestTimeout: Timeout = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
   implicit def executionContext: ExecutionContext = context.dispatcher
 
+  var alarmId: String = ""
+  var alarmBegin: Option[Timestamp] = None
+  var alarmEnd: Option[Timestamp] = None
+  var alarmDesc: String = ""
 
   override def receiveRecover: Receive = {
     case evt: Event =>
@@ -45,7 +49,7 @@ class AlarmActor (config: Config) extends PersistentActor with ActorLogging {
   }
 
   private def isValid(): Boolean = {
-    true
+    alarmId != "" && alarmBegin != None
   }
 
   private def replyToSender(msg: Any) = {
