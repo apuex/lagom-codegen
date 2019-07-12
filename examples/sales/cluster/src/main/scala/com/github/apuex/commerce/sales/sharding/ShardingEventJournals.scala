@@ -17,7 +17,7 @@ object ShardingEventJournals {
 }
 
 class ShardingEventJournals (config: Config) extends Actor with ActorLogging {
-  val defaultNumberOfShards = config.getInt("sales.entity.number-of-shards")
+  val numberOfShards = config.getInt("sales.entity.number-of-shards")
   val shardName: String = "sharding-event-journal"
 
   val extractEntityId: ShardRegion.ExtractEntityId = {
@@ -27,7 +27,10 @@ class ShardingEventJournals (config: Config) extends Actor with ActorLogging {
 
   val extractShardId: ShardRegion.ExtractShardId = {
     case cmd: Command =>
-      (abs(cmd.entityId.hashCode) % defaultNumberOfShards).toString
+      (abs(cmd.entityId.hashCode) % numberOfShards).toString
+    case ShardRegion.StartEntity(id) =>
+      // StartEntity is used by remembering entities feature
+      (abs(id.hashCode) % numberOfShards).toString
   }
 
   ClusterSharding(context.system).start(

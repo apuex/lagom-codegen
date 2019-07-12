@@ -101,8 +101,8 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |//  Uncomment in multi-node cluster deployments.
          |//  remote {
          |//    netty.tcp {
-         |//      hostname = "localhost" // default to the first seed node
-         |//      port = 2553               // default port
+         |//      hostname = "localhost"      // default to the first seed node
+         |//      port = 2553                 // default port
          |//      hostname = $${? HOSTNAME}   // override with -DHOSTNAME
          |//      port = $${? PORT}           // override with -DPORT
          |//    }
@@ -112,6 +112,14 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |//    seed-nodes = [
          |//      "akka.tcp://${cToShell(modelName)}@localhost:2553",
          |//    ]
+         |//    sharding {
+         |//      // The state of the coordinator and the state of
+         |//      // Remembering Entities of the shards are persistent (durable) to survive failures.
+         |//      // Distributed Data or Persistence can be used for the storage.
+         |//      // Distributed Data is used by default.
+         |//      state-store-mode = ddata           // Distributed Data
+         |//      // state-store-mode = persistence  // Persistence
+         |//    }
          |//  }
          |
          |  // leveldb persistence plugin for development environment.

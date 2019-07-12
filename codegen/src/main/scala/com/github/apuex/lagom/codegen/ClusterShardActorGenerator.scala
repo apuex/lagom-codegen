@@ -54,7 +54,7 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |}
          |
          |class ${facadeClassName} (config: Config) extends Actor with ActorLogging {
-         |  val defaultNumberOfShards = config.getInt("sales.entity.number-of-shards")
+         |  val numberOfShards = config.getInt("sales.entity.number-of-shards")
          |  val shardName: String = "${cToShell(s"${shard}_${name}")}"
          |
          |  val extractEntityId: ShardRegion.ExtractEntityId = {
@@ -64,7 +64,10 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |
          |  val extractShardId: ShardRegion.ExtractShardId = {
          |    case cmd: Command =>
-         |      (abs(cmd.entityId.hashCode) % defaultNumberOfShards).toString
+         |      (abs(cmd.entityId.hashCode) % numberOfShards).toString
+         |    case ShardRegion.StartEntity(id) =>
+         |      // StartEntity is used by remembering entities feature
+         |      (abs(id.hashCode) % numberOfShards).toString
          |  }
          |
          |  ClusterSharding(context.system).start(
