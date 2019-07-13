@@ -39,15 +39,65 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
     case evt: Event =>
       updateState(evt)
     case SnapshotOffer(_, x: ProductVo) =>
-    case x: RecoveryCompleted =>
+      productId = x.productId
+      productName = x.productName
+      productUnit = x.productUnit
+      unitPrice = x.unitPrice
+      recordTime = x.recordTime
+      quantitySold = x.quantitySold
+      productDesc = x.productDesc
+    case _: RecoveryCompleted =>
     case x => log.info("RECOVER: {} {}", this, x)
   }
 
   override def receiveCommand: Receive = {
+    case cmd: CreateProductCmd =>
+
+    case cmd: RetrieveProductCmd =>
+
+    case cmd: UpdateProductCmd =>
+
+    case cmd: DeleteProductCmd =>
+
+    case cmd: ChangeProductNameCmd =>
+
+    case cmd: ChangeProductUnitCmd =>
+
+    case cmd: ChangeUnitPriceCmd =>
+
+    case cmd: ChangeProductDescCmd =>
+
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
 
   private def updateState: (Event => Unit) = {
+    case evt: CreateProductEvent =>
+      productId = evt.productId
+      productName = evt.productName
+      productUnit = evt.productUnit
+      unitPrice = evt.unitPrice
+      productDesc = evt.productDesc
+
+    case evt: UpdateProductEvent =>
+      productName = evt.productName
+      productUnit = evt.productUnit
+      unitPrice = evt.unitPrice
+      productDesc = evt.productDesc
+
+    case evt: DeleteProductEvent =>
+
+    case evt: ChangeProductNameEvent =>
+      productName = evt.productName
+
+    case evt: ChangeProductUnitEvent =>
+      productUnit = evt.productUnit
+
+    case evt: ChangeUnitPriceEvent =>
+      unitPrice = evt.unitPrice
+
+    case evt: ChangeProductDescEvent =>
+      productDesc = evt.productDesc
+
     case x => log.info("UN-UPDATED: {} {}", this, x)
   }
 

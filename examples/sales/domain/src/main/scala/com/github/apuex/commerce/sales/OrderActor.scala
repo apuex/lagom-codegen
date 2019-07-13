@@ -36,15 +36,55 @@ class OrderActor (config: Config) extends PersistentActor with ActorLogging {
     case evt: Event =>
       updateState(evt)
     case SnapshotOffer(_, x: OrderVo) =>
-    case x: RecoveryCompleted =>
+      orderId = x.orderId
+      orderTime = x.orderTime
+      orderLines = x.orderLines
+      orderPaymentType = x.orderPaymentType
+    case _: RecoveryCompleted =>
     case x => log.info("RECOVER: {} {}", this, x)
   }
 
   override def receiveCommand: Receive = {
+    case cmd: CreateOrderCmd =>
+
+    case cmd: RetrieveOrderCmd =>
+
+    case cmd: UpdateOrderCmd =>
+
+    case cmd: DeleteOrderCmd =>
+
+    case cmd: AddOrderLinesCmd =>
+
+    case cmd: RemoveOrderLinesCmd =>
+
+    case cmd: ChangeOrderPaymentTypeCmd =>
+
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
 
   private def updateState: (Event => Unit) = {
+    case evt: CreateOrderEvent =>
+      orderId = evt.orderId
+      orderTime = evt.orderTime
+      orderLines = evt.orderLines
+      orderPaymentType = evt.orderPaymentType
+
+    case evt: UpdateOrderEvent =>
+      orderTime = evt.orderTime
+      orderLines = evt.orderLines
+      orderPaymentType = evt.orderPaymentType
+
+    case evt: DeleteOrderEvent =>
+
+    case evt: AddOrderLinesEvent =>
+      orderLines = orderLines ++ evt.orderLines
+
+    case evt: RemoveOrderLinesEvent =>
+      orderLines = orderLines.filter(evt.orderLines.contains(_))
+
+    case evt: ChangeOrderPaymentTypeEvent =>
+      orderPaymentType = evt.orderPaymentType
+
     case x => log.info("UN-UPDATED: {} {}", this, x)
   }
 

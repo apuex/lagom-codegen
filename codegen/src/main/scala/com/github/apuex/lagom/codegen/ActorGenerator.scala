@@ -14,6 +14,9 @@ class ActorGenerator(modelLoader: ModelLoader) {
 
   import modelLoader._
 
+  val commandGen = ActorCommandPatternsGenerator(modelLoader)
+  val eventsGen = ActorEventPatternsGenerator(modelLoader)
+
   def generate(): Unit = {
     xml.child.filter(_.label == "entity")
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
@@ -70,15 +73,20 @@ class ActorGenerator(modelLoader: ModelLoader) {
          |    case evt: Event =>
          |      updateState(evt)
          |    case SnapshotOffer(_, x: ${cToPascal(name)}Vo) =>
-         |    case x: RecoveryCompleted =>
+         |      ${indent(updateFields(fields, "x"), 6)}
+         |    case _: RecoveryCompleted =>
          |    case x => log.info("RECOVER: {} {}", this, x)
          |  }
          |
          |  override def receiveCommand: Receive = {
+         |    ${indent(commandPatterns(aggregate), 4)}
+         |
          |    case x => log.info("UNHANDLED: {} {}", this, x)
          |  }
          |
          |  private def updateState: (Event => Unit) = {
+         |    ${indent(eventPatterns(aggregate), 4)}
+         |
          |    case x => log.info("UN-UPDATED: {} {}", this, x)
          |  }
          |
@@ -95,17 +103,12 @@ class ActorGenerator(modelLoader: ModelLoader) {
     (fileName, content)
   }
 
-  def defEntityField(field: Field): String = {
-    s"""
-       |var ${cToCamel(field.name)}: ${defFieldType(field)} = ${defaultValue(field)}
-     """.stripMargin.trim
+  def commandPatterns(aggregate: Aggregate): String = {
+    commandGen.generateCallsForAggregate(aggregate)
   }
 
-  def defEntityFields(fields: Seq[Field]): String = {
-    fields
-      .map(defEntityField)
-      .reduceOption((l, r) => s"${l}\n${r}")
-      .getOrElse("")
+  def eventPatterns(aggregate: Aggregate): String = {
+    eventsGen.generateCallsForAggregate(aggregate)
   }
 
   def checkValid(primaryKey: PrimaryKey): String = {

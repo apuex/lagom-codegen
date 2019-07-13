@@ -36,15 +36,50 @@ class AlarmActor (config: Config) extends PersistentActor with ActorLogging {
     case evt: Event =>
       updateState(evt)
     case SnapshotOffer(_, x: AlarmVo) =>
-    case x: RecoveryCompleted =>
+      alarmId = x.alarmId
+      alarmBegin = x.alarmBegin
+      alarmEnd = x.alarmEnd
+      alarmDesc = x.alarmDesc
+    case _: RecoveryCompleted =>
     case x => log.info("RECOVER: {} {}", this, x)
   }
 
   override def receiveCommand: Receive = {
+    case cmd: CreateAlarmCmd =>
+
+    case cmd: RetrieveAlarmCmd =>
+
+    case cmd: UpdateAlarmCmd =>
+
+    case cmd: DeleteAlarmCmd =>
+
+    case cmd: BeginAlarmCmd =>
+
+    case cmd: EndAlarmCmd =>
+
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
 
   private def updateState: (Event => Unit) = {
+    case evt: CreateAlarmEvent =>
+      alarmId = evt.alarmId
+      alarmBegin = evt.alarmBegin
+      alarmEnd = evt.alarmEnd
+      alarmDesc = evt.alarmDesc
+
+    case evt: UpdateAlarmEvent =>
+      alarmEnd = evt.alarmEnd
+      alarmDesc = evt.alarmDesc
+
+    case evt: DeleteAlarmEvent =>
+
+    case evt: BeginAlarmEvent =>
+      alarmDesc = evt.alarmDesc
+
+    case evt: EndAlarmEvent =>
+      alarmEnd = evt.alarmEnd
+      alarmDesc = evt.alarmDesc
+
     case x => log.info("UN-UPDATED: {} {}", this, x)
   }
 

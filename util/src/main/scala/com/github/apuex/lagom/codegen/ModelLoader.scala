@@ -532,4 +532,62 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
       .reduceOption((l, r) => s"${l}, ${r}")
       .getOrElse("")
   }
+
+  def defEntityField(field: Field): String = {
+    s"""
+       |var ${cToCamel(field.name)}: ${defFieldType(field)} = ${defaultValue(field)}
+     """.stripMargin.trim
+  }
+
+  def defEntityFields(fields: Seq[Field]): String = {
+    fields
+      .map(defEntityField)
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
+  }
+
+  def addToField(field: Field, aliasPrefix: String): String = {
+    if ("array" == field._type) {
+      s"""
+         |${cToCamel(field.name)} = ${cToCamel(field.name)} ++ ${aliasPrefix}${cToCamel(field.name)}
+     """.stripMargin.trim
+    } else if ("map" == field._type) {
+      s"""
+         |${cToCamel(field.name)} = ${cToCamel(field.name)} ++ ${aliasPrefix}${cToCamel(field.name)}
+     """.stripMargin.trim
+    } else {
+      s"""
+         |
+     """.stripMargin.trim
+    }
+  }
+
+  def removeFromField(field: Field, aliasPrefix: String): String = {
+    if ("array" == field._type) {
+      s"""
+         |${cToCamel(field.name)} = ${cToCamel(field.name)}.filter(${aliasPrefix}${cToCamel(field.name)}.contains(_))
+     """.stripMargin.trim
+    } else if ("map" == field._type) {
+      s"""
+         |${cToCamel(field.name)} = ${cToCamel(field.name)} -- ${aliasPrefix}${cToCamel(field.name)}.keys
+     """.stripMargin.trim
+    } else {
+      s"""
+         |
+     """.stripMargin.trim
+    }
+  }
+
+  def updateField(field: Field, aliasPrefix: String): String = {
+    s"""
+       |${cToCamel(field.name)} = ${aliasPrefix}${cToCamel(field.name)}
+     """.stripMargin.trim
+  }
+
+  def updateFields(fields: Seq[Field], alias: String = ""): String = {
+    fields
+      .map(updateField(_, if ("" == alias) "" else s"${alias}."))
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
+  }
 }
