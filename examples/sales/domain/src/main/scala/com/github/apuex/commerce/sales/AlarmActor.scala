@@ -68,6 +68,9 @@ class AlarmActor (config: Config) extends PersistentActor with ActorLogging {
       val evt = EndAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
       persist(evt)(updateState)
 
+    case evt: AlarmEvent =>
+      persist(evt)(updateState)
+
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
 

@@ -81,6 +81,9 @@ class ActorGenerator(modelLoader: ModelLoader) {
          |  override def receiveCommand: Receive = {
          |    ${indent(commandPatterns(aggregate), 4)}
          |
+         |    case evt: ${cToPascal(name)}Event =>
+         |      persist(evt)(updateState)
+         |
          |    case x => log.info("UNHANDLED: {} {}", this, x)
          |  }
          |

@@ -101,6 +101,9 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
       val evt = ChangeProductDescEvent(cmd.userId, cmd.productId, cmd.productDesc)
       persist(evt)(updateState)
 
+    case evt: ProductEvent =>
+      persist(evt)(updateState)
+
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
 

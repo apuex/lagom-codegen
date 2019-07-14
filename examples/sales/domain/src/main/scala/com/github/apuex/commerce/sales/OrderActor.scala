@@ -80,6 +80,9 @@ class OrderActor (config: Config) extends PersistentActor with ActorLogging {
       val evt = ChangeOrderPaymentTypeEvent(cmd.userId, cmd.orderId, cmd.orderPaymentType)
       persist(evt)(updateState)
 
+    case evt: OrderEvent =>
+      persist(evt)(updateState)
+
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
 

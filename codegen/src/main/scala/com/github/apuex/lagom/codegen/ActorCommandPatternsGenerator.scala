@@ -133,7 +133,11 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
   def defMessageCall(message: Message, parentName: String, parentFields: Seq[Field], primaryKey: PrimaryKey): String = {
     val key = primaryKey.fields.map(_.name)
       .toSet
+    val fieldNames = message.fields
+      .map(_.name)
+      .toSet
     val derivedFields = parentFields
+      .filter(x => fieldNames.contains(x.name))
       .filter(x => !key.contains(x.name))
     val derived = derivedFields.map(_.name)
       .toSet
