@@ -23,11 +23,6 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
     save(
       s"${cToPascal(s"${modelName}_${event}_${apply}")}.scala",
       content,
-      crudImplSrcDir
-    )
-    save(
-      s"${cToPascal(s"${modelName}_${event}_${apply}")}.scala",
-      content,
       implSrcDir
     )
   }
@@ -163,7 +158,6 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
     import aggregate._
     (
       defCrudCalls(name, fields, primaryKey) ++
-        defByForeignKeyCalls(name, fields, foreignKeys) ++
         defMessageCalls(aggregate.messages, name, fields, primaryKey) ++
         defCallsForEmbeddedAggregateMessages(aggregate.name, aggregate.aggregates)
       )
@@ -174,10 +168,7 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
 
   def generateCallsForValueObject(valueObject: ValueObject): String = {
     import valueObject._
-    (
-      defCrudCalls(name, fields, primaryKey) ++
-        defByForeignKeyCalls(name, fields, foreignKeys)
-      )
+    defCrudCalls(name, fields, primaryKey)
       .filter(_ != "")
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
@@ -249,29 +240,6 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
          |  ${cToCamel(name)}Dao.delete${cToPascal(name)}(evt)
      """.stripMargin.trim
     )
-  }
-
-  def defByForeignKeyCalls(name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
-    foreignKeys
-      .map(x => {
-        val fieldNames = x.fields
-          .map(_.name)
-          .toSet
-
-        val fkFields = fields
-          .filter(x => fieldNames.contains(x.name))
-        defByForeignKeyCall(name, fkFields)
-      })
-  }
-
-  def defByForeignKeyCall(name: String, keyFields: Seq[Field]): String = {
-    val by = keyFields
-      .map(x => cToPascal(x.name))
-      .reduceOption((x, y) => s"${x}${y}")
-      .getOrElse("")
-
-    s"""
-     """.stripMargin.trim
   }
 }
 
