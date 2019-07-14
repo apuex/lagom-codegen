@@ -14,7 +14,8 @@ import akka.stream.{OverflowStrategy, SourceShape}
 import akka.util.Timeout
 import com.github.apuex.commerce.sales.ScalapbJson._
 import com.github.apuex.commerce.sales._
-import com.github.apuex.commerce.sales.dao._
+import com.github.apuex.commerce.sales.sharding._
+import com.github.apuex.commerce.sales.dao.mysql._
 import com.github.apuex.events.play.EventEnvelope
 import com.github.apuex.springbootsolution.runtime.DateFormat._
 import com.github.apuex.springbootsolution.runtime.FilterPredicate.Clause.{Connection, Predicate}
@@ -29,12 +30,8 @@ import scalapb.GeneratedMessage
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-class SalesServiceImpl (alarmDao: AlarmDao,
-  paymentTypeDao: PaymentTypeDao,
-  productDao: ProductDao,
-  orderDao: OrderDao,
-  orderItemDao: OrderItemDao,
-  eventJournalDao: EventJournalDao,
+class SalesServiceImpl (clusterShardingModule: ClusterShardingModule,
+  daoModule: DaoModule,
   eventApply: SalesEventApply,
   publishQueue: String,
   mediator: ActorRef,
@@ -42,53 +39,34 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   db: Database)
   extends SalesService {
 
+  import clusterShardingModule._
+  import daoModule._
+
   implicit val timeout = Timeout(duration)
 
   def createAlarm(): ServiceCall[CreateAlarmCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = CreateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        alarmDao.createAlarm(evt)
-      }
-    )
+    Future.successful({
+      shardingAlarms ! cmd
+      0
+    })
   }
 
   def retrieveAlarm(): ServiceCall[RetrieveAlarmCmd, AlarmVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        alarmDao.retrieveAlarm(cmd)
-      }
-    )
+    shardingAlarms.ask(cmd).mapTo[AlarmVo]
   }
 
   def updateAlarm(): ServiceCall[UpdateAlarmCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = UpdateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        alarmDao.updateAlarm(evt)
-      }
-    )
+    Future.successful({
+      shardingAlarms ! cmd
+      0
+    })
   }
 
   def deleteAlarm(): ServiceCall[DeleteAlarmCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = DeleteAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        alarmDao.deleteAlarm(evt)
-      }
-    )
+    Future.successful({
+      shardingAlarms ! cmd
+      0
+    })
   }
 
   def queryAlarm(): ServiceCall[QueryCommand, AlarmListVo] = ServiceCall { cmd =>
@@ -108,29 +86,17 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   }
 
   def beginAlarm(): ServiceCall[BeginAlarmCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = BeginAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmDesc)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        alarmDao.beginAlarm(evt)
-      }
-    )
+    Future.successful({
+      shardingAlarms ! cmd
+      0
+    })
   }
 
   def endAlarm(): ServiceCall[EndAlarmCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = EndAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        alarmDao.endAlarm(evt)
-      }
-    )
+    Future.successful({
+      shardingAlarms ! cmd
+      0
+    })
   }
 
   def createPaymentType(): ServiceCall[CreatePaymentTypeCmd, Int] = ServiceCall { cmd =>
@@ -197,50 +163,28 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   }
 
   def createProduct(): ServiceCall[CreateProductCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        productDao.createProduct(evt)
-      }
-    )
+    Future.successful({
+      shardingProducts ! cmd
+      0
+    })
   }
 
   def retrieveProduct(): ServiceCall[RetrieveProductCmd, ProductVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        productDao.retrieveProduct(cmd)
-      }
-    )
+    shardingProducts.ask(cmd).mapTo[ProductVo]
   }
 
   def updateProduct(): ServiceCall[UpdateProductCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        productDao.updateProduct(evt)
-      }
-    )
+    Future.successful({
+      shardingProducts ! cmd
+      0
+    })
   }
 
   def deleteProduct(): ServiceCall[DeleteProductCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = DeleteProductEvent(cmd.userId, cmd.productId)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        productDao.deleteProduct(evt)
-      }
-    )
+    Future.successful({
+      shardingProducts ! cmd
+      0
+    })
   }
 
   def queryProduct(): ServiceCall[QueryCommand, ProductListVo] = ServiceCall { cmd =>
@@ -260,146 +204,83 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   }
 
   def getProductSales(): ServiceCall[GetProductSalesCmd, ProductSalesVo] = ServiceCall { cmd =>
-    mediator.ask(Publish(publishQueue, cmd))(Timeout(duration))
-      .mapTo[ProductSalesVo]
+    shardingProducts.ask(cmd).mapTo[ProductSalesVo]
   }
 
   def updateProductSales(): ServiceCall[UpdateProductSalesCmd, Int] = ServiceCall { cmd =>
     Future.successful({
-      mediator ! Publish(publishQueue, cmd)
+      shardingProducts ! cmd
       0
     })
   }
 
   def getProductName(): ServiceCall[GetProductNameCmd, ProductNameVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-         productDao.getProductName(cmd)
-      }
-    )
+    shardingProducts.ask(cmd).mapTo[ProductNameVo]
   }
 
   def changeProductName(): ServiceCall[ChangeProductNameCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = ChangeProductNameEvent(cmd.userId, cmd.productId, cmd.productName)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        productDao.changeProductName(evt)
-      }
-    )
+    Future.successful({
+      shardingProducts ! cmd
+      0
+    })
   }
 
   def getProductUnit(): ServiceCall[GetProductUnitCmd, ProductUnitVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-         productDao.getProductUnit(cmd)
-      }
-    )
+    shardingProducts.ask(cmd).mapTo[ProductUnitVo]
   }
 
   def changeProductUnit(): ServiceCall[ChangeProductUnitCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = ChangeProductUnitEvent(cmd.userId, cmd.productId, cmd.productUnit)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        productDao.changeProductUnit(evt)
-      }
-    )
+    Future.successful({
+      shardingProducts ! cmd
+      0
+    })
   }
 
   def getUnitPrice(): ServiceCall[GetUnitPriceCmd, UnitPriceVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-         productDao.getUnitPrice(cmd)
-      }
-    )
+    shardingProducts.ask(cmd).mapTo[UnitPriceVo]
   }
 
   def changeUnitPrice(): ServiceCall[ChangeUnitPriceCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = ChangeUnitPriceEvent(cmd.userId, cmd.productId, cmd.unitPrice)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        productDao.changeUnitPrice(evt)
-      }
-    )
+    Future.successful({
+      shardingProducts ! cmd
+      0
+    })
   }
 
   def getProductDesc(): ServiceCall[GetProductDescCmd, ProductDescVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-         productDao.getProductDesc(cmd)
-      }
-    )
+    shardingProducts.ask(cmd).mapTo[ProductDescVo]
   }
 
   def changeProductDesc(): ServiceCall[ChangeProductDescCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = ChangeProductDescEvent(cmd.userId, cmd.productId, cmd.productDesc)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        productDao.changeProductDesc(evt)
-      }
-    )
+    Future.successful({
+      shardingProducts ! cmd
+      0
+    })
   }
 
   def createOrder(): ServiceCall[CreateOrderCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = CreateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        orderDao.createOrder(evt)
-      }
-    )
+    Future.successful({
+      shardingOrders ! cmd
+      0
+    })
   }
 
   def retrieveOrder(): ServiceCall[RetrieveOrderCmd, OrderVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        orderDao.retrieveOrder(cmd)
-      }
-    )
+    shardingOrders.ask(cmd).mapTo[OrderVo]
   }
 
   def updateOrder(): ServiceCall[UpdateOrderCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = UpdateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        orderDao.updateOrder(evt)
-      }
-    )
+    Future.successful({
+      shardingOrders ! cmd
+      0
+    })
   }
 
   def deleteOrder(): ServiceCall[DeleteOrderCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = DeleteOrderEvent(cmd.userId, cmd.orderId)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        orderDao.deleteOrder(evt)
-      }
-    )
+    Future.successful({
+      shardingOrders ! cmd
+      0
+    })
   }
 
   def queryOrder(): ServiceCall[QueryCommand, OrderListVo] = ServiceCall { cmd =>
@@ -419,58 +300,32 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   }
 
   def getOrderLines(): ServiceCall[GetOrderLinesCmd, OrderLinesVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-         orderDao.getOrderLines(cmd)
-      }
-    )
+    shardingOrders.ask(cmd).mapTo[OrderLinesVo]
   }
 
   def addOrderLines(): ServiceCall[AddOrderLinesCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = AddOrderLinesEvent(cmd.userId, cmd.orderId, cmd.orderLines)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        orderDao.addOrderLines(evt)
-      }
-    )
+    Future.successful({
+      shardingOrders ! cmd
+      0
+    })
   }
 
   def removeOrderLines(): ServiceCall[RemoveOrderLinesCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = RemoveOrderLinesEvent(cmd.userId, cmd.orderId)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        orderDao.removeOrderLines(evt)
-      }
-    )
+    Future.successful({
+      shardingOrders ! cmd
+      0
+    })
   }
 
   def getOrderPaymentType(): ServiceCall[GetOrderPaymentTypeCmd, OrderPaymentTypeVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-         orderDao.getOrderPaymentType(cmd)
-      }
-    )
+    shardingOrders.ask(cmd).mapTo[OrderPaymentTypeVo]
   }
 
   def changeOrderPaymentType(): ServiceCall[ChangeOrderPaymentTypeCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = ChangeOrderPaymentTypeEvent(cmd.userId, cmd.orderId, cmd.orderPaymentType)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        orderDao.changeOrderPaymentType(evt)
-      }
-    )
+    Future.successful({
+      shardingOrders ! cmd
+      0
+    })
   }
 
   def createOrderItem(): ServiceCall[CreateOrderItemCmd, Int] = ServiceCall { cmd =>
