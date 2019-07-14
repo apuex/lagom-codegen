@@ -18,7 +18,8 @@ class ActorGenerator(modelLoader: ModelLoader) {
   val eventsGen = ActorEventPatternsGenerator(modelLoader)
 
   def generate(): Unit = {
-    xml.child.filter(_.label == "entity")
+    xml.child
+      .filter(_.label == "entity")
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .sortWith((x, y) => depends(x, y))
       .map(x => toAggregate(x, xml))

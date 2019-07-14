@@ -19,6 +19,7 @@ object Main extends App {
       case "generate-actor" => ActorGenerator(args.drop(1)(0)).generate()
       case "generate-cluster-shard-actor" => ClusterShardActorGenerator(args.drop(1)(0)).generate()
       case "generate-cqrs-service" => CqrsServiceGenerator(args.drop(1)(0)).generate()
+      case "generate-cqrs-event-apply" => CqrsEventsAppGenerator(args.drop(1)(0)).generate()
       case "generate-service" => ServiceGenerator(args.drop(1)(0)).generate()
       case "generate-dao" => DaoGenerator(args.drop(1)(0)).generate()
       case "generate-dao-mysql" => DaoMysqlImplGenerator(args.drop(1)(0)).generate()
@@ -44,6 +45,7 @@ object Main extends App {
     ClusterShardActorGenerator(modelLoader).generate()
     // TODO: NOT implemented.
     CqrsServiceGenerator(modelLoader).generate()
+    CqrsEventsAppGenerator(modelLoader).generate()
     CrudServiceGenerator(modelLoader).generate()
     CrudEventsAppGenerator(modelLoader).generate()
     DaoGenerator(modelLoader).generate()
