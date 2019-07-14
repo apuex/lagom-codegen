@@ -77,12 +77,35 @@ class ActorEventPatternsGenerator(modelLoader: ModelLoader) {
       .filter(!_.transient)
       .filter(x => derived.contains(x.name)).isEmpty
 
+    val multiple = message.returnType.endsWith("*")
+    val returnType = if ("" == message.returnType) "Int"
+    else {
+      val baseName = message.returnType.replace("*", "")
+      if (multiple) {
+        if (isAggregateEntity(baseName)) s"${cToPascal(baseName)}ListVo]" else s"${cToPascal(baseName)}Vo"
+      } else {
+        cToPascal(toJavaType(baseName))
+      }
+    }
+
+    // TODO: implement return message
+    val replyVal = if("Int" != returnType) {
+      s"""
+         |
+       """.stripMargin.trim
+    } else {
+      s"""
+         |
+       """.stripMargin.trim
+    }
+
     if (message.transient || hasPersistField)
       ""
     else
       s"""
          |case evt: ${cToPascal(message.name)}Event =>
          |  ${indent(updateFields(message.fields.filter(x => derived.contains(x.name)), "evt"), 2)}
+         |  ${replyVal}
      """.stripMargin.trim
   }
 

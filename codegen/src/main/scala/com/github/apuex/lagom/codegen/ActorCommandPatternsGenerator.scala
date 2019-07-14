@@ -5,8 +5,6 @@ import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime.TextUtils.indent
 import com.github.apuex.springbootsolution.runtime.TypeConverters.toJavaType
 
-import scala.xml.Node
-
 
 object ActorCommandPatternsGenerator {
   def apply(fileName: String): ActorCommandPatternsGenerator = ActorCommandPatternsGenerator(ModelLoader(fileName))
@@ -149,9 +147,32 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
       .filter(x => !key.contains(x.name))
       .filter(x => derived.contains(x.name))
 
+    val multiple = message.returnType.endsWith("*")
+    val returnType = if ("" == message.returnType) "Int"
+    else {
+      val baseName = message.returnType.replace("*", "")
+      if (multiple) {
+        if (isAggregateEntity(baseName)) s"${cToPascal(baseName)}ListVo]" else s"${cToPascal(baseName)}Vo"
+      } else {
+        cToPascal(toJavaType(baseName))
+      }
+    }
+
+    // TODO: implement return message
+    val replyVal = if(message.transient && "Int" != returnType) {
+      s"""
+         |
+       """.stripMargin.trim
+    } else {
+      s"""
+         |
+       """.stripMargin.trim
+    }
+
     val messageOp = if (message.transient) {
       s"""
-         |${indent(updateFields(derivedFields, "cmd"), 2)}
+         |${updateFields(derivedFields, "cmd")}
+         |${replyVal}
      """.stripMargin.trim
     } else {
         s"""
