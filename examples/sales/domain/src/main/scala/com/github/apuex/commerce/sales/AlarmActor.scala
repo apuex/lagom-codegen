@@ -46,16 +46,27 @@ class AlarmActor (config: Config) extends PersistentActor with ActorLogging {
 
   override def receiveCommand: Receive = {
     case cmd: CreateAlarmCmd =>
+      val evt = CreateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
+      persist(evt)(updateState)
 
-    case cmd: RetrieveAlarmCmd =>
+    case _: RetrieveAlarmCmd =>
+      sender() ! AlarmVo(alarmId, alarmBegin, alarmEnd, alarmDesc)
 
     case cmd: UpdateAlarmCmd =>
+      val evt = UpdateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
+      persist(evt)(updateState)
 
     case cmd: DeleteAlarmCmd =>
+      val evt = DeleteAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin)
+      persist(evt)(updateState)
 
     case cmd: BeginAlarmCmd =>
+      val evt = BeginAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmDesc)
+      persist(evt)(updateState)
 
     case cmd: EndAlarmCmd =>
+      val evt = EndAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
+      persist(evt)(updateState)
 
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
@@ -71,7 +82,7 @@ class AlarmActor (config: Config) extends PersistentActor with ActorLogging {
       alarmEnd = evt.alarmEnd
       alarmDesc = evt.alarmDesc
 
-    case evt: DeleteAlarmEvent =>
+    case _: DeleteAlarmEvent =>
 
     case evt: BeginAlarmEvent =>
       alarmDesc = evt.alarmDesc

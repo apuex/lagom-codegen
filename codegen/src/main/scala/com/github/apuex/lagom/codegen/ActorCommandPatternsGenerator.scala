@@ -20,32 +20,98 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
 
   def defCallsForEmbeddedAggregateMessage(name: String, aggregate: Aggregate): String = {
     val persistFields = aggregate.fields.filter(!_.transient)
-    val nonKeyFieldCount = persistFields.length - aggregate.primaryKey.fields.length
+    val nonKeyFieldCount = aggregate.fields.length - aggregate.primaryKey.fields.length
     val keyFieldNames = aggregate.primaryKey.fields.map(_.name).toSet
-    val nonKeyFields = persistFields
+    val nonKeyFields = aggregate.fields
       .filter(x => !keyFieldNames.contains(x.name))
+    val nonKeyPersistFields = persistFields
+      .filter(x => !keyFieldNames.contains(x.name))
+    val nonKeyTransientFields = aggregate.fields.filter(_.transient)
+      .filter(x => !keyFieldNames.contains(x.name))
+    val get =
+      s"""
+         |case _: Get${cToPascal(aggregate.name)}Cmd =>
+         |  sender() ! ${cToPascal(aggregate.name)}Vo(${substituteMethodParams(aggregate.fields)})
+       """.stripMargin.trim
+
+    val updateOp = if (nonKeyPersistFields.isEmpty) {
+      s"""
+         |${updateFields(nonKeyTransientFields, "cmd")}
+     """.stripMargin.trim
+    } else {
+      s"""
+         |${updateFields(nonKeyTransientFields, "cmd")}
+         |val evt = Update${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
+         |persist(evt)(updateState)
+     """.stripMargin.trim
+    }
+
     val update = if (nonKeyFieldCount > 1)
       s"""
          |case cmd: Update${cToPascal(aggregate.name)}Cmd =>
+         |  ${indent(updateOp, 2)}
      """.stripMargin.trim
     else if (nonKeyFieldCount == 1) {
       val field = nonKeyFields.head
+      val addOp = if (nonKeyPersistFields.isEmpty) {
+        s"""
+           |${indent(addToField(field, "cmd."), 2)}
+     """.stripMargin.trim
+      } else {
+        s"""
+           |${indent(addToField(field, "cmd."), 2)}
+           |val evt = Add${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
+           |persist(evt)(updateState)
+     """.stripMargin.trim
+      }
+      val removeOp = if (nonKeyPersistFields.isEmpty) {
+        s"""
+           |${indent(removeFromField(field, "cmd."), 2)}
+     """.stripMargin.trim
+      } else {
+        s"""
+           |${indent(removeFromField(field, "cmd."), 2)}
+           |val evt = Remove${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
+           |persist(evt)(updateState)
+     """.stripMargin.trim
+      }
+      val changeOp = if (nonKeyPersistFields.isEmpty) {
+        s"""
+           |${indent(updateFields(nonKeyTransientFields, "cmd"), 2)}
+     """.stripMargin.trim
+      } else {
+        s"""
+           |${indent(updateFields(nonKeyTransientFields, "cmd"), 2)}
+           |val evt = Change${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
+           |persist(evt)(updateState)
+     """.stripMargin.trim
+      }
+
       if ("array" == field._type || "map" == field._type)
         s"""
            |case cmd: Add${cToPascal(aggregate.name)}Cmd =>
+           |  ${indent(addOp, 2)}
            |
            |case cmd: Remove${cToPascal(aggregate.name)}Cmd =>
+           |  ${indent(removeOp, 2)}
+           |
      """.stripMargin.trim
       else
         s"""
            |case cmd: Change${cToPascal(aggregate.name)}Cmd =>
+           |  ${indent(changeOp, 2)}
      """.stripMargin.trim
     } else { // this cannot be happen.
       s"""
          |
      """.stripMargin.trim
     }
-    update
+
+    s"""
+       |${get}
+       |
+       |${update}
+     """.stripMargin.trim
   }
 
   def defCallsForEmbeddedAggregateMessages(name: String, aggregates: Seq[Aggregate]): Seq[String] = {
@@ -65,18 +131,34 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
   }
 
   def defMessageCall(message: Message, parentName: String, parentFields: Seq[Field], primaryKey: PrimaryKey): String = {
-    val key = primaryKey.fields.map(_.name).toSet
-    val derived = parentFields.map(_.name).filter(!key.contains(_)).toSet
+    val key = primaryKey.fields.map(_.name)
+      .toSet
+    val derivedFields = parentFields
+      .filter(x => !key.contains(x.name))
+    val derived = derivedFields.map(_.name)
+      .toSet
 
-    val hasPersistField = message.fields
+    val persistFields = message.fields
       .filter(!_.transient)
-      .filter(x => derived.contains(x.name)).isEmpty
+    val transientFields = message.fields
+      .filter(_.transient)
+      .filter(x => !key.contains(x.name))
+      .filter(x => derived.contains(x.name))
 
-    if (message.transient || hasPersistField)
-      ""
-    else
+    val messageOp = if (message.transient) {
       s"""
-         |case cmd: ${cToPascal(message.name)}Cmd =>
+         |${indent(updateFields(derivedFields, "cmd"), 2)}
+     """.stripMargin.trim
+    } else {
+        s"""
+           |${indent(updateFields(transientFields, "cmd"), 2)}
+           |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
+           |persist(evt)(updateState)
+     """.stripMargin.trim
+    }
+    s"""
+       |case cmd: ${cToPascal(message.name)}Cmd =>
+       |  ${indent(messageOp, 2)}
      """.stripMargin.trim
   }
 
@@ -92,18 +174,25 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
     Seq(
       s"""
          |case cmd: Create${cToPascal(name)}Cmd =>
+         |  val evt = Create${cToPascal(name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
+         |  persist(evt)(updateState)
      """.stripMargin.trim,
       s"""
-         |case cmd: Retrieve${cToPascal(name)}Cmd =>
+         |case _: Retrieve${cToPascal(name)}Cmd =>
+         |  sender() ! ${cToPascal(name)}Vo(${substituteMethodParams(fields)})
      """.stripMargin.trim,
       if (nonKeyPersistFields.isEmpty)
         ""
       else
         s"""
            |case cmd: Update${cToPascal(name)}Cmd =>
+           |  val evt = Update${cToPascal(name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
+           |  persist(evt)(updateState)
      """.stripMargin.trim,
       s"""
          |case cmd: Delete${cToPascal(name)}Cmd =>
+         |  val evt = Delete${cToPascal(name)}Event(${substituteMethodParams(userField +: primaryKey.fields, "cmd")})
+         |  persist(evt)(updateState)
      """.stripMargin.trim
     )
   }

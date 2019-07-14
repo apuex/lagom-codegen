@@ -108,7 +108,7 @@ class ActorEventPatternsGenerator(modelLoader: ModelLoader) {
            |  ${indent(updateFields(nonKeyPersistFields, "evt"), 2)}
      """.stripMargin.trim,
       s"""
-         |case evt: Delete${cToPascal(name)}Event =>
+         |case _: Delete${cToPascal(name)}Event =>
      """.stripMargin.trim
     )
   }

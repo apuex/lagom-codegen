@@ -32,7 +32,7 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
   var productUnit: String = ""
   var unitPrice: Double = 0
   var recordTime: Option[Timestamp] = None
-  var quantitySold: Option[Double] = None
+  var quantitySold: Double = 0
   var productDesc: String = ""
 
   override def receiveRecover: Receive = {
@@ -52,20 +52,54 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
 
   override def receiveCommand: Receive = {
     case cmd: CreateProductCmd =>
+      val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
+      persist(evt)(updateState)
 
-    case cmd: RetrieveProductCmd =>
+    case _: RetrieveProductCmd =>
+      sender() ! ProductVo(productId, productName, productUnit, unitPrice, recordTime, quantitySold, productDesc)
 
     case cmd: UpdateProductCmd =>
+      val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
+      persist(evt)(updateState)
 
     case cmd: DeleteProductCmd =>
+      val evt = DeleteProductEvent(cmd.userId, cmd.productId)
+      persist(evt)(updateState)
+
+    case _: GetProductSalesCmd =>
+      sender() ! ProductSalesVo(productId, recordTime, quantitySold)
+
+    case cmd: UpdateProductSalesCmd =>
+      recordTime = cmd.recordTime
+      quantitySold = cmd.quantitySold
+
+    case _: GetProductNameCmd =>
+      sender() ! ProductNameVo(productId, productName)
 
     case cmd: ChangeProductNameCmd =>
+      val evt = ChangeProductNameEvent(cmd.userId, cmd.productId, cmd.productName)
+      persist(evt)(updateState)
+
+    case _: GetProductUnitCmd =>
+      sender() ! ProductUnitVo(productId, productUnit)
 
     case cmd: ChangeProductUnitCmd =>
+      val evt = ChangeProductUnitEvent(cmd.userId, cmd.productId, cmd.productUnit)
+      persist(evt)(updateState)
+
+    case _: GetUnitPriceCmd =>
+      sender() ! UnitPriceVo(productId, unitPrice)
 
     case cmd: ChangeUnitPriceCmd =>
+      val evt = ChangeUnitPriceEvent(cmd.userId, cmd.productId, cmd.unitPrice)
+      persist(evt)(updateState)
+
+    case _: GetProductDescCmd =>
+      sender() ! ProductDescVo(productId, productDesc)
 
     case cmd: ChangeProductDescCmd =>
+      val evt = ChangeProductDescEvent(cmd.userId, cmd.productId, cmd.productDesc)
+      persist(evt)(updateState)
 
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
@@ -84,7 +118,7 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
       unitPrice = evt.unitPrice
       productDesc = evt.productDesc
 
-    case evt: DeleteProductEvent =>
+    case _: DeleteProductEvent =>
 
     case evt: ChangeProductNameEvent =>
       productName = evt.productName

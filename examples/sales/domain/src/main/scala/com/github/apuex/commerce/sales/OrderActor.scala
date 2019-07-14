@@ -46,18 +46,39 @@ class OrderActor (config: Config) extends PersistentActor with ActorLogging {
 
   override def receiveCommand: Receive = {
     case cmd: CreateOrderCmd =>
+      val evt = CreateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
+      persist(evt)(updateState)
 
-    case cmd: RetrieveOrderCmd =>
+    case _: RetrieveOrderCmd =>
+      sender() ! OrderVo(orderId, orderTime, orderLines, orderPaymentType)
 
     case cmd: UpdateOrderCmd =>
+      val evt = UpdateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
+      persist(evt)(updateState)
 
     case cmd: DeleteOrderCmd =>
+      val evt = DeleteOrderEvent(cmd.userId, cmd.orderId)
+      persist(evt)(updateState)
+
+    case _: GetOrderLinesCmd =>
+      sender() ! OrderLinesVo(orderId, orderLines)
 
     case cmd: AddOrderLinesCmd =>
+      orderLines = orderLines ++ cmd.orderLines
+      val evt = AddOrderLinesEvent(cmd.userId, cmd.orderId, cmd.orderLines)
+      persist(evt)(updateState)
 
     case cmd: RemoveOrderLinesCmd =>
+      orderLines = orderLines.filter(cmd.orderLines.contains(_))
+      val evt = RemoveOrderLinesEvent(cmd.userId, cmd.orderId, cmd.orderLines)
+      persist(evt)(updateState)
+
+    case _: GetOrderPaymentTypeCmd =>
+      sender() ! OrderPaymentTypeVo(orderId, orderPaymentType)
 
     case cmd: ChangeOrderPaymentTypeCmd =>
+      val evt = ChangeOrderPaymentTypeEvent(cmd.userId, cmd.orderId, cmd.orderPaymentType)
+      persist(evt)(updateState)
 
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
@@ -74,7 +95,7 @@ class OrderActor (config: Config) extends PersistentActor with ActorLogging {
       orderLines = evt.orderLines
       orderPaymentType = evt.orderPaymentType
 
-    case evt: DeleteOrderEvent =>
+    case _: DeleteOrderEvent =>
 
     case evt: AddOrderLinesEvent =>
       orderLines = orderLines ++ evt.orderLines

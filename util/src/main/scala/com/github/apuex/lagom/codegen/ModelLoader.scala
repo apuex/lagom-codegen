@@ -483,10 +483,10 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
     else if (isEnum(field._type))
       cToPascal(field._type)
     else {
-      if (field.required)
+      //if (field.required)
         defFieldType(field._type)
-      else
-        s"Option[${defFieldType(field._type)}]"
+      //else
+      //  s"Option[${defFieldType(field._type)}]"
     }
   }
 
@@ -500,10 +500,10 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
     else if ("timestamp" == field._type)
       "None"
     else {
-      if (field.required) {
+      // if (field.required) {
         defaultValue(field._type)
-      } else
-        s"None"
+      //} else
+      //  s"None"
     }
   }
 
