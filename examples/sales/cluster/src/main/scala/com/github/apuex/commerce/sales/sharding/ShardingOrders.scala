@@ -12,7 +12,7 @@ import com.typesafe.config._
 import scala.math.Numeric.IntIsIntegral._
 
 object ShardingOrders {
-  def props = Props[ShardingOrders]
+  def props(config: Config) = Props(new ShardingOrders(config))
   def name: String = "ShardingOrders"
 }
 
@@ -35,7 +35,7 @@ class ShardingOrders (config: Config) extends Actor with ActorLogging {
 
   ClusterSharding(context.system).start(
     shardName,
-    OrderActor.props,
+    OrderActor.props(config),
     ClusterShardingSettings(context.system),
     extractEntityId,
     extractShardId

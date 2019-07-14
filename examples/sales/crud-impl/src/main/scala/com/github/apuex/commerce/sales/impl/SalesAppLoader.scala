@@ -3,8 +3,6 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.impl
 
-import java.util.concurrent.TimeUnit
-
 import akka.cluster.pubsub.DistributedPubSub
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao.mysql._

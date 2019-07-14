@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 
 
 object OrderActor {
-  def props = Props[OrderActor]
+  def props(config: Config) = Props(new OrderActor(config))
   def name: String = "OrderActor"
 }
 

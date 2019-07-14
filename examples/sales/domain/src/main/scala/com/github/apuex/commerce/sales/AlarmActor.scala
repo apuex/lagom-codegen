@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 
 
 object AlarmActor {
-  def props = Props[AlarmActor]
+  def props(config: Config) = Props(new AlarmActor(config))
   def name: String = "AlarmActor"
 }
 

@@ -58,7 +58,7 @@ class ActorGenerator(modelLoader: ModelLoader) {
          |
          |
          |object ${className} {
-         |  def props = Props[${className}]
+         |  def props(config: Config) = Props(new ${className}(config))
          |  def name: String = "${className}"
          |}
          |

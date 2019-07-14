@@ -3,12 +3,11 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.impl
 
-import java.util.concurrent.TimeUnit
-
 import akka.cluster.pubsub.DistributedPubSub
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao.mysql._
 import com.github.apuex.commerce.sales.impl.SalesAppLoader._
+import com.github.apuex.commerce.sales.sharding._
 import com.lightbend.lagom.scaladsl.client._
 import com.lightbend.lagom.scaladsl.devmode._
 import com.lightbend.lagom.scaladsl.server._
@@ -43,6 +42,7 @@ object SalesAppLoader {
     implicit val duration = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
     lazy val mediator = DistributedPubSub(actorSystem).mediator
     lazy val daoModule = wire[DaoModule]
+    lazy val clusterModule = wire[ClusterShardingModule]
     lazy val eventApply = wire[SalesEventApply]
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
   }

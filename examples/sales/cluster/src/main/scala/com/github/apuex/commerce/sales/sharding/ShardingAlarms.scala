@@ -12,7 +12,7 @@ import com.typesafe.config._
 import scala.math.Numeric.IntIsIntegral._
 
 object ShardingAlarms {
-  def props = Props[ShardingAlarms]
+  def props(config: Config) = Props(new ShardingAlarms(config))
   def name: String = "ShardingAlarms"
 }
 
@@ -35,7 +35,7 @@ class ShardingAlarms (config: Config) extends Actor with ActorLogging {
 
   ClusterSharding(context.system).start(
     shardName,
-    AlarmActor.props,
+    AlarmActor.props(config),
     ClusterShardingSettings(context.system),
     extractEntityId,
     extractShardId

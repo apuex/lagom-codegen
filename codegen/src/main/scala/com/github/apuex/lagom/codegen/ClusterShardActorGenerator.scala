@@ -2,6 +2,9 @@ package com.github.apuex.lagom.codegen
 
 import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+import com.github.apuex.springbootsolution.runtime.TextUtils.indent
+
+import scala.xml.Node
 
 object ClusterShardActorGenerator {
   def apply(fileName: String): ClusterShardActorGenerator = new ClusterShardActorGenerator(ModelLoader(fileName))
@@ -14,7 +17,8 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    xml.child.filter(_.label == "entity")
+    xml.child
+      .filter(_.label == "entity")
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .sortWith((x, y) => depends(x, y))
       .map(x => toAggregate(x, xml))
@@ -24,6 +28,7 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
         x._2,
         clusterSrcDir
       ))
+    save(s"""${cToPascal(s"${cluster}_${shard}")}Module.scala""", wireModule(xml), clusterSrcDir)
   }
 
   def generateClusterShardActor(aggregate: Aggregate): (String, String) = {
@@ -49,7 +54,7 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |import scala.math.Numeric.IntIsIntegral._
          |
          |object ${facadeClassName} {
-         |  def props = Props[${facadeClassName}]
+         |  def props(config: Config) = Props(new ${facadeClassName}(config))
          |  def name: String = "${facadeClassName}"
          |}
          |
@@ -72,7 +77,7 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |
          |  ClusterSharding(context.system).start(
          |    shardName,
-         |    ${className}.props,
+         |    ${className}.props(config),
          |    ClusterShardingSettings(context.system),
          |    extractEntityId,
          |    extractShardId
@@ -90,5 +95,39 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |}
        """.stripMargin.trim
     (fileName, content)
+  }
+
+  def wireModule(root: Node): String = {
+    s"""
+       |/*****************************************************
+       | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+       | *****************************************************/
+       |package ${clusterSrcPackage}
+       |
+       |import akka.actor._
+       |import com.softwaremill.macwire._
+       |import com.softwaremill.macwire.akkasupport._
+       |import com.typesafe.config._
+       |
+       |@Module
+       |class ${cToPascal(s"${cluster}_${shard}")}Module(system: ActorSystem, config: Config) {
+       |  ${indent(wireClusterShards(root), 2)}
+       |}
+     """.stripMargin.trim
+  }
+
+  def wireClusterShards(root: Node): String = {
+    root.child
+      .filter(_.label == "entity")
+      .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
+      .map(_.\@("name"))
+      .map(x => s"${shard}_${x}s")
+      .map(x => {
+        s"""
+           |lazy val ${cToCamel(x)} = wireActor[${cToPascal(x)}](${cToPascal(x)}.name)
+         """.stripMargin.trim
+      })
+      .reduceOption((l, r) => s"${l}\n\n${r}")
+      .getOrElse("")
   }
 }

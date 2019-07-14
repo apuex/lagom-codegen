@@ -27,12 +27,11 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${implSrcPackage}
        |
-       |import java.util.concurrent.TimeUnit
-       |
        |import akka.cluster.pubsub.DistributedPubSub
        |import ${apiSrcPackage}._
-       |import ${apiSrcPackage}.dao.mysql._
+       |import ${apiSrcPackage}.${dao}.${mysql}._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
+       |import ${apiSrcPackage}.${shard}._
        |import com.lightbend.lagom.scaladsl.client._
        |import com.lightbend.lagom.scaladsl.devmode._
        |import com.lightbend.lagom.scaladsl.server._
@@ -67,6 +66,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    implicit val duration = Duration(config.getString("db.${cToShell(modelDbSchema)}-db.event.query-interval")).asInstanceOf[FiniteDuration]
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
+       |    lazy val clusterModule = wire[${cToPascal(s"${cluster}_${shard}")}Module]
        |    lazy val eventApply = wire[${cToPascal(s"${modelName}_${event}_${apply}")}]
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
@@ -81,11 +81,9 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${implSrcPackage}
        |
-       |import java.util.concurrent.TimeUnit
-       |
        |import akka.cluster.pubsub.DistributedPubSub
        |import ${apiSrcPackage}._
-       |import ${apiSrcPackage}.dao.mysql._
+       |import ${apiSrcPackage}.${dao}.${mysql}._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
        |import com.lightbend.lagom.scaladsl.client._
        |import com.lightbend.lagom.scaladsl.devmode._

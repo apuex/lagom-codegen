@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 
 
 object ProductActor {
-  def props = Props[ProductActor]
+  def props(config: Config) = Props(new ProductActor(config))
   def name: String = "ProductActor"
 }
 
