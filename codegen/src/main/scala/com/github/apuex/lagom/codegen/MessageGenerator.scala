@@ -250,13 +250,6 @@ class MessageGenerator(modelLoader: ModelLoader) {
   def generateEvents(messages: Seq[Message], name: String, messageSrcPackage: String): Seq[String] = {
     messages
       .filter(!_.transient)
-      .filter(x => {
-        val keyFieldNames = x.primaryKey.fields.map(_.name).toSet
-        !x.fields
-          .filter(!_.transient)
-          .filter(x => !keyFieldNames.contains(x.name))
-          .isEmpty
-      })
       .map(x => generateEvent(x, name, messageSrcPackage))
   }
 
