@@ -594,7 +594,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
                |${offsetParser(offsetType)}
                |
                |def selectCurrentOffset()(implicit conn: Connection): ${offsetType} = {
-               |  SQL("SELECT max(${name}.offset) FROM ${modelDbSchema}.${name}").as(offsetParser.single)
+               |  SQL("SELECT max(${name}.offset) as offset FROM ${modelDbSchema}.${name}").as(offsetParser.single)
                |}
      """.stripMargin.trim
           })
