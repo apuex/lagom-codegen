@@ -7,6 +7,7 @@ import akka.actor._
 import akka.event._
 import akka.pattern._
 import akka.persistence._
+import akka.persistence.journal.Tagged
 import akka.util.Timeout._
 import akka.util._
 import com.github.apuex.commerce.sales._
@@ -27,6 +28,8 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
   implicit def requestTimeout: Timeout = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
   implicit def executionContext: ExecutionContext = context.dispatcher
 
+  val tags = Set("all", "product")
+
   var productId: String = ""
   var productName: String = ""
   var productUnit: String = ""
@@ -38,6 +41,8 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
   override def receiveRecover: Receive = {
     case evt: Event =>
       updateState(evt)
+    case Tagged(evt, _)  =>
+      updateStateWithTag(evt)
     case SnapshotOffer(_, x: ProductVo) =>
       productId = x.productId
       productName = x.productName
@@ -53,18 +58,18 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
   override def receiveCommand: Receive = {
     case cmd: CreateProductCmd =>
       val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
-      persist(evt)(updateState)
+      persist(Tagged(evt, tags))(updateStateWithTag)
 
     case _: RetrieveProductCmd =>
       sender() ! ProductVo(productId, productName, productUnit, unitPrice, recordTime, quantitySold, productDesc)
 
     case cmd: UpdateProductCmd =>
       val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
-      persist(evt)(updateState)
+      persist(Tagged(evt, tags))(updateStateWithTag)
 
     case cmd: DeleteProductCmd =>
       val evt = DeleteProductEvent(cmd.userId, cmd.productId)
-      persist(evt)(updateState)
+      persist(Tagged(evt, tags))(updateStateWithTag)
 
     case _: GetProductSalesCmd =>
       sender() ! ProductSalesVo(productId, recordTime, quantitySold)
@@ -78,36 +83,41 @@ class ProductActor (config: Config) extends PersistentActor with ActorLogging {
 
     case cmd: ChangeProductNameCmd =>
       val evt = ChangeProductNameEvent(cmd.userId, cmd.productId, cmd.productName)
-      persist(evt)(updateState)
+      persist(Tagged(evt, tags))(updateStateWithTag)
 
     case _: GetProductUnitCmd =>
       sender() ! ProductUnitVo(productId, productUnit)
 
     case cmd: ChangeProductUnitCmd =>
       val evt = ChangeProductUnitEvent(cmd.userId, cmd.productId, cmd.productUnit)
-      persist(evt)(updateState)
+      persist(Tagged(evt, tags))(updateStateWithTag)
 
     case _: GetUnitPriceCmd =>
       sender() ! UnitPriceVo(productId, unitPrice)
 
     case cmd: ChangeUnitPriceCmd =>
       val evt = ChangeUnitPriceEvent(cmd.userId, cmd.productId, cmd.unitPrice)
-      persist(evt)(updateState)
+      persist(Tagged(evt, tags))(updateStateWithTag)
 
     case _: GetProductDescCmd =>
       sender() ! ProductDescVo(productId, productDesc)
 
     case cmd: ChangeProductDescCmd =>
       val evt = ChangeProductDescEvent(cmd.userId, cmd.productId, cmd.productDesc)
-      persist(evt)(updateState)
+      persist(Tagged(evt, tags))(updateStateWithTag)
 
     case evt: ProductEvent =>
-      persist(evt)(updateState)
+      persist(Tagged(evt, tags))(updateStateWithTag)
 
     case x => log.info("UNHANDLED: {} {}", this, x)
   }
 
-  private def updateState: (Event => Unit) = {
+  private def updateStateWithTag: (Any => Unit) = {
+    case Tagged(x, _) => updateState(x)
+    case x => updateState(x)
+  }
+
+  private def updateState: (Any => Unit) = {
     case evt: CreateProductEvent =>
       productId = evt.productId
       productName = evt.productName

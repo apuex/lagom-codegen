@@ -526,7 +526,7 @@ class SalesServiceImpl (clusterShardingModule: ClusterShardingModule,
 
         val eventSource = readJournal
           .eventsByTag(
-            "sales",
+            "all",
             offset
               .map(x => {
                 if (x.matches("^[\\+\\-]{0,1}[0-9]+$")) Offset.sequence(x.toLong)

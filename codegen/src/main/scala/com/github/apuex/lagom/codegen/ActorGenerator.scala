@@ -48,6 +48,7 @@ class ActorGenerator(modelLoader: ModelLoader) {
          |import akka.event._
          |import akka.pattern._
          |import akka.persistence._
+         |import akka.persistence.journal.Tagged
          |import akka.util.Timeout._
          |import akka.util._
          |import ${messageSrcPackage}._
@@ -68,11 +69,15 @@ class ActorGenerator(modelLoader: ModelLoader) {
          |  implicit def requestTimeout: Timeout = Duration(config.getString("db.${cToShell(modelDbSchema)}-db.event.query-interval")).asInstanceOf[FiniteDuration]
          |  implicit def executionContext: ExecutionContext = context.dispatcher
          |
+         |  val tags = Set("all", "${cToShell(name)}")
+         |
          |  ${indent(defEntityFields(fields), 2)}
          |
          |  override def receiveRecover: Receive = {
          |    case evt: Event =>
          |      updateState(evt)
+         |    case Tagged(evt, _)  =>
+         |      updateStateWithTag(evt)
          |    case SnapshotOffer(_, x: ${cToPascal(name)}Vo) =>
          |      ${indent(updateFields(fields, "x"), 6)}
          |    case _: RecoveryCompleted =>
@@ -83,12 +88,17 @@ class ActorGenerator(modelLoader: ModelLoader) {
          |    ${indent(commandPatterns(aggregate), 4)}
          |
          |    case evt: ${cToPascal(name)}Event =>
-         |      persist(evt)(updateState)
+         |      persist(Tagged(evt, tags))(updateStateWithTag)
          |
          |    case x => log.info("UNHANDLED: {} {}", this, x)
          |  }
          |
-         |  private def updateState: (Event => Unit) = {
+         |  private def updateStateWithTag: (Any => Unit) = {
+         |    case Tagged(x, _) => updateState(x)
+         |    case x => updateState(x)
+         |  }
+         |
+         |  private def updateState: (Any => Unit) = {
          |    ${indent(eventPatterns(aggregate), 4)}
          |
          |    case x => log.info("UN-UPDATED: {} {}", this, x)

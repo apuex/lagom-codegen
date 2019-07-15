@@ -375,7 +375,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |
        |      val eventSource = readJournal
        |        .eventsByTag(
-       |          "${cToShell(modelName)}",
+       |          "all",
        |          offset
        |            .map(x => {
        |              if (x.matches("^[\\\\+\\\\-]{0,1}[0-9]+$$")) Offset.sequence(x.toLong)

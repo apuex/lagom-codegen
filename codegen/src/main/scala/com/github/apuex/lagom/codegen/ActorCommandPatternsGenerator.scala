@@ -40,7 +40,7 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
       s"""
          |${updateFields(nonKeyTransientFields, "cmd")}
          |val evt = Update${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-         |persist(evt)(updateState)
+         |persist(Tagged(evt, tags))(updateStateWithTag)
      """.stripMargin.trim
     }
 
@@ -59,7 +59,7 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
         s"""
            |${indent(addToField(field, "cmd."), 2)}
            |val evt = Add${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-           |persist(evt)(updateState)
+           |persist(Tagged(evt, tags))(updateStateWithTag)
      """.stripMargin.trim
       }
       val removeOp = if (nonKeyPersistFields.isEmpty) {
@@ -70,7 +70,7 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
         s"""
            |${indent(removeFromField(field, "cmd."), 2)}
            |val evt = Remove${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-           |persist(evt)(updateState)
+           |persist(Tagged(evt, tags))(updateStateWithTag)
      """.stripMargin.trim
       }
       val changeOp = if (nonKeyPersistFields.isEmpty) {
@@ -81,7 +81,7 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
         s"""
            |${indent(updateFields(nonKeyTransientFields, "cmd"), 2)}
            |val evt = Change${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-           |persist(evt)(updateState)
+           |persist(Tagged(evt, tags))(updateStateWithTag)
      """.stripMargin.trim
       }
 
@@ -178,7 +178,7 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
         s"""
            |${indent(updateFields(transientFields, "cmd"), 2)}
            |val evt = ${cToPascal(message.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-           |persist(evt)(updateState)
+           |persist(Tagged(evt, tags))(updateStateWithTag)
      """.stripMargin.trim
     }
     s"""
@@ -200,7 +200,7 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
       s"""
          |case cmd: Create${cToPascal(name)}Cmd =>
          |  val evt = Create${cToPascal(name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-         |  persist(evt)(updateState)
+         |  persist(Tagged(evt, tags))(updateStateWithTag)
      """.stripMargin.trim,
       s"""
          |case _: Retrieve${cToPascal(name)}Cmd =>
@@ -212,12 +212,12 @@ class ActorCommandPatternsGenerator(modelLoader: ModelLoader) {
         s"""
            |case cmd: Update${cToPascal(name)}Cmd =>
            |  val evt = Update${cToPascal(name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-           |  persist(evt)(updateState)
+           |  persist(Tagged(evt, tags))(updateStateWithTag)
      """.stripMargin.trim,
       s"""
          |case cmd: Delete${cToPascal(name)}Cmd =>
          |  val evt = Delete${cToPascal(name)}Event(${substituteMethodParams(userField +: primaryKey.fields, "cmd")})
-         |  persist(evt)(updateState)
+         |  persist(Tagged(evt, tags))(updateStateWithTag)
      """.stripMargin.trim
     )
   }
