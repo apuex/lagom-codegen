@@ -27,10 +27,13 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${implSrcPackage}
        |
+       |import java.util.UUID
+       |
        |import akka.cluster.pubsub.DistributedPubSub
-       |import akka.persistence.query.PersistenceQuery
        |import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
+       |import akka.persistence.query.{Offset, PersistenceQuery}
        |import akka.persistence.query.scaladsl.EventsByTagQuery
+       |import akka.stream.ActorMaterializer
        |import ${apiSrcPackage}._
        |import ${apiSrcPackage}.${dao}.${mysql}._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
@@ -41,6 +44,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |import com.softwaremill.macwire._
        |import play.api.db._
        |import play.api.libs.ws.ahc._
+       |import scalapb.GeneratedMessage
        |
        |import scala.concurrent.duration.{Duration, FiniteDuration}
        |
@@ -74,7 +78,24 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    lazy val queryEventApply = wire[${cToPascal(s"${modelName}_${query}_${event}_${apply}")}]
        |    lazy val readJournal: EventsByTagQuery = PersistenceQuery(actorSystem)
        |      .readJournalFor[LeveldbReadJournal](LeveldbReadJournal.Identifier)
+       |    implicit val actorMaterializer = ActorMaterializer()(actorSystem)
+       |
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
+       |
+       |    val offset: Option[String] = None
+       |    readJournal
+       |      .eventsByTag(
+       |        "all",
+       |        offset
+       |          .map(x => {
+       |            if (x.matches("^[\\\\+\\\\-]{0,1}[0-9]+$$")) Offset.sequence(x.toLong)
+       |            else Offset.timeBasedUUID(UUID.fromString(x))
+       |          })
+       |          .getOrElse(Offset.noOffset)
+       |      )
+       |      .filter(ee => ee.event.isInstanceOf[GeneratedMessage])
+       |      .map(ee => ee.event.asInstanceOf[GeneratedMessage])
+       |      .runForeach(queryEventApply.on)(actorMaterializer)
        |  }
        |
        |}
