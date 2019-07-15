@@ -19,15 +19,14 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    val content = generateServiceImpl()
     save(
-      s"${cToPascal(s"${modelName}_${event}_${apply}")}.scala",
-      content,
+      s"${cToPascal(s"${modelName}_${query}_${event}_${apply}")}.scala",
+      generateServiceImpl(crudImplSrcPackage),
       crudImplSrcDir
     )
   }
 
-  def generateServiceImpl(): String = {
+  def generateServiceImpl(srcPackage: String): String = {
     val constructorParams = (
       xml.child.filter(_.label == "entity").map(_.\@("name"))
         .map(x => s"${cToCamel(x)}Dao: ${cToPascal(x)}Dao") ++
@@ -44,7 +43,7 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
        |/*****************************************************
        | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
        | *****************************************************/
-       |package ${crudImplSrcPackage}
+       |package ${srcPackage}
        |
        |import java.sql.Connection
        |import java.util.Date
@@ -58,7 +57,7 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
        |import com.github.apuex.springbootsolution.runtime.DateFormat._
        |import play.api.db.Database
        |
-       |class ${cToPascal(s"${modelName}_${event}_${apply}")}(${indent(constructorParams, 2)}) {
+       |class ${cToPascal(s"${modelName}_${query}_${event}_${apply}")}(${indent(constructorParams, 2)}) {
        |
        |  def on(ee: EventEnvelope): Any = {
        |    db.withTransaction { implicit c =>

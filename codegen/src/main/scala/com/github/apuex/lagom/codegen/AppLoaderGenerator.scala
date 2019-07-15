@@ -70,7 +70,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
        |    lazy val clusterModule = wire[${cToPascal(s"${cluster}_${shard}")}Module]
-       |    lazy val eventApply = wire[${cToPascal(s"${modelName}_${event}_${apply}")}]
+       |    lazy val domainEventApply = wire[${cToPascal(s"${modelName}_${domain}_${event}_${apply}")}]
+       |    lazy val queryEventApply = wire[${cToPascal(s"${modelName}_${query}_${event}_${apply}")}]
        |    lazy val readJournal: EventsByTagQuery = PersistenceQuery(actorSystem)
        |      .readJournalFor[LeveldbReadJournal](LeveldbReadJournal.Identifier)
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
@@ -124,7 +125,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    implicit val duration = Duration(config.getString("db.${cToShell(modelDbSchema)}-db.event.query-interval")).asInstanceOf[FiniteDuration]
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
-       |    lazy val eventApply = wire[${cToPascal(s"${modelName}_${event}_${apply}")}]
+       |    lazy val eventApply = wire[${cToPascal(s"${modelName}_${query}_${event}_${apply}")}]
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
        |

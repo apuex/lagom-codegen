@@ -18,20 +18,19 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    val content = generateServiceImpl()
     save(
       s"${cToPascal(s"${modelName}_${service}_${impl}")}.scala",
-      content,
+      generateServiceImpl(),
       crudImplSrcDir
     )
   }
 
-  def generateServiceImpl(): String = {
+  def generateServiceImpl(srcPackage: String = crudImplSrcPackage): String = {
     val constructorParams = (
       xml.child.filter(_.label == "entity").map(_.\@("name"))
         .map(x => s"${cToCamel(x)}Dao: ${cToPascal(x)}Dao") ++
         Seq(
-          s"eventApply: ${cToPascal(s"${modelName}_${event}_${apply}")}",
+          s"eventApply: ${cToPascal(s"${modelName}_${query}_${event}_${apply}")}",
           "publishQueue: String",
           "mediator: ActorRef",
           "duration: FiniteDuration",
@@ -45,7 +44,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |/*****************************************************
        | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
        | *****************************************************/
-       |package ${crudImplSrcPackage}
+       |package ${srcPackage}
        |
        |import java.util.Date
        |

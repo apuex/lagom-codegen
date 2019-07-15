@@ -16,17 +16,22 @@ object CqrsEventsAppGenerator {
 class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
 
   import modelLoader._
+  val crudGen = CrudEventsAppGenerator(modelLoader)
 
   def generate(): Unit = {
-    val content = generateServiceImpl()
     save(
-      s"${cToPascal(s"${modelName}_${event}_${apply}")}.scala",
-      content,
+      s"${cToPascal(s"${modelName}_${domain}_${event}_${apply}")}.scala",
+      generateServiceImpl(implSrcPackage),
+      implSrcDir
+    )
+    save(
+      s"${cToPascal(s"${modelName}_${query}_${event}_${apply}")}.scala",
+      crudGen.generateServiceImpl(implSrcPackage),
       implSrcDir
     )
   }
 
-  def generateServiceImpl(): String = {
+  def generateServiceImpl(srcPackage: String): String = {
     val constructorParams = Seq(
       "clusterShardingModule: ClusterShardingModule",
       "publishQueue: String",
@@ -39,7 +44,7 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
        |/*****************************************************
        | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
        | *****************************************************/
-       |package ${crudImplSrcPackage}
+       |package ${srcPackage}
        |
        |import akka.actor._
        |import akka.cluster.pubsub.DistributedPubSubMediator._
@@ -49,7 +54,7 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
        |import com.github.apuex.events.play.EventEnvelope
        |
        |
-       |class ${cToPascal(s"${modelName}_${event}_${apply}")}(${indent(constructorParams, 2)}) {
+       |class ${cToPascal(s"${modelName}_${domain}_${event}_${apply}")}(${indent(constructorParams, 2)}) {
        |
        |  import clusterShardingModule._
        |

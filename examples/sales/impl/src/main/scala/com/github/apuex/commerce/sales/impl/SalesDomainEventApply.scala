@@ -11,7 +11,7 @@ import com.github.apuex.commerce.sales.sharding._
 import com.github.apuex.events.play.EventEnvelope
 
 
-class SalesEventApply(clusterShardingModule: ClusterShardingModule,
+class SalesDomainEventApply(clusterShardingModule: ClusterShardingModule,
   publishQueue: String,
   mediator: ActorRef) {
 

@@ -41,7 +41,7 @@ object SalesAppLoader {
     implicit val duration = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
     lazy val mediator = DistributedPubSub(actorSystem).mediator
     lazy val daoModule = wire[DaoModule]
-    lazy val eventApply = wire[SalesEventApply]
+    lazy val eventApply = wire[SalesQueryEventApply]
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
   }
 

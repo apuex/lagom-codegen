@@ -31,7 +31,7 @@ import scala.concurrent.duration.FiniteDuration
 
 class SalesServiceImpl (clusterShardingModule: ClusterShardingModule,
   daoModule: DaoModule,
-  eventApply: SalesEventApply,
+  eventApply: SalesDomainEventApply,
   publishQueue: String,
   mediator: ActorRef,
   duration: FiniteDuration,

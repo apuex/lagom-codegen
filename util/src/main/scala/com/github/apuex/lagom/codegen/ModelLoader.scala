@@ -371,6 +371,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val apply: String = "apply"
   val api = "api"
   val domain = "domain"
+  val query = "query"
   val cluster = "cluster"
   val shard = "sharding"
   val dao = "dao"

@@ -46,7 +46,8 @@ object SalesAppLoader {
     lazy val mediator = DistributedPubSub(actorSystem).mediator
     lazy val daoModule = wire[DaoModule]
     lazy val clusterModule = wire[ClusterShardingModule]
-    lazy val eventApply = wire[SalesEventApply]
+    lazy val domainEventApply = wire[SalesDomainEventApply]
+    lazy val queryEventApply = wire[SalesQueryEventApply]
     lazy val readJournal: EventsByTagQuery = PersistenceQuery(actorSystem)
       .readJournalFor[LeveldbReadJournal](LeveldbReadJournal.Identifier)
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])

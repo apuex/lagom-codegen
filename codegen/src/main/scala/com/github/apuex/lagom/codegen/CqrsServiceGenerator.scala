@@ -22,16 +22,16 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
   def generate(): Unit = {
     save(
       s"${cToPascal(s"${modelName}_${service}_${impl}")}.scala",
-      generateServiceImpl(),
+      generateServiceImpl(implSrcPackage),
       implSrcDir
     )
   }
 
-  def generateServiceImpl(): String = {
+  def generateServiceImpl(srcPackage: String): String = {
     val constructorParams = Seq(
       "clusterShardingModule: ClusterShardingModule",
       "daoModule: DaoModule",
-      s"eventApply: ${cToPascal(s"${modelName}_${event}_${apply}")}",
+      s"eventApply: ${cToPascal(s"${modelName}_${domain}_${event}_${apply}")}",
       "publishQueue: String",
       "mediator: ActorRef",
       "duration: FiniteDuration",
@@ -45,7 +45,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |/*****************************************************
        | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
        | *****************************************************/
-       |package ${crudImplSrcPackage}
+       |package ${srcPackage}
        |
        |import java.util.{Date, UUID}
        |

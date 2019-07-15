@@ -15,7 +15,7 @@ import com.github.apuex.events.play.EventEnvelope
 import com.github.apuex.springbootsolution.runtime.DateFormat._
 import play.api.db.Database
 
-class SalesEventApply(alarmDao: AlarmDao,
+class SalesQueryEventApply(alarmDao: AlarmDao,
   paymentTypeDao: PaymentTypeDao,
   productDao: ProductDao,
   orderDao: OrderDao,
