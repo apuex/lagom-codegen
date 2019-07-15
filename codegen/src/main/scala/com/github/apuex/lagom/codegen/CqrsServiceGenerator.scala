@@ -35,6 +35,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
       "publishQueue: String",
       "mediator: ActorRef",
       "duration: FiniteDuration",
+      "readJournal: EventsByTagQuery",
       "db: Database"
     )
       .reduceOption((l, r) => s"${l},\n${r}")
@@ -46,26 +47,25 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        | *****************************************************/
        |package ${crudImplSrcPackage}
        |
-       |import java.util.Date
+       |import java.util.{Date, UUID}
        |
        |import akka._
        |import akka.actor._
        |import akka.cluster.pubsub.DistributedPubSubMediator._
        |import akka.pattern.ask
+       |import akka.persistence.query._
+       |import akka.persistence.query.scaladsl.EventsByTagQuery
        |import akka.stream.scaladsl._
        |import akka.stream.{OverflowStrategy, SourceShape}
        |import akka.util.Timeout
        |import ${messageSrcPackage}.ScalapbJson._
        |import ${messageSrcPackage}._
-       |import ${messageSrcPackage}.${shard}._
        |import ${messageSrcPackage}.${dao}.${mysql}._
+       |import ${messageSrcPackage}.${shard}._
        |import com.github.apuex.events.play.EventEnvelope
        |import com.github.apuex.springbootsolution.runtime.DateFormat._
-       |import com.github.apuex.springbootsolution.runtime.FilterPredicate.Clause.{Connection, Predicate}
-       |import com.github.apuex.springbootsolution.runtime.LogicalConnectionType.AND
        |import com.github.apuex.springbootsolution.runtime._
        |import com.google.protobuf.any.Any
-       |import com.google.protobuf.timestamp.Timestamp
        |import com.lightbend.lagom.scaladsl.api._
        |import play.api.db.Database
        |import scalapb.GeneratedMessage
@@ -86,8 +86,6 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |  ${indent(defCurrentEvents(), 2)}
        |
        |  ${indent(defEvents(), 2)}
-       |
-       |  ${indent(defQueryForEvents(), 2)}
        |}
      """.stripMargin.trim
   }
@@ -375,26 +373,26 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |        })
        |        .map(printer.print(_))
        |
-       |      val eventSource = Source.fromIterator(() => new Iterator[Seq[${cToPascal(journalTable)}Vo]] {
-       |        var lastOffset: Option[String] = Some(offset.getOrElse("0"))
-       |
-       |        override def hasNext: Boolean = true
-       |
-       |        override def next(): Seq[${cToPascal(journalTable)}Vo] = db.withTransaction { implicit c =>
-       |          val result = ${cToCamel(journalTable)}Dao.query${cToPascal(journalTable)}(queryForEventsCmd(lastOffset).withOrderBy(Seq(OrderBy("offset", OrderType.ASC))))
-       |          if (!result.isEmpty) {
-       |            lastOffset = Some(result.last.offset.toString)
-       |          }
-       |          result
-       |        }
-       |      })
-       |        .throttle(1, duration)
-       |        .flatMapMerge(2, x => Source(x.toList))
-       |        .map(x => EventEnvelope(
-       |          x.offset.toString,
-       |          x.persistenceId,
-       |          0,
-       |          Some(Any.of(s"type.googleapis.com/$${x.metaData}", x.content)))
+       |      val eventSource = readJournal
+       |        .eventsByTag(
+       |          "${cToShell(modelName)}",
+       |          offset
+       |            .map(x => {
+       |              if (x.matches("^[\\\\+\\\\-]{0,1}[0-9]+$$")) Offset.sequence(x.toLong)
+       |              else Offset.timeBasedUUID(UUID.fromString(x))
+       |            })
+       |            .getOrElse(Offset.noOffset)
+       |        )
+       |        .filter(ee => ee.event.isInstanceOf[GeneratedMessage])
+       |        .map(ee => EventEnvelope(
+       |          ee.offset match {
+       |            case Sequence(value) => value.toString
+       |            case TimeBasedUUID(value) => value.toString
+       |            case x => x.toString
+       |          },
+       |          ee.persistenceId,
+       |          ee.sequenceNr,
+       |          Some(Any.of(s"type.googleapis.com/$${ee.event.getClass.getName}", ee.event.asInstanceOf[GeneratedMessage].toByteString)))
        |        )
        |        .map(printer.print(_))
        |
@@ -417,38 +415,6 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |  }
        |}
     """.stripMargin.trim
-  }
-
-  def defQueryForEvents(): String = {
-    s"""
-       |private def queryForEventsCmd(offset: Option[String]): QueryCommand = {
-       |  QueryCommand(
-       |    Some(
-       |      FilterPredicate(
-       |        Connection(
-       |          LogicalConnectionVo(
-       |            AND,
-       |            Seq(
-       |              FilterPredicate(
-       |                Predicate(
-       |                  LogicalPredicateVo(
-       |                    PredicateType.GT,
-       |                    "offset",
-       |                    Seq("offset")
-       |                  )
-       |                )
-       |              )
-       |            )
-       |          )
-       |        )
-       |      )
-       |    ),
-       |    Map(
-       |      "offset" -> offset.getOrElse("")
-       |    )
-       |  )
-       |}
-     """.stripMargin.trim
   }
 
   private def defPublishCmdOrEvent(transient: Boolean, noPersistFields: Boolean, returnVal: String = ""): String = {

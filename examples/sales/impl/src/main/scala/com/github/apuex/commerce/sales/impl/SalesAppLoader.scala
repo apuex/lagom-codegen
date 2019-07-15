@@ -4,6 +4,9 @@
 package com.github.apuex.commerce.sales.impl
 
 import akka.cluster.pubsub.DistributedPubSub
+import akka.persistence.query.PersistenceQuery
+import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
+import akka.persistence.query.scaladsl.EventsByTagQuery
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao.mysql._
 import com.github.apuex.commerce.sales.impl.SalesAppLoader._
@@ -44,6 +47,8 @@ object SalesAppLoader {
     lazy val daoModule = wire[DaoModule]
     lazy val clusterModule = wire[ClusterShardingModule]
     lazy val eventApply = wire[SalesEventApply]
+    lazy val readJournal: EventsByTagQuery = PersistenceQuery(actorSystem)
+      .readJournalFor[LeveldbReadJournal](LeveldbReadJournal.Identifier)
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
   }
 

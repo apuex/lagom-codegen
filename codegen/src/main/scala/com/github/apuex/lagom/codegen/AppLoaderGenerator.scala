@@ -28,6 +28,9 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |package ${implSrcPackage}
        |
        |import akka.cluster.pubsub.DistributedPubSub
+       |import akka.persistence.query.PersistenceQuery
+       |import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
+       |import akka.persistence.query.scaladsl.EventsByTagQuery
        |import ${apiSrcPackage}._
        |import ${apiSrcPackage}.${dao}.${mysql}._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
@@ -68,6 +71,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    lazy val daoModule = wire[DaoModule]
        |    lazy val clusterModule = wire[${cToPascal(s"${cluster}_${shard}")}Module]
        |    lazy val eventApply = wire[${cToPascal(s"${modelName}_${event}_${apply}")}]
+       |    lazy val readJournal: EventsByTagQuery = PersistenceQuery(actorSystem)
+       |      .readJournalFor[LeveldbReadJournal](LeveldbReadJournal.Identifier)
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |  }
        |
