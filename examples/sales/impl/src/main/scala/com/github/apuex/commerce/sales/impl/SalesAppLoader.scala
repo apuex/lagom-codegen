@@ -58,7 +58,10 @@ object SalesAppLoader {
 
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
 
-    val offset: Option[String] = None
+    val offset: Option[String] = db.withTransaction { implicit c =>
+      Some(daoModule.eventJournalDao.selectCurrentOffset().toString)
+    }
+
     readJournal
       .eventsByTag(
         "all",

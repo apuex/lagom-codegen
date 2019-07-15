@@ -86,6 +86,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
         defMessages(aggregate.messages, aggregate.fields, aggregate.primaryKey) ++
         defEmbeddedAggregateMessages(aggregate.aggregates)
       )
+      .filter(_ != "")
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
 
@@ -117,6 +118,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
       defCrud(name, fields, primaryKey) ++
         defByForeignKeys(name, fields, foreignKeys)
       )
+      .filter(_ != "")
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
     val content =
@@ -178,7 +180,19 @@ class DaoGenerator(modelLoader: ModelLoader) {
          """.stripMargin.trim
     }
 
+    val offset = if(journalTable == name) {
+      fields.filter("offset" == _.name)
+        .map(x => {
+          val offsetType = if("long" == x._type) cToPascal(x._type) else x._type.toUpperCase
+          s"""
+             |def selectCurrentOffset()(implicit conn: Connection): ${offsetType}
+           """.stripMargin.trim
+        })
+        .reduceOption((l, r) => s"${l}\n${r}")
+    } else None
+
     Seq(
+      offset.getOrElse(""),
       s"""
          |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int
      """.stripMargin.trim,

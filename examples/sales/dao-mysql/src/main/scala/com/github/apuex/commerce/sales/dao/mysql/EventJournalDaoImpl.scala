@@ -24,6 +24,16 @@ import com.github.apuex.commerce.sales.dao._
 class EventJournalDaoImpl() extends EventJournalDao {
   val log = Logger.of(getClass)
 
+  private def offsetParser(implicit c: Connection): RowParser[Long] = {
+    get[Long]("offset") map {
+      case offset => offset
+    }
+  }
+  
+  def selectCurrentOffset()(implicit conn: Connection): Long = {
+    SQL("SELECT max(event_journal.offset) FROM sales.event_journal").as(offsetParser.single)
+  }
+
   def createEventJournal(evt: CreateEventJournalEvent)(implicit conn: Connection): Int = {
     val rowsAffected = SQL(s"""
       |UPDATE sales.event_journal

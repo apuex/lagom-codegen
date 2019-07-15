@@ -82,7 +82,10 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |
-       |    val offset: Option[String] = None
+       |    val offset: Option[String] = db.withTransaction { implicit c =>
+       |      Some(daoModule.${cToCamel(journalTable)}Dao.selectCurrentOffset().toString)
+       |    }
+       |
        |    readJournal
        |      .eventsByTag(
        |        "all",

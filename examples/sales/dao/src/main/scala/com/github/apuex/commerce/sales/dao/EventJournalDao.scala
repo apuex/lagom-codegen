@@ -9,6 +9,8 @@ import com.google.protobuf.timestamp.Timestamp
 import java.sql.Connection
 
 trait EventJournalDao {
+  def selectCurrentOffset()(implicit conn: Connection): Long
+
   def createEventJournal(evt: CreateEventJournalEvent)(implicit conn: Connection): Int
 
   def retrieveEventJournal(cmd: RetrieveEventJournalCmd)(implicit conn: Connection): EventJournalVo

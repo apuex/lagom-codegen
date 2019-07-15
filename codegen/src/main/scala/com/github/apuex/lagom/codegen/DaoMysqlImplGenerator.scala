@@ -82,6 +82,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         defMessages(name, persistFields, primaryKey, aggregate.messages) ++
         defEmbeddedAggregateMessages(name, aggregate.aggregates)
       )
+      .filter("" != _)
       .map(indentWithLeftMargin(_, 2))
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
@@ -143,6 +144,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         defSelectByFks(name, fields, foreignKeys) ++
         defDeleteByFks(name, fields, foreignKeys)
       )
+      .filter("" != _)
       .map(indentWithLeftMargin(_, 2))
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
@@ -348,17 +350,17 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     val constructorParam = fields
       .map(x => {
         val required = x.required || keyFieldNames.contains(x.name)
-        if(x.transient) {
+        if (x.transient) {
           if (isJdbcType(x._type)) {
             defaultValue(x._type)
           }
           else if (isEnum(x._type)) s"${cToPascal(x._type)}.fromValue(0)"
           else { // array, map or value object type,
-            if("array" == x._type)
+            if ("array" == x._type)
               s"""
                  |Seq()
            """.stripMargin.trim
-            else if("array" == x._type)
+            else if ("array" == x._type)
               s"""
                  |Map()
            """.stripMargin.trim
@@ -567,6 +569,16 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     fields.filter(x => !generated.contains(x.name))
   }
 
+  def offsetParser(offsetType: String): String = {
+    s"""
+       |private def offsetParser(implicit c: Connection): RowParser[${offsetType}] = {
+       |  get[${offsetType}]("offset") map {
+       |    case offset => offset
+       |  }
+       |}
+     """.stripMargin.trim
+  }
+
   def defCrud(name: String, fields: Seq[Field], primaryKey: PrimaryKey, fks: Seq[ForeignKey]): Seq[String] = {
     val keyFieldNames = primaryKey.fields.map(_.name).toSet
     val persistFields = fields.filter(!_.transient)
@@ -574,7 +586,23 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     if (persistFields.isEmpty) {
       Seq()
     } else {
+      val offset = if (journalTable == name) {
+        fields.filter("offset" == _.name)
+          .map(x => {
+            val offsetType = if("long" == x._type) cToPascal(x._type) else x._type.toUpperCase
+            s"""
+               |${offsetParser(offsetType)}
+               |
+               |def selectCurrentOffset()(implicit conn: Connection): ${offsetType} = {
+               |  SQL("SELECT max(${name}.offset) FROM ${modelDbSchema}.${name}").as(offsetParser.single)
+               |}
+     """.stripMargin.trim
+          })
+          .reduceOption((l, r) => s"${l}\n${r}")
+      } else None
+
       Seq(
+        offset.getOrElse(""),
         s"""
            |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int = {
            |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, persistFields, primaryKey.fields), 2), 2)})
