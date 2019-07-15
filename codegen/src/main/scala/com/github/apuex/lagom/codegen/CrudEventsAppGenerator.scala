@@ -50,28 +50,26 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
        |
        |import akka.actor._
        |import akka.cluster.pubsub.DistributedPubSubMediator._
-       |import ${messageSrcPackage}.ScalapbJson._
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.dao._
-       |import com.github.apuex.events.play.EventEnvelope
        |import com.github.apuex.springbootsolution.runtime.DateFormat._
        |import play.api.db.Database
+       |import scalapb.GeneratedMessage
        |
        |class ${cToPascal(s"${modelName}_${query}_${event}_${apply}")}(${indent(constructorParams, 2)}) {
        |
-       |  def on(ee: EventEnvelope): Any = {
+       |  def on(event: GeneratedMessage): Any = {
        |    db.withTransaction { implicit c =>
-       |      ee.event
-       |        .map(unpack)
-       |        .map({
-       |          case x: Event =>
-       |            ${cToCamel(journalTable)}Dao.createEventJournal(
-       |              Create${cToPascal(journalTable)}Event(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
-       |            )
-       |            dispatch(x)
-       |          case x: ValueObject =>
-       |            mediator ! Publish(publishQueue, x)
-       |        })
+       |      event match {
+       |        case x: Event =>
+       |          ${cToCamel(journalTable)}Dao.createEventJournal(
+       |            Create${cToPascal(journalTable)}Event(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
+       |          )
+       |          dispatch(x)
+       |        case x: ValueObject =>
+       |          mediator ! Publish(publishQueue, x)
+       |        case _ =>
+       |      }
        |    }
        |  }
        |

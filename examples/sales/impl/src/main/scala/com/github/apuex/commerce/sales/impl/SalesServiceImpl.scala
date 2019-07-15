@@ -459,7 +459,8 @@ class SalesServiceImpl (clusterShardingModule: ClusterShardingModule,
       Future.successful({
         val replySource = is
           .map(parseJson)
-          .map(eventApply.on)
+          .map(x => x.event.map(unpack))
+          .map(x => x.map(eventApply.on))
           .filter(_ => false) // to drainage
           .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
 
@@ -506,7 +507,8 @@ class SalesServiceImpl (clusterShardingModule: ClusterShardingModule,
         // reply/confirm to inbound message...
         val replySource = is
           .map(parseJson)
-          .map(eventApply.on)
+          .map(x => x.event.map(unpack))
+          .map(x => x.map(eventApply.on))
           .filter(_ => false) // to drainage
           .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
 

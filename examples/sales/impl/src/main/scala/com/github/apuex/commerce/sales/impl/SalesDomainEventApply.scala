@@ -5,10 +5,9 @@ package com.github.apuex.commerce.sales.impl
 
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSubMediator._
-import com.github.apuex.commerce.sales.ScalapbJson._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.sharding._
-import com.github.apuex.events.play.EventEnvelope
+import scalapb.GeneratedMessage
 
 
 class SalesDomainEventApply(clusterShardingModule: ClusterShardingModule,
@@ -17,15 +16,14 @@ class SalesDomainEventApply(clusterShardingModule: ClusterShardingModule,
 
   import clusterShardingModule._
 
-  def on(ee: EventEnvelope): Any = {
-    ee.event
-      .map(unpack)
-      .map({
-        case x: Event =>
-          dispatch(x)
-        case x: ValueObject =>
-          mediator ! Publish(publishQueue, x)
-      })
+  def on(event: GeneratedMessage): Any = {
+    event match {
+      case x: Event =>
+        dispatch(x)
+      case x: ValueObject =>
+        mediator ! Publish(publishQueue, x)
+      case _ =>
+    }
   }
 
   def dispatch(msg: Any): Any = msg match {

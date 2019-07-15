@@ -8,12 +8,11 @@ import java.util.Date
 
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSubMediator._
-import com.github.apuex.commerce.sales.ScalapbJson._
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
-import com.github.apuex.events.play.EventEnvelope
 import com.github.apuex.springbootsolution.runtime.DateFormat._
 import play.api.db.Database
+import scalapb.GeneratedMessage
 
 class SalesQueryEventApply(alarmDao: AlarmDao,
   paymentTypeDao: PaymentTypeDao,
@@ -25,19 +24,18 @@ class SalesQueryEventApply(alarmDao: AlarmDao,
   mediator: ActorRef,
   db: Database) {
 
-  def on(ee: EventEnvelope): Any = {
+  def on(event: GeneratedMessage): Any = {
     db.withTransaction { implicit c =>
-      ee.event
-        .map(unpack)
-        .map({
-          case x: Event =>
-            eventJournalDao.createEventJournal(
-              CreateEventJournalEvent(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
-            )
-            dispatch(x)
-          case x: ValueObject =>
-            mediator ! Publish(publishQueue, x)
-        })
+      event match {
+        case x: Event =>
+          eventJournalDao.createEventJournal(
+            CreateEventJournalEvent(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
+          )
+          dispatch(x)
+        case x: ValueObject =>
+          mediator ! Publish(publishQueue, x)
+        case _ =>
+      }
     }
   }
 

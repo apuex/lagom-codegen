@@ -48,25 +48,23 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
        |
        |import akka.actor._
        |import akka.cluster.pubsub.DistributedPubSubMediator._
-       |import ${messageSrcPackage}.ScalapbJson._
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.${shard}._
-       |import com.github.apuex.events.play.EventEnvelope
+       |import scalapb.GeneratedMessage
        |
        |
        |class ${cToPascal(s"${modelName}_${domain}_${event}_${apply}")}(${indent(constructorParams, 2)}) {
        |
        |  import clusterShardingModule._
        |
-       |  def on(ee: EventEnvelope): Any = {
-       |    ee.event
-       |      .map(unpack)
-       |      .map({
-       |        case x: Event =>
-       |          dispatch(x)
-       |        case x: ValueObject =>
-       |          mediator ! Publish(publishQueue, x)
-       |      })
+       |  def on(event: GeneratedMessage): Any = {
+       |    event match {
+       |      case x: Event =>
+       |        dispatch(x)
+       |      case x: ValueObject =>
+       |        mediator ! Publish(publishQueue, x)
+       |      case _ =>
+       |    }
        |  }
        |
        |  def dispatch(msg: Any): Any = msg match {
