@@ -3,17 +3,19 @@
  *****************************************************/
 package com.github.apuex.commerce.sales.impl
 
-import java.util.UUID
+import java.util.{Date, UUID}
 
 import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
-import akka.persistence.query.{Offset, PersistenceQuery}
 import akka.persistence.query.scaladsl.EventsByTagQuery
+import akka.persistence.query.{Offset, PersistenceQuery}
 import akka.stream.ActorMaterializer
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao.mysql._
 import com.github.apuex.commerce.sales.impl.SalesAppLoader._
 import com.github.apuex.commerce.sales.sharding._
+import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
 import com.lightbend.lagom.scaladsl.client._
 import com.lightbend.lagom.scaladsl.devmode._
 import com.lightbend.lagom.scaladsl.server._
@@ -80,8 +82,20 @@ object SalesAppLoader {
           .getOrElse(Offset.noOffset)
       )
       .filter(ee => ee.event.isInstanceOf[GeneratedMessage])
-      .map(ee => ee.event.asInstanceOf[GeneratedMessage])
-      .runForeach(queryEventApply.on)(actorMaterializer)
+      .runForeach(ee => {
+          db.withTransaction { implicit c =>
+            ee.event match {
+              case x: Event =>
+                daoModule.eventJournalDao.createEventJournal(
+                  CreateEventJournalEvent(x.userId, ee.offset.toString.toLong, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+                )
+                queryEventApply.dispatch(x)
+              case x: ValueObject =>
+                mediator ! Publish(publishQueue, x)
+              case _ =>
+            }
+          }
+      })(actorMaterializer)
   }
 
 }
