@@ -18,6 +18,7 @@ import com.lightbend.lagom.scaladsl.client._
 import com.lightbend.lagom.scaladsl.devmode._
 import com.lightbend.lagom.scaladsl.server._
 import com.softwaremill.macwire._
+import play.api.Logger
 import play.api.db._
 import play.api.libs.ws.ahc._
 import scalapb.GeneratedMessage
@@ -43,6 +44,8 @@ object SalesAppLoader {
       with DBComponents
       with HikariCPComponents {
 
+    val logger = Logger(classOf[SalesAppLoader])
+
     // Bind the service that this server provides
     lazy val db = dbApi.database("sales-db")
     lazy val publishQueue = "instant-event-publish-queue"
@@ -60,6 +63,10 @@ object SalesAppLoader {
 
     val offset: Option[String] = db.withTransaction { implicit c =>
       Some(daoModule.eventJournalDao.selectCurrentOffset().toString)
+    }
+
+    if(logger.isInfoEnabled) {
+      offset.map(x => logger.info(s"Starting from offset=${x}"))
     }
 
     readJournal

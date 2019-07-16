@@ -42,6 +42,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |import com.lightbend.lagom.scaladsl.devmode._
        |import com.lightbend.lagom.scaladsl.server._
        |import com.softwaremill.macwire._
+       |import play.api.Logger
        |import play.api.db._
        |import play.api.libs.ws.ahc._
        |import scalapb.GeneratedMessage
@@ -67,6 +68,8 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |      with DBComponents
        |      with HikariCPComponents {
        |
+       |    val logger = Logger(classOf[SalesAppLoader])
+       |
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
        |    lazy val publishQueue = "instant-event-publish-queue"
@@ -86,6 +89,9 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |      Some(daoModule.${cToCamel(journalTable)}Dao.selectCurrentOffset().toString)
        |    }
        |
+       |    if(logger.isInfoEnabled) {
+       |      offset.map(x => logger.info(s"Starting from offset=$${x}"))
+       |    }
        |    readJournal
        |      .eventsByTag(
        |        "all",

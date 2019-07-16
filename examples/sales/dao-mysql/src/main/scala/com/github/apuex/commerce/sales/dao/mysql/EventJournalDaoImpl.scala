@@ -31,7 +31,12 @@ class EventJournalDaoImpl() extends EventJournalDao {
   }
   
   def selectCurrentOffset()(implicit conn: Connection): Long = {
-    SQL("SELECT max(event_journal.offset) as offset FROM sales.event_journal").as(offsetParser.single)
+    try {
+      val max = SQL("SELECT max(event_journal.offset) as offset FROM sales.event_journal").as(offsetParser.*)
+      if (max.isEmpty) 0 else max.head
+    } catch {
+      case _ => 0
+    }
   }
 
   def createEventJournal(evt: CreateEventJournalEvent)(implicit conn: Connection): Int = {
