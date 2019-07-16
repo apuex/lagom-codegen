@@ -9,7 +9,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
 import akka.persistence.query.scaladsl.EventsByTagQuery
-import akka.persistence.query.{Offset, PersistenceQuery}
+import akka.persistence.query._
 import akka.stream.ActorMaterializer
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao.mysql._
@@ -87,7 +87,9 @@ object SalesAppLoader {
             ee.event match {
               case x: Event =>
                 daoModule.eventJournalDao.createEventJournal(
-                  CreateEventJournalEvent(x.userId, ee.offset.toString.toLong, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+                  CreateEventJournalEvent(x.userId, ee.offset match {
+                    case Sequence(x) => x
+                  }, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
                 )
                 queryEventApply.dispatch(x)
               case x: ValueObject =>

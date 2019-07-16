@@ -66,7 +66,7 @@ ALTER TABLE sales.product ADD CONSTRAINT product_pk PRIMARY KEY(product_id);
 
 ALTER TABLE sales.order ADD CONSTRAINT order_pk PRIMARY KEY(order_id);
 
-ALTER TABLE sales.event_journal ADD INDEX event_pk(offset), MODIFY offset BIGINT NOT NULL AUTO_INCREMENT;
+ALTER TABLE sales.event_journal ADD CONSTRAINT event_pk PRIMARY KEY(offset);
 
 ALTER TABLE sales.order_item ADD CONSTRAINT order_item_order_fk FOREIGN KEY(order_id) REFERENCES sales.order(order_id);
 

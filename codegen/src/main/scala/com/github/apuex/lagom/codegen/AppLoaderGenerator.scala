@@ -33,7 +33,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |import akka.cluster.pubsub.DistributedPubSubMediator.Publish
        |import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
        |import akka.persistence.query.scaladsl.EventsByTagQuery
-       |import akka.persistence.query.{Offset, PersistenceQuery}
+       |import akka.persistence.query._
        |import akka.stream.ActorMaterializer
        |import ${apiSrcPackage}._
        |import ${apiSrcPackage}.${dao}.${mysql}._
@@ -111,7 +111,9 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |            ee.event match {
        |              case x: Event =>
        |                daoModule.${cToCamel(journalTable)}Dao.createEventJournal(
-       |                  Create${cToPascal(journalTable)}Event(x.userId, ee.offset.toString.toLong, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+       |                  Create${cToPascal(journalTable)}Event(x.userId, ee.offset match {
+       |                    case Sequence(x) => x
+       |                  }, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
        |                )
        |                queryEventApply.dispatch(x)
        |              case x: ValueObject =>

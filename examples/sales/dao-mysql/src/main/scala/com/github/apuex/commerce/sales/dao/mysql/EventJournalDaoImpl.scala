@@ -60,11 +60,13 @@ class EventJournalDaoImpl() extends EventJournalDao {
     if(rowsAffected == 0)
       SQL(s"""
         |INSERT INTO sales.event_journal(
+        |    event_journal.offset,
         |    event_journal.persistence_id,
         |    event_journal.occurred_time,
         |    event_journal.meta_data,
         |    event_journal.content
         |  ) VALUES (
+        |    {offset},
         |    {persistenceId},
         |    {occurredTime},
         |    {metaData},
