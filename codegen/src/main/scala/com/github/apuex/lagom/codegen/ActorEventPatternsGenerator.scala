@@ -104,7 +104,7 @@ class ActorEventPatternsGenerator(modelLoader: ModelLoader) {
     else
       s"""
          |case evt: ${cToPascal(message.name)}Event =>
-         |  ${indent(updateFields(message.fields.filter(x => derived.contains(x.name)), "evt"), 2)}
+         |  ${indent(updateFields(message.fields.filter(x => (if(message.creator) key.contains(x.name) else false) || derived.contains(x.name)), "evt"), 2)}
          |  ${replyVal}
      """.stripMargin.trim
   }

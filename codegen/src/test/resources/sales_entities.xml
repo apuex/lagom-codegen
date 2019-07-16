@@ -14,7 +14,7 @@
       <field name="alarm_id"/>
       <field name="alarm_begin"/>
     </primaryKey>
-    <message name="begin_alarm">
+    <message name="begin_alarm" creator="true">
       <field name="alarm_desc"/>
     </message>
     <message name="end_alarm">

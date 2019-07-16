@@ -98,6 +98,8 @@ class AlarmActor (config: Config) extends PersistentActor with ActorLogging {
     case _: DeleteAlarmEvent =>
 
     case evt: BeginAlarmEvent =>
+      alarmId = evt.alarmId
+      alarmBegin = evt.alarmBegin
       alarmDesc = evt.alarmDesc
 
     case evt: EndAlarmEvent =>
