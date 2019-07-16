@@ -2,6 +2,7 @@ package com.github.apuex.lagom.codegen
 
 import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
+import com.github.apuex.springbootsolution.runtime.TextUtils._
 
 object AppLoaderGenerator {
   def apply(fileName: String): AppLoaderGenerator = new AppLoaderGenerator(ModelLoader(fileName))
@@ -112,7 +113,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |              case x: Event =>
        |                daoModule.${cToCamel(journalTable)}Dao.createEventJournal(
        |                  Create${cToPascal(journalTable)}Event(x.userId, ee.offset match {
-       |                    case Sequence(x) => x
+       |                    ${indent(offsetPattern(), 20)}
        |                  }, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
        |                )
        |                queryEventApply.dispatch(x)
@@ -190,5 +191,26 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
       crudAppLoader,
       crudImplSrcDir
     )
+  }
+
+  def offsetPattern(): String = {
+    xml.child.filter(x => "entity" == x.label && journalTable == x.\@("name"))
+      .flatMap(_.child.filter(x => x.label == "field" && "offset" == x.\@("name")))
+      .map(x => x.\@("type") match {
+        case "long" =>
+          s"""
+             |case Sequence(x) => x
+             |// case TimeBasedUUID(x) => x
+           """.stripMargin.trim
+
+        case "uuid" =>
+          s"""
+             |// case Sequence(x) => x
+             |case TimeBasedUUID(x) => x
+           """.stripMargin.trim
+
+      })
+      .reduceOption((l, r) => s"${l}\n${r}")
+      .getOrElse("")
   }
 }

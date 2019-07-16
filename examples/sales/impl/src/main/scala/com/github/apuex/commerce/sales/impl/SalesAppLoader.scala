@@ -89,6 +89,7 @@ object SalesAppLoader {
                 daoModule.eventJournalDao.createEventJournal(
                   CreateEventJournalEvent(x.userId, ee.offset match {
                     case Sequence(x) => x
+                    // case TimeBasedUUID(x) => x
                   }, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
                 )
                 queryEventApply.dispatch(x)

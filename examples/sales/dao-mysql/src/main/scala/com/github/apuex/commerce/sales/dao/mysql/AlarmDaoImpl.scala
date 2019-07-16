@@ -10,6 +10,7 @@ import java.util.Date
 import anorm.ParameterValue._
 import anorm.SqlParser._
 import anorm._
+import com.datastax.driver.core.utils.UUIDs
 import play._
 import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, toScalapbTimestamp}
 import com.github.apuex.springbootsolution.runtime.EnumConvert._

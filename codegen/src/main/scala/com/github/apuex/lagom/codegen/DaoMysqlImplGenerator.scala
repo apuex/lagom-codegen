@@ -101,6 +101,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |import anorm.ParameterValue._
          |import anorm.SqlParser._
          |import anorm._
+         |import com.datastax.driver.core.utils.UUIDs
          |import play._
          |import com.github.apuex.springbootsolution.runtime.DateFormat.{scalapbToDate, toScalapbTimestamp}
          |import com.github.apuex.springbootsolution.runtime.EnumConvert._
@@ -590,6 +591,12 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         fields.filter("offset" == _.name)
           .map(x => {
             val offsetType = if("long" == x._type) cToPascal(x._type) else x._type.toUpperCase
+            val defaultValue = if("long" == x._type)
+              "0"
+            else
+              s"""
+                 |UUIDs.startOf(0)
+              """".stripMargin.trim
             s"""
                |${offsetParser(offsetType)}
                |
@@ -598,7 +605,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
                |    val max = SQL("SELECT max(${name}.offset) as offset FROM ${modelDbSchema}.${name}").as(offsetParser.*)
                |    if (max.isEmpty) 0 else max.head
                |  } catch {
-               |    case _ => 0
+               |    case _ => ${defaultValue}
                |  }
                |}
      """.stripMargin.trim
