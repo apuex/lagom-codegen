@@ -234,6 +234,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
     import aggregate._
     (
       defCrudCalls(transient, name, fields, primaryKey) ++
+        defByForeignKeyCalls(transient, name, fields, foreignKeys) ++
         defMessageCalls(aggregate.messages, name, fields, primaryKey) ++
         defCallsForEmbeddedAggregateMessages(aggregate.name, aggregate.aggregates)
       )
@@ -243,7 +244,10 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
 
   def generateCallsForValueObject(valueObject: ValueObject): String = {
     import valueObject._
-    defCrudCalls(transient, name, fields, primaryKey)
+    (
+      defCrudCalls(transient, name, fields, primaryKey) ++
+        defByForeignKeyCalls(transient, name, fields, foreignKeys)
+      )
       .reduceOption((l, r) => s"${l}\n\n${r}")
       .getOrElse("")
   }
@@ -395,6 +399,47 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |}
      """.stripMargin.trim
       )
+  }
+
+  def defByForeignKeyCalls(transient: Boolean, name: String, fields: Seq[Field], foreignKeys: Seq[ForeignKey]): Seq[String] = {
+    if (transient)
+      Seq()
+    else
+      foreignKeys
+        .map(x => {
+          val fieldNames = x.fields
+            .map(_.name)
+            .toSet
+
+          val fkFields = fields
+            .filter(x => fieldNames.contains(x.name))
+          defByForeignKeyCall(name, fkFields)
+        })
+  }
+
+  def defByForeignKeyCall(name: String, keyFields: Seq[Field]): String = {
+    val by = keyFields
+      .map(x => cToPascal(x.name))
+      .reduceOption((x, y) => s"${x}${y}")
+      .getOrElse("")
+
+    s"""
+       |def select${cToPascal(name)}By${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, ${cToPascal(name)}ListVo] = ServiceCall { _ =>
+       |  Future.successful(
+       |    db.withTransaction { implicit c =>
+       |       ${cToPascal(name)}ListVo(${cToCamel(name)}Dao.selectBy${by}(${substituteMethodParams(keyFields)}))
+       |    }
+       |  )
+       |}
+       |
+       |def delete${cToPascal(name)}By${by}(${defMethodParams(keyFields)}): ServiceCall[NotUsed, Int] = ServiceCall { _ =>
+       |  Future.successful(
+       |    db.withTransaction { implicit c =>
+       |       ${cToCamel(name)}Dao.deleteBy${by}(${substituteMethodParams(keyFields)})
+       |    }
+       |  )
+       |}
+     """.stripMargin.trim
   }
 
   def defCurrentEvents(): String = {

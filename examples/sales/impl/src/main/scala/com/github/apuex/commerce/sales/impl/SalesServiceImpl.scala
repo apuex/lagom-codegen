@@ -391,6 +391,38 @@ class SalesServiceImpl (clusterShardingModule: ClusterShardingModule,
     )
   }
 
+  def selectOrderItemByOrderId(orderId: String): ServiceCall[NotUsed, OrderItemListVo] = ServiceCall { _ =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         OrderItemListVo(orderItemDao.selectByOrderId(orderId))
+      }
+    )
+  }
+
+  def deleteOrderItemByOrderId(orderId: String): ServiceCall[NotUsed, Int] = ServiceCall { _ =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         orderItemDao.deleteByOrderId(orderId)
+      }
+    )
+  }
+
+  def selectOrderItemByProductId(productId: String): ServiceCall[NotUsed, OrderItemListVo] = ServiceCall { _ =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         OrderItemListVo(orderItemDao.selectByProductId(productId))
+      }
+    )
+  }
+
+  def deleteOrderItemByProductId(productId: String): ServiceCall[NotUsed, Int] = ServiceCall { _ =>
+    Future.successful(
+      db.withTransaction { implicit c =>
+         orderItemDao.deleteByProductId(productId)
+      }
+    )
+  }
+
   def createEventJournal(): ServiceCall[CreateEventJournalCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>

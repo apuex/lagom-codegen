@@ -34,7 +34,7 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
   }
 
   "A ModelLoader" should "load aggregate roots" in {
-    val aggregates = xml.child.filter(_.label == "entity")
+    val aggregates = xml.child.filter(x => x.label == "entity" && x.\@("name") == "alarm")
       .map(x => {
         if ("" == x.\@("aggregatesTo")) Some(toAggregate(x, xml))
         else None
@@ -48,265 +48,58 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
           "alarm",
           false,
           List(
-            Field("alarm_id", "string", 64, 0, false, "", "", "", "", "", false, false, ""),
-            Field("alarm_begin", "timestamp", 0, 0, false, "", "", "", "", "", false, false, ""),
-            Field("alarm_end", "timestamp", 0, 0, false, "", "", "", "", "", false, false, ""),
-            Field("alarm_desc", "string", 64, 0, false, "", "", "", "", "", false, false, "")
+            Field("alarm_id", "string", 64, 0, true, "", "", "", "", "", false, false, "告警对象ID"),
+            Field("alarm_begin", "timestamp", 0, 0, true, "", "", "", "", "", false, false, "告警发生时间"),
+            Field("alarm_end", "timestamp", 0, 0, false, "", "", "", "", "", false, false, "告警结束时间"),
+            Field("alarm_desc", "string", 64, 0, true, "", "", "", "", "", false, false, "告警描述")
           ),
           List(),
           List(
             Message(
               "begin_alarm",
               List(
-                Field("alarm_id", "string", 64, 0, false, "", "", "", "", "", false, false, ""),
-                Field("alarm_begin", "timestamp", 0, 0, false, "", "", "", "", "", false, false, ""),
-                Field("alarm_desc", "string", 64, 0, false, "", "", "", "", "", false, false, "")
+                Field("alarm_id", "string", 64, 0, true, "", "", "", "", "", false, false, "告警对象ID"),
+                Field("alarm_begin", "timestamp", 0, 0, true, "", "", "", "", "", false, false, "告警发生时间"),
+                Field("alarm_desc", "string", 64, 0, true, "", "", "", "", "", false, false, "告警描述")
               ),
-              PrimaryKey("alarm_pk", List(Field("alarm_id", "string", 64, 0, false, "", "", "", "", "", false, false, ""), Field("alarm_begin", "timestamp", 0, 0, false, "", "", "", "", "", false, false, ""))),
+              PrimaryKey(
+                "alarm_pk",
+                List(
+                  Field("alarm_id", "string", 64, 0, true, "", "", "", "", "", false, false, "告警对象ID"),
+                  Field("alarm_begin", "timestamp", 0, 0, true, "", "", "", "", "", false, false, "告警发生时间")
+                ),
+                false
+              ),
               false,
               ""
             ),
             Message(
               "end_alarm",
               List(
-                Field("alarm_id", "string", 64, 0, false, "", "", "", "", "", false, false, ""),
-                Field("alarm_begin", "timestamp", 0, 0, false, "", "", "", "", "", false, false, ""),
-                Field("alarm_end", "timestamp", 0, 0, false, "", "", "", "", "", false, false, ""),
-                Field("alarm_desc", "string", 64, 0, false, "", "", "", "", "", false, false, "")
+                Field("alarm_id", "string", 64, 0, true, "", "", "", "", "", false, false, "告警对象ID"),
+                Field("alarm_begin", "timestamp", 0, 0, true, "", "", "", "", "", false, false, "告警发生时间"),
+                Field("alarm_end", "timestamp", 0, 0, false, "", "", "", "", "", false, false, "告警结束时间"),
+                Field("alarm_desc", "string", 64, 0, true, "", "", "", "", "", false, false, "告警描述")
               ),
-              PrimaryKey("alarm_pk", List(Field("alarm_id", "string", 64, 0, false, "", "", "", "", "", false, false, ""), Field("alarm_begin", "timestamp", 0, 0, false, "", "", "", "", "", false, false, ""))),
+              PrimaryKey(
+                "alarm_pk",
+                List(
+                  Field("alarm_id", "string", 64, 0, true, "", "", "", "", "", false, false, "告警对象ID"),
+                  Field("alarm_begin", "timestamp", 0, 0, true, "", "", "", "", "", false, false, "告警发生时间")
+                ),
+                false
+              ),
               false,
               ""
             )
           ),
-          PrimaryKey("alarm_pk", List(Field("alarm_id", "string", 64, 0, false, "", "", "", "", "", false, false, ""), Field("alarm_begin", "timestamp", 0, 0, false, "", "", "", "", "", false, false, ""))),
-          List(),
-          false
-        ),
-        Aggregate(
-          "payment_type",
-          false,
-          List(
-            Field(
-              "payment_type_id",
-              "int",
-              0,
-              0,
-              false,
-              "",
-              "",
-              "",
-              "",
-              "",
-              false,
-              false,
-              "支付方式代码"
-            ),
-            Field(
-              "payment_type_name",
-              "string",
-              64,
-              0,
-              false,
-              "",
-              "",
-              "",
-              "",
-              "",
-              false,
-              false,
-              "支付方式常量符号"
-            ),
-            Field(
-              "payment_type_label",
-              "string",
-              64,
-              0,
-              false,
-              "",
-              "",
-              "",
-              "",
-              "",
-              false,
-              false,
-              "支付方式文字描述"
-            )
-          ),
-          List(),
-          List(),
           PrimaryKey(
-            "payment_type_pk",
+            "alarm_pk",
             List(
-              Field(
-                "payment_type_id",
-                "int",
-                0,
-                0,
-                false,
-                "",
-                "",
-                "",
-                "",
-                "",
-                false,
-                false,
-                "支付方式代码"
-              )
-            )
-          ),
-          List(),
-          false
-        ),
-        Aggregate(
-          "product",
-          false,
-          List(
-            Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号"),
-            Field("product_name", "string", 64, 0, false, "", "", "", "", "", true, false, "商品名称"),
-            Field("product_unit", "string", 64, 0, false, "", "", "", "", "", true, false, "计价单位"),
-            Field("unit_price", "double", 0, 0, false, "", "", "", "", "", true, false, "单价"),
-            Field("record_time", "timestamp", 0, 0, false, "", "", "", "", "", false, true, "销量最后更新时间"),
-            Field("quantity_sold", "double", 0, 0, false, "", "", "", "", "", false, true, "销量")
-          ),
-          List(
-            Aggregate(
-              "product_sales",
-              false,
-              List(
-                Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号"),
-                Field("record_time", "timestamp", 0, 0, false, "", "", "", "", "", false, true, "销量最后更新时间"),
-                Field("quantity_sold", "double", 0, 0, false, "", "", "", "", "", false, true, "销量")
-              ),
-              List(),
-              List(),
-              PrimaryKey(
-                "product_pk",
-                List(
-                  Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号")
-                )
-              ),
-              List(),
-              false
+              Field("alarm_id", "string", 64, 0, true, "", "", "", "", "", false, false, "告警对象ID"),
+              Field("alarm_begin", "timestamp", 0, 0, true, "", "", "", "", "", false, false, "告警发生时间")
             ),
-            Aggregate(
-              "product_name",
-              false,
-              List(
-                Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号"),
-                Field("product_name", "string", 64, 0, false, "", "", "", "", "", true, false, "商品名称")
-              ),
-              List(),
-              List(),
-              PrimaryKey(
-                "product_pk",
-                List(
-                  Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号")
-                )
-              ),
-              List(),
-              false
-            ),
-            Aggregate(
-              "product_unit",
-              false,
-              List(
-                Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号"),
-                Field("product_unit", "string", 64, 0, false, "", "", "", "", "", true, false, "计价单位")
-              ),
-              List(),
-              List(),
-              PrimaryKey(
-                "product_pk",
-                List(
-                  Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号")
-                )
-              ),
-              List(),
-              false
-            ),
-            Aggregate(
-              "unit_price",
-              false,
-              List(
-                Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号"),
-                Field("unit_price", "double", 0, 0, false, "", "", "", "", "", true, false, "单价")
-              ),
-              List(),
-              List(),
-              PrimaryKey(
-                "product_pk",
-                List(
-                  Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号")
-                )
-              ),
-              List(),
-              false
-            )
-          ),
-          List(),
-          PrimaryKey(
-            "product_pk",
-            List(
-              Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号")
-            )
-          ),
-          List(),
-          false
-        ),
-        Aggregate(
-          "order",
-          false,
-          List(
-            Field("order_id", "string", 64, 0, false, "", "", "", "", "", false, false, "订单编号"),
-            Field("order_time", "timestamp", 0, 0, false, "", "", "", "", "", false, false, "下单时间"),
-            Field("order_lines", "array", 0, 0, false, "", "", "", "", "order_item", true, false, "购买清单"),
-            Field("order_payment_type", "payment_type", 0, 0, false, "", "", "", "", "", true, false, "支付方式")
-          ),
-          List(
-            Aggregate(
-              "order_lines",
-              false,
-              List(
-                Field("order_id", "string", 64, 0, false, "", "", "", "", "", false, false, "订单编号"),
-                Field("order_lines", "array", 0, 0, false, "", "", "", "", "order_item", true, false, "购买清单")
-              ),
-              List(),
-              List(),
-              PrimaryKey(
-                "order_pk",
-                List(
-                  Field("order_id", "string", 64, 0, false, "", "", "", "", "", false, false, "订单编号")
-                )
-              ),
-              List(),
-              false
-            ),
-            Aggregate(
-              "order_payment_type",
-              false,
-              List(
-                Field("order_id", "string", 64, 0, false, "", "", "", "", "", false, false, "订单编号"),
-                Field("order_payment_type", "payment_type", 0, 0, false, "", "", "", "", "", true, false, "支付方式")
-              ),
-              List(),
-              List(),
-              PrimaryKey(
-                "order_pk",
-                List(
-                  Field("order_id", "string", 64, 0, false, "", "", "", "", "", false, false, "订单编号")
-                )
-              ),
-              List(),
-              false
-            )
-          ),
-          List(),
-          PrimaryKey(
-            "order_pk",
-            List(
-              Field("order_id", "string", 64, 0, false, "", "", "", "", "", false, false, "订单编号")
-            )
+            false
           ),
           List(),
           false
@@ -329,15 +122,24 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
         "alarm" -> PrimaryKey(
           "alarm_pk",
           List(
-            Field("alarm_id", "string", 64, 0, false, "", "", "", "", "", false, false, ""),
-            Field("alarm_begin", "timestamp", 0, 0, false, "", "", "", "", "", false, false, "")
-          )
+            Field("alarm_id", "string", 64, 0, true, "", "", "", "", "", false, false, "告警对象ID"),
+            Field("alarm_begin", "timestamp", 0, 0, true, "", "", "", "", "", false, false, "告警发生时间")
+          ),
+          false
         ),
-        "payment_type" -> PrimaryKey("payment_type_pk", List(Field("payment_type_id", "int", 0, 0, false, "", "", "", "", "", false, false, "支付方式代码"))),
-        "product_sales" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号"))),
-        "product" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号"))),
-        "order" -> PrimaryKey("order_pk", List(Field("order_id", "string", 64, 0, false, "", "", "", "", "", false, false, "订单编号"))),
-        "order_item" -> PrimaryKey("order_item_pk", List(Field("order_id", "string", 64, 0, false, "", "", "", "", "", false, false, "订单编号"), Field("product_id", "string", 64, 0, false, "", "", "", "", "", false, false, "商品编号")))
+        "payment_type" -> PrimaryKey("payment_type_pk", List(Field("payment_type_id", "int", 0, 0, true, "", "", "", "", "", false, false, "支付方式代码")), false),
+        "product_sales" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, 0, true, "", "", "", "", "", false, false, "商品编号")), false),
+        "product" -> PrimaryKey("product_pk", List(Field("product_id", "string", 64, 0, true, "", "", "", "", "", false, false, "商品编号")), false),
+        "order" -> PrimaryKey("order_pk", List(Field("order_id", "string", 64, 0, true, "", "", "", "", "", false, false, "订单编号")), false),
+        "order_item" -> PrimaryKey(
+          "order_item_pk",
+          List(
+            Field("order_id", "string", 64, 0, true, "", "", "", "", "", false, false, "订单编号"),
+            Field("product_id", "string", 64, 0, true, "", "", "", "", "", false, false, "商品编号")
+          ),
+          false
+        ),
+        "event_journal" -> PrimaryKey("event_pk",List(Field("offset","long",0,0,true,"","","","","",false,false,"事件顺序号")),true)
       )
     )
   }
@@ -357,7 +159,7 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
     defFieldType("timestamp") should be("Timestamp")
     defFieldType("float") should be("Float")
     defFieldType("double") should be("Double")
-    defFieldType("blob") should be("Bytes")
+    defFieldType("blob") should be("ByteString")
     defFieldType("payment_type") should be("PaymentType")
     defFieldType("product") should be("ProductVo")
     defFieldType("product_name") should be("ProductNameVo")
@@ -382,11 +184,12 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
 
     selectByPkDefs should be(
       s"""
-         |def selectByAlarmPk(alarmId: String, alarmBegin: Timestamp): AlarmVo
+         |def selectByAlarmPk(alarmId: String, alarmBegin: Option[Timestamp]): AlarmVo
          |def selectByPaymentTypePk(paymentTypeId: Int): PaymentTypeVo
          |def selectByProductPk(productId: String): ProductVo
          |def selectByOrderPk(orderId: String): OrderVo
          |def selectByOrderItemPk(orderId: String, productId: String): OrderItemVo
+         |def selectByEventPk(offset: Long): EventJournalVo
        """.stripMargin.trim
     )
   }

@@ -3,12 +3,13 @@
        package="com.github.apuex.commerce.sales"
        version="1.0.0"
        dbSchema="sales"
+       journalTable="event_journal"
        maintainer="xtwxy@hotmail.com">
   <entity name="alarm" aggregate="true">
-    <field name="alarm_id" type="string" length="64"/>
-    <field name="alarm_begin" type="timestamp"/>
-    <field name="alarm_end" type="timestamp"/>
-    <field name="alarm_desc" type="string" length="64"/>
+    <field name="alarm_id" type="string" required="true" length="64" comment="告警对象ID"/>
+    <field name="alarm_begin" type="timestamp" required="true" comment="告警发生时间"/>
+    <field name="alarm_end" type="timestamp" comment="告警结束时间"/>
+    <field name="alarm_desc" type="string" length="64" required="true" comment="告警描述"/>
     <primaryKey name="alarm_pk">
       <field name="alarm_id"/>
       <field name="alarm_begin"/>
@@ -22,9 +23,9 @@
     </message>
   </entity>
   <entity name="payment_type" enum="true">
-    <field name="payment_type_id" type="int" comment="支付方式代码"/>
-    <field name="payment_type_name" type="string" length="64" comment="支付方式常量符号"/>
-    <field name="payment_type_label" type="string" length="64" comment="支付方式文字描述"/>
+    <field name="payment_type_id" type="int" required="true" comment="支付方式代码"/>
+    <field name="payment_type_name" type="string" length="64" required="true" comment="支付方式常量符号"/>
+    <field name="payment_type_label" type="string" length="64" required="true" comment="支付方式文字描述"/>
     <primaryKey name="payment_type_pk">
       <field name="payment_type_id"/>
     </primaryKey>
@@ -37,34 +38,35 @@
     <row payment_type_no="4" payment_type_name="WECHAT" payment_type_label="微信"/>
   </entity>
   <entity name="product" aggregate="true">
-    <field name="product_id" type="string" length="64" comment="商品编号"/>
-    <field name="product_name" type="string" length="64" aggregate="true" comment="商品名称"/>
-    <field name="product_unit" type="string" length="64" aggregate="true" comment="计价单位"/>
-    <field name="unit_price" type="double" aggregate="true" comment="单价"/>
+    <field name="product_id" type="string" length="64" required="true" comment="商品编号"/>
+    <field name="product_name" type="string" length="64" required="true" aggregate="true" comment="商品名称"/>
+    <field name="product_unit" type="string" length="64" required="true" aggregate="true" comment="计价单位"/>
+    <field name="unit_price" type="double" required="true" aggregate="true" comment="单价"/>
     <field name="record_time" type="timestamp" transient="true" comment="销量最后更新时间"/>
     <field name="quantity_sold" type="double" transient="true" comment="销量"/>
+    <field name="product_desc" type="string" length="64" required="true" aggregate="true" comment="商品描述"/>
     <primaryKey name="product_pk">
       <field name="product_id"/>
     </primaryKey>
-    <aggregate name="product_sales">
+    <aggregate name="product_sales" transient="true">
       <field name="record_time"/>
       <field name="quantity_sold"/>
     </aggregate>
   </entity>
   <entity name="order" aggregate="true">
-    <field name="order_id" type="string" length="64" comment="订单编号"/>
-    <field name="order_time" type="timestamp" comment="下单时间"/>
+    <field name="order_id" type="string" length="64" required="true" comment="订单编号"/>
+    <field name="order_time" type="timestamp" required="true" comment="下单时间"/>
     <field name="order_lines" type="array" valueType="order_item" aggregate="true" comment="购买清单"/>
-    <field name="order_payment_type" type="payment_type" aggregate="true" comment="支付方式"/>
+    <field name="order_payment_type" type="payment_type" required="true" aggregate="true" comment="支付方式"/>
     <primaryKey name="order_pk">
       <field name="order_id"/>
     </primaryKey>
   </entity>
   <entity name="order_item" aggregatesTo="order">
-    <field name="product_name" refField="product_name" refKey="order_item_product_fk" comment="商品名称"/>
-    <field name="item_unit" type="string" length="64" comment="计价单位"/>
-    <field name="unit_price" type="double" comment="单价"/>
-    <field name="order_quantity" type="double" comment="数量"/>
+    <field name="product_name" refField="product_name" refKey="order_item_product_fk" required="true" comment="商品名称"/>
+    <field name="item_unit" type="string" length="64" comment="计价单位" required="true"/>
+    <field name="unit_price" type="double" comment="单价" required="true"/>
+    <field name="order_quantity" type="double" comment="数量" required="true"/>
     <primaryKey name="order_item_pk">
       <field name="order_id"/>
       <field name="product_id"/>
@@ -75,5 +77,16 @@
     <foreignKey name="order_item_product_fk" refEntity="product">
       <field name="product_id" refField="product_id"/>
     </foreignKey>
+  </entity>
+
+  <entity name="event_journal" aggregate="true">
+    <field name="persistence_id" type="string" length="64" required="true" comment="实体ID" />
+    <field name="occurred_time" type="timestamp" required="true" comment="事件发生时间" />
+    <field name="offset" type="long" required="true" comment="事件顺序号"/>
+    <field name="meta_data" type="string" length="128" required="true" comment="事件元数据" />
+    <field name="content" type="blob" required="true" comment="事件内容" />
+    <primaryKey name="event_pk" generated="true">
+      <field name="offset" />
+    </primaryKey>
   </entity>
 </model>
