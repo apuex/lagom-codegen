@@ -605,7 +605,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
                |    val max = SQL("SELECT max(${name}.offset) as offset FROM ${modelDbSchema}.${name}").as(offsetParser.*)
                |    if (max.isEmpty) 0 else max.head
                |  } catch {
-               |    case _ => ${defaultValue}
+               |    case _: Throwable => ${defaultValue}
                |  }
                |}
      """.stripMargin.trim
