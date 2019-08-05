@@ -32,7 +32,7 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |
          |# https://www.playframework.com/documentation/latest/Configuration
          |
-         |${modelName} {
+         |${cToShell(modelName)} {
          |  request-time-out = 30 seconds
          |  entity {
          |    // default number of shards
