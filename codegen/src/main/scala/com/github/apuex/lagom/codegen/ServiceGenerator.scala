@@ -57,8 +57,8 @@ class ServiceGenerator(modelLoader: ModelLoader) {
        |
        |    named("${cToShell(modelName)}")
        |      .withCalls(
-       |        pathCall("/api/current-events", currentEvents _),
-       |        pathCall("/api/events?offset", events _),
+       |        pathCall("/${cToShell(modelName)}-api/current-events", currentEvents _),
+       |        pathCall("/${cToShell(modelName)}-api/events?offset", events _),
        |        ${indent(callDescs(), 8)}
        |      ).withAutoAcl(true)
        |  }
@@ -271,27 +271,27 @@ class ServiceGenerator(modelLoader: ModelLoader) {
     val nonKeyFields = aggregate.fields.filter(x => !keyFieldNames.contains(x.name))
     val get = Seq(
       s"""
-         |pathCall("/api/${cToShell(aggregate.name)}/get-${cToShell(aggregate.name)}", get${cToPascal(aggregate.name)} _)
+         |pathCall("/${cToShell(modelName)}-api/${cToShell(aggregate.name)}/get-${cToShell(aggregate.name)}", get${cToPascal(aggregate.name)} _)
      """.stripMargin.trim)
     val update = if (nonKeyFieldCount > 1)
       Seq(
         s"""
-           |pathCall("/api/${cToShell(aggregate.name)}/update-${cToShell(aggregate.name)}", update${cToPascal(aggregate.name)} _)
+           |pathCall("/${cToShell(modelName)}-api/${cToShell(aggregate.name)}/update-${cToShell(aggregate.name)}", update${cToPascal(aggregate.name)} _)
      """.stripMargin.trim)
     else if (nonKeyFieldCount == 1) {
       val field = nonKeyFields.head
       if ("array" == field._type || "map" == field._type)
         Seq(
           s"""
-             |pathCall("/api/${cToShell(aggregate.name)}/add-${cToShell(aggregate.name)}", add${cToPascal(aggregate.name)} _)
+             |pathCall("/${cToShell(modelName)}-api/${cToShell(aggregate.name)}/add-${cToShell(aggregate.name)}", add${cToPascal(aggregate.name)} _)
      """.stripMargin.trim,
           s"""
-             |pathCall("/api/${cToShell(aggregate.name)}/remove-${cToShell(aggregate.name)}", remove${cToPascal(aggregate.name)} _)
+             |pathCall("/${cToShell(modelName)}-api/${cToShell(aggregate.name)}/remove-${cToShell(aggregate.name)}", remove${cToPascal(aggregate.name)} _)
      """.stripMargin.trim)
       else
         Seq(
           s"""
-             |pathCall("/api/${cToShell(aggregate.name)}/change-${cToShell(aggregate.name)}", change${cToPascal(aggregate.name)} _)
+             |pathCall("/${cToShell(modelName)}-api/${cToShell(aggregate.name)}/change-${cToShell(aggregate.name)}", change${cToPascal(aggregate.name)} _)
      """.stripMargin.trim)
     } else { // this cannot be happen.
       Seq(
@@ -328,7 +328,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
   def defMessageCallDesc(name: String, message: Message): String = {
     s"""
-       |pathCall("/api/${cToShell(name)}/${cToShell(message.name)}", ${cToCamel(message.name)} _)
+       |pathCall("/${cToShell(modelName)}-api/${cToShell(name)}/${cToShell(message.name)}", ${cToCamel(message.name)} _)
      """.stripMargin.trim
   }
 
@@ -347,26 +347,26 @@ class ServiceGenerator(modelLoader: ModelLoader) {
          """.stripMargin.trim
     } else {
       s"""
-         |pathCall("/api/${cToShell(name)}/update-${cToShell(name)}", update${cToPascal(name)} _)
+         |pathCall("/${cToShell(modelName)}-api/${cToShell(name)}/update-${cToShell(name)}", update${cToPascal(name)} _)
          """.stripMargin.trim
     }
 
     Seq(
       s"""
-         |pathCall("/api/${cToShell(name)}/create-${cToShell(name)}", create${cToPascal(name)} _)
+         |pathCall("/${cToShell(modelName)}-api/${cToShell(name)}/create-${cToShell(name)}", create${cToPascal(name)} _)
      """.stripMargin.trim,
       s"""
-         |pathCall("/api/${cToShell(name)}/retrieve-${cToShell(name)}", retrieve${cToPascal(name)} _)
+         |pathCall("/${cToShell(modelName)}-api/${cToShell(name)}/retrieve-${cToShell(name)}", retrieve${cToPascal(name)} _)
      """.stripMargin.trim,
       update,
       s"""
-         |pathCall("/api/${cToShell(name)}/delete-${cToShell(name)}", delete${cToPascal(name)} _)
+         |pathCall("/${cToShell(modelName)}-api/${cToShell(name)}/delete-${cToShell(name)}", delete${cToPascal(name)} _)
      """.stripMargin.trim,
       s"""
-         |pathCall("/api/${cToShell(name)}/query-${cToShell(name)}", query${cToPascal(name)} _)
+         |pathCall("/${cToShell(modelName)}-api/${cToShell(name)}/query-${cToShell(name)}", query${cToPascal(name)} _)
      """.stripMargin.trim,
       s"""
-         |pathCall("/api/${cToShell(name)}/retrieve-${cToShell(name)}-by-rowid/:rowid", retrieve${cToPascal(name)}ByRowid _)
+         |pathCall("/${cToShell(modelName)}-api/${cToShell(name)}/retrieve-${cToShell(name)}-by-rowid/:rowid", retrieve${cToPascal(name)}ByRowid _)
      """.stripMargin.trim
     )
   }
@@ -398,10 +398,10 @@ class ServiceGenerator(modelLoader: ModelLoader) {
 
     Seq(
       s"""
-         |pathCall("/api/${cToShell(name)}/select-${cToShell(name)}-by-${byPath}?${defQueryParams(keyFields)}", select${cToPascal(name)}By${byMethod} _)
+         |pathCall("/${cToShell(modelName)}-api/${cToShell(name)}/select-${cToShell(name)}-by-${byPath}?${defQueryParams(keyFields)}", select${cToPascal(name)}By${byMethod} _)
      """.stripMargin.trim,
       s"""
-         |pathCall("/api/${cToShell(name)}/delete-${cToShell(name)}-by-${byPath}?${defQueryParams(keyFields)}", delete${cToPascal(name)}By${byMethod} _)
+         |pathCall("/${cToShell(modelName)}-api/${cToShell(name)}/delete-${cToShell(name)}-by-${byPath}?${defQueryParams(keyFields)}", delete${cToPascal(name)}By${byMethod} _)
      """.stripMargin.trim,
     )
   }
