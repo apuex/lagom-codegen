@@ -100,6 +100,8 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |
          |  // Uncomment in multi-node cluster deployments.
          |  remote {
+         |    startup-timeout = 60 s
+         |
          |    netty.tcp {
          |      hostname = "localhost"      // default to the first seed node
          |      port = 2553                 // default port
