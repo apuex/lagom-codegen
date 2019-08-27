@@ -83,6 +83,7 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
   def calls(root: Node): Seq[String] = {
     root.child
       .filter(_.label == "entity")
+      .filter(x => ("true" != x.\@("transient")))
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .map(_.\@("name"))
       .map(x => {

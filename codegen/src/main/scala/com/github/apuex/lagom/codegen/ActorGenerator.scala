@@ -19,7 +19,7 @@ class ActorGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     xml.child
-      .filter(_.label == "entity")
+      .filter(x => x.label == "entity" && !(x.\@("transient") == "true"))
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .sortWith((x, y) => depends(x, y))
       .map(x => toAggregate(x, xml))

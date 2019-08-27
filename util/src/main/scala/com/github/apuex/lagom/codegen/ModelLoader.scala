@@ -122,7 +122,7 @@ object ModelLoader {
     val pks = node.child.filter(_.label == "primaryKey")
     if (pks.isEmpty) {
       val aggregatesTo = node.\@("aggregatesTo")
-      getPrimaryKey(root.child.filter(_.label == aggregatesTo).head, root)
+      getPrimaryKey(root.child.filter(x => x.label == "entity" && x.\@("name") == aggregatesTo).head, root)
     } else {
       val pk = pks.head
       val pkName = pk.\@("name")
@@ -476,7 +476,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
        """.stripMargin.trim
     else if ("map" == field._type)
       s"""
-         |Map[${defFieldType(field.valueType)}, ${defFieldType(field.valueType)}]
+         |Map[${defFieldType(field.keyType)}, ${defFieldType(field.valueType)}]
        """.stripMargin.trim
     else if ("any" == field._type)
       s"Option[${defFieldType(field._type)}]"

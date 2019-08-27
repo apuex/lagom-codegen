@@ -90,7 +90,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
     .getOrElse("")
 
   def calls(root: Node): Seq[String] = {
-    root.child.filter(_.label == "entity")
+    root.child.filter(x => x.label == "entity" && !(x.\@("transient") == "true"))
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         val enum = if ("true" == x.\@("enum")) true else false
@@ -252,7 +252,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   }
 
   def callDescs(root: Node): Seq[String] = {
-    root.child.filter(_.label == "entity")
+    root.child.filter(x => x.label == "entity" && !(x.\@("transient") == "true"))
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         val enum = if ("true" == x.\@("enum")) true else false

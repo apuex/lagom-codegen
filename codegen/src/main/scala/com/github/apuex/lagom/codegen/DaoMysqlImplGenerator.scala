@@ -42,6 +42,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def wireDaos(root: Node): String = {
     root.child.filter(_.label == "entity")
+      .filter(x => ("true" != x.\@("transient")))
       .map(_.\@("name"))
       .map(x => {
         s"""
@@ -307,7 +308,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     } else if ("map" == field._type) {
       s"""
          |${cToCamel(field.entity)}Dao.${callSelectByFk(keyFields)}
-         |  .map(x => (x.${cToCamel(field.keyField)} -> x.${cToCamel(field.valueField)}}
+         |  .map(x => (x.${cToCamel(field.keyField)} -> x.${cToCamel(field.valueField)}))
          |  .toMap
       """.stripMargin.trim
     } else {

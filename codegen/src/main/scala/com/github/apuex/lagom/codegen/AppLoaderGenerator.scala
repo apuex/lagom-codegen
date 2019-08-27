@@ -71,7 +71,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |      with DBComponents
        |      with HikariCPComponents {
        |
-       |    val logger = Logger(classOf[SalesAppLoader])
+       |    val logger = Logger(classOf[${cToPascal(appLoaderName)}])
        |
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")

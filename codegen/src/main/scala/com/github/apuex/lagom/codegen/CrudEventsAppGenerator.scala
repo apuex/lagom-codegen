@@ -28,7 +28,9 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
 
   def generateServiceImpl(srcPackage: String): String = {
     val constructorParams = (
-      xml.child.filter(_.label == "entity").map(_.\@("name"))
+      xml.child
+        .filter(x => x.label == "entity" && !(x.\@("transient") == "true"))
+        .map(_.\@("name"))
         .map(x => s"${cToCamel(x)}Dao: ${cToPascal(x)}Dao") ++
         Seq(
           "publishQueue: String",

@@ -18,7 +18,7 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     xml.child
-      .filter(_.label == "entity")
+      .filter(x => x.label == "entity" && !(x.\@("transient") == "true"))
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .sortWith((x, y) => depends(x, y))
       .map(x => toAggregate(x, xml))
@@ -119,6 +119,7 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
   def wireClusterShards(root: Node): String = {
     root.child
       .filter(_.label == "entity")
+      .filter(x => ("true" != x.\@("transient")))
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .map(_.\@("name"))
       .map(x => s"${shard}_${x}s")
