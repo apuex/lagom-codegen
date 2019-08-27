@@ -749,7 +749,15 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       } else if ("map" == field._type) {
         // FIXME: not properly implemented
         s"""
-           |
+           |// map not implemented
+           |def get${cToPascal(aggregate.name)}(cmd: Get${cToPascal(aggregate.name)}Cmd)(implicit conn: Connection): ${cToPascal(aggregate.name)}Vo = {
+           |  ${cToPascal(aggregate.name)}Vo(
+           |    ${substituteMethodParams(primaryKey.fields, "cmd")},
+           |    ${cToCamel(field.entity)}Dao.${callSelectByFk(primaryKey.fields, "cmd")}
+           |      .map(x => (x.${cToCamel(field.keyField)} -> x.${cToCamel(field.valueField)}))
+           |      .toMap
+           |  )
+           |}
          """.stripMargin.trim
       } else {
         s"""
@@ -809,22 +817,22 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
            |// FIXME: not properly implemented
            |def add${cToPascal(aggregate.name)}(evt: Add${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
            |  evt.${cToCamel(aggregate.name)}
-           |    .map(x => Create${cToPascal(field.valueType)}Event(
+           |    .map(x => Create${cToPascal(field.entity)}Event(
            |        ${substituteMethodParams(Seq(userField), "evt")}, ${substituteMethodParams(primaryKey.fields, "evt")}, x._1, x._2
            |      )
            |     )
-           |    .map(${cToCamel(field.valueType)}Dao.create${cToPascal(field.valueType)}(_))
+           |    .map(${cToCamel(field.entity)}Dao.create${cToPascal(field.entity)}(_))
            |    .foldLeft(0)((t, u) => t + u)
            |}
            |
            |// FIXME: not properly implemented
            |def remove${cToPascal(aggregate.name)}(evt: Remove${cToPascal(aggregate.name)}Event)(implicit conn: Connection): Int = {
            |  evt.${cToCamel(aggregate.name)}
-           |    .map(x => Delete${cToPascal(field.valueType)}Event(
+           |    .map(x => Delete${cToPascal(field.entity)}Event(
            |        ${substituteMethodParams(Seq(userField), "evt")}, ${substituteMethodParams(primaryKey.fields, "evt")}, x._1
            |      )
            |     )
-           |    .map(${cToCamel(field.valueType)}Dao.delete${cToPascal(field.valueType)}(_))
+           |    .map(${cToCamel(field.entity)}Dao.delete${cToPascal(field.entity)}(_))
            |    .foldLeft(0)((t, u) => t + u)
            |}
      """.stripMargin.trim
