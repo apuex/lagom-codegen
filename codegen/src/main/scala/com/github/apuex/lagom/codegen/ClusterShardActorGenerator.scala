@@ -59,7 +59,7 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
          |}
          |
          |class ${facadeClassName} (config: Config) extends Actor with ActorLogging {
-         |  val numberOfShards = config.getInt("sales.entity.number-of-shards")
+         |  val numberOfShards = config.getInt("${cToShell(modelName)}.entity.number-of-shards")
          |  val shardName: String = "${cToShell(s"${shard}_${name}")}"
          |
          |  val extractEntityId: ShardRegion.ExtractEntityId = {
