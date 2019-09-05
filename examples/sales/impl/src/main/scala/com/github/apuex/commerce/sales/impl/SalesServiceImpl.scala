@@ -23,18 +23,18 @@ import com.github.apuex.springbootsolution.runtime.DateFormat._
 import com.github.apuex.springbootsolution.runtime._
 import com.google.protobuf.any.Any
 import com.lightbend.lagom.scaladsl.api._
+import com.typesafe.config.Config
 import play.api.db.Database
 import scalapb.GeneratedMessage
 
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
-class SalesServiceImpl (clusterShardingModule: ClusterShardingModule,
+class SalesServiceImpl (config: Config,
+  clusterShardingModule: ClusterShardingModule,
   daoModule: DaoModule,
   eventApply: SalesDomainEventApply,
-  publishQueue: String,
   mediator: ActorRef,
-  duration: FiniteDuration,
   readJournal: EventsByTagQuery,
   db: Database)
   extends SalesService {
@@ -42,7 +42,9 @@ class SalesServiceImpl (clusterShardingModule: ClusterShardingModule,
   import clusterShardingModule._
   import daoModule._
 
-  implicit val timeout = Timeout(duration)
+  val publishQueue = config.getString("sales.instant-event-publish-queue")
+  implicit val duration = Duration(config.getString("db.sales-db.event.query-interval")).asInstanceOf[FiniteDuration]
+  implicit val timeout = Timeout(Duration(config.getString("sales.request-timeout")).asInstanceOf[FiniteDuration])
 
   def createAlarm(): ServiceCall[CreateAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful({

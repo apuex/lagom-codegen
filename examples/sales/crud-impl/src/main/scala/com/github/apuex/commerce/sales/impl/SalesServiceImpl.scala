@@ -42,8 +42,6 @@ class SalesServiceImpl (alarmDao: AlarmDao,
   db: Database)
   extends SalesService {
 
-  implicit val timeout = Timeout(duration)
-
   def createAlarm(): ServiceCall[CreateAlarmCmd, Int] = ServiceCall { cmd =>
     Future.successful(
       db.withTransaction { implicit c =>
