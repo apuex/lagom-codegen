@@ -78,8 +78,6 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |class ${cToPascal(modelName)}ServiceImpl (${indent(constructorParams, 2)})
        |  extends ${cToPascal(modelName)}Service {
        |
-       |  implicit val timeout = Timeout(duration)
-       |
        |  ${indent(calls(), 2)}
        |
        |  ${indent(defCurrentEvents(), 2)}

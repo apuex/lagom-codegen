@@ -33,7 +33,8 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |# https://www.playframework.com/documentation/latest/Configuration
          |
          |${cToShell(modelName)} {
-         |  request-time-out = 30 seconds
+         |  instant-event-publish-queue = instant-event-publish-queue
+         |  request-timeout = 30 seconds
          |  entity {
          |    // default number of shards
          |    number-of-shards = 100

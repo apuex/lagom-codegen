@@ -29,12 +29,11 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
 
   def generateServiceImpl(srcPackage: String): String = {
     val constructorParams = Seq(
+      "config: Config",
       "clusterShardingModule: ClusterShardingModule",
       "daoModule: DaoModule",
       s"eventApply: ${cToPascal(s"${modelName}_${domain}_${event}_${apply}")}",
-      "publishQueue: String",
       "mediator: ActorRef",
-      "duration: FiniteDuration",
       "readJournal: EventsByTagQuery",
       "db: Database"
     )
@@ -67,11 +66,12 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |import com.github.apuex.springbootsolution.runtime._
        |import com.google.protobuf.any.Any
        |import com.lightbend.lagom.scaladsl.api._
+       |import com.typesafe.config.Config
        |import play.api.db.Database
        |import scalapb.GeneratedMessage
        |
        |import scala.concurrent.Future
-       |import scala.concurrent.duration.FiniteDuration
+       |import scala.concurrent.duration.{Duration, FiniteDuration}
        |
        |class ${cToPascal(modelName)}ServiceImpl (${indent(constructorParams, 2)})
        |  extends ${cToPascal(modelName)}Service {
@@ -79,7 +79,9 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |  import clusterShardingModule._
        |  import daoModule._
        |
-       |  implicit val timeout = Timeout(duration)
+       |  val publishQueue = config.getString("${cToShell(modelName)}.instant-event-publish-queue")
+       |  implicit val duration = Duration(config.getString("db.${cToShell(modelDbSchema)}-db.event.query-interval")).asInstanceOf[FiniteDuration]
+       |  implicit val timeout = Timeout(Duration(config.getString("${cToShell(modelName)}.request-timeout")).asInstanceOf[FiniteDuration])
        |
        |  ${indent(calls(), 2)}
        |

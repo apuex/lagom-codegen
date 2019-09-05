@@ -32,6 +32,11 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |
          |# https://www.playframework.com/documentation/latest/Configuration
          |
+         |${cToShell(modelName)} {
+         |  instant-event-publish-queue = instant-event-publish-queue
+         |  request-timeout = 30 seconds
+         |}
+         |
          |play {
          |  application {
          |    loader = "${implSrcPackage}.${cToPascal(s"${modelName}_${app}_${loader}")}"
