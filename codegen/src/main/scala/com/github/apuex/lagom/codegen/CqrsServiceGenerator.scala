@@ -366,13 +366,13 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |              "",          // offset
        |              x.entityId,  // persistence_id
        |              0L,          // sequence_nr
-       |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+       |              Some(pack(x.asInstanceOf[GeneratedMessage])))
        |          case x: ValueObject =>
        |            EventEnvelope(
        |              "",          // offset
        |              "",          // persistence_id
        |              0L,          // sequence_nr
-       |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+       |              Some(pack(x.asInstanceOf[GeneratedMessage])))
        |        })
        |        .map(printer.print(_))
        |
@@ -418,7 +418,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |              "",          // offset
        |              x.entityId,  // persistence_id
        |              0L,          // sequence_nr
-       |              Some(Any.of(s"type.googleapis.com/$${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+       |              Some(pack(x.asInstanceOf[GeneratedMessage])))
        |        })
        |        .map(printer.print(_))
        |
@@ -441,7 +441,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |          },
        |          ee.persistenceId,
        |          ee.sequenceNr,
-       |          Some(Any.of(s"type.googleapis.com/$${ee.event.getClass.getName}", ee.event.asInstanceOf[GeneratedMessage].toByteString)))
+       |          Some(pack(ee.event.getClass.getName, ee.event.asInstanceOf[GeneratedMessage].toByteString)))
        |        )
        |        .map(printer.print(_))
        |

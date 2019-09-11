@@ -20,11 +20,12 @@ class JsonSerializerGenerator(modelLoader: ModelLoader) {
        |package ${apiSrcPackage}
        |
        |import com.github.apuex.events.play.{EventEnvelope, EventEnvelopeProto}
+       |import com.google.protobuf.ByteString
        |import com.google.protobuf.any.Any
        |import play.api.libs.json._
-       |import scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
        |import scalapb.json4s.JsonFormat.GenericCompanion
        |import scalapb.json4s._
+       |import scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
        |
        |object ScalapbJson {
        |  // json parser and printer
@@ -37,6 +38,8 @@ class JsonSerializerGenerator(modelLoader: ModelLoader) {
        |  val parser = new Parser().withTypeRegistry(registry)
        |
        |  // any packager for pack/unpack messages.
+       |  def pack(msg: GeneratedMessage): Any = Any.of(s"type.googleapis.com/$${msg.getClass.getName}", msg.asInstanceOf[GeneratedMessage].toByteString)
+       |  def pack(className: String, content: ByteString): Any = Any.of(s"type.googleapis.com/$${className}", content)
        |  def unpack(any: Any): GeneratedMessage = registry.findType(any.typeUrl)
        |    .map(_.parseFrom(any.value.newCodedInput())).get
        |

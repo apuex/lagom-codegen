@@ -648,13 +648,13 @@ class SalesServiceImpl (alarmDao: AlarmDao,
                 "",          // offset
                 x.entityId,  // persistence_id
                 0L,          // sequence_nr
-                Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+                Some(pack(x.asInstanceOf[GeneratedMessage])))
             case x: ValueObject =>
               EventEnvelope(
                 "",          // offset
                 "",          // persistence_id
                 0L,          // sequence_nr
-                Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+                Some(pack(x.asInstanceOf[GeneratedMessage])))
           })
           .map(printer.print(_))
 
@@ -695,7 +695,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
                 "",          // offset
                 x.entityId,  // persistence_id
                 0L,          // sequence_nr
-                Some(Any.of(s"type.googleapis.com/${x.getClass.getName}", x.asInstanceOf[GeneratedMessage].toByteString)))
+                Some(pack(x.asInstanceOf[GeneratedMessage])))
           })
           .map(printer.print(_))
 
@@ -718,7 +718,7 @@ class SalesServiceImpl (alarmDao: AlarmDao,
             x.offset.toString,
             x.persistenceId,
             0,
-            Some(Any.of(s"type.googleapis.com/${x.metaData}", x.content)))
+            Some(pack(x.metaData, x.content)))
           )
           .map(printer.print(_))
 
