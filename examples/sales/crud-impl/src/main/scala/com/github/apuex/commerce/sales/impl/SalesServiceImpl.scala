@@ -634,6 +634,8 @@ class SalesServiceImpl (alarmDao: AlarmDao,
       Future.successful({
         val replySource = is
           .map(parseJson)
+          .filter(x => x.event.isDefined)
+          .map(x => unpack(x.event.get))
           .map(eventApply.on)
           .filter(_ => false) // to drainage
           .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
@@ -681,6 +683,8 @@ class SalesServiceImpl (alarmDao: AlarmDao,
         // reply/confirm to inbound message...
         val replySource = is
           .map(parseJson)
+          .filter(x => x.event.isDefined)
+          .map(x => unpack(x.event.get))
           .map(eventApply.on)
           .filter(_ => false) // to drainage
           .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))

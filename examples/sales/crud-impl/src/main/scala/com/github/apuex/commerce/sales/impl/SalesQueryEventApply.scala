@@ -32,9 +32,10 @@ class SalesQueryEventApply(alarmDao: AlarmDao,
             CreateEventJournalEvent(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
           )
           dispatch(x)
+          mediator ! Publish(publishQueue, x)
         case x: ValueObject =>
           mediator ! Publish(publishQueue, x)
-        case _ =>
+        case _ => None
       }
     }
   }

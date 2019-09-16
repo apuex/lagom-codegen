@@ -20,9 +20,10 @@ class SalesDomainEventApply(clusterShardingModule: ClusterShardingModule,
     event match {
       case x: Event =>
         dispatch(x)
+        mediator ! Publish(publishQueue, x)
       case x: ValueObject =>
         mediator ! Publish(publishQueue, x)
-      case _ =>
+      case _ => None
     }
   }
 
