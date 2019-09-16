@@ -450,6 +450,8 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |    Future.successful({
        |      val replySource = is
        |        .map(parseJson)
+       |        .filter(x => x.event.isDefined)
+       |        .map(x => unpack(x.event.get))
        |        .map(eventApply.on)
        |        .filter(_ => false) // to drainage
        |        .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
@@ -501,6 +503,8 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |      // reply/confirm to inbound message...
        |      val replySource = is
        |        .map(parseJson)
+       |        .filter(x => x.event.isDefined)
+       |        .map(x => unpack(x.event.get))
        |        .map(eventApply.on)
        |        .filter(_ => false) // to drainage
        |        .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))

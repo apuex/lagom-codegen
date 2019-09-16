@@ -351,6 +351,8 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |    Future.successful({
        |      val replySource = is
        |        .map(parseJson)
+       |        .filter(x => x.event.isDefined)
+       |        .map(x => unpack(x.event.get))
        |        .map(x => x.event.map(unpack))
        |        .map(x => x.map(eventApply.on))
        |        .filter(_ => false) // to drainage
@@ -403,6 +405,8 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |      // reply/confirm to inbound message...
        |      val replySource = is
        |        .map(parseJson)
+       |        .filter(x => x.event.isDefined)
+       |        .map(x => unpack(x.event.get))
        |        .map(x => x.event.map(unpack))
        |        .map(x => x.map(eventApply.on))
        |        .filter(_ => false) // to drainage
