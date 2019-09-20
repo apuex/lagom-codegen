@@ -353,8 +353,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |        .map(parseJson)
        |        .filter(x => x.event.isDefined)
        |        .map(x => unpack(x.event.get))
-       |        .map(x => x.event.map(unpack))
-       |        .map(x => x.map(eventApply.on))
+       |        .map(eventApply.on)
        |        .filter(_ => false) // to drainage
        |        .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
        |
@@ -407,8 +406,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |        .map(parseJson)
        |        .filter(x => x.event.isDefined)
        |        .map(x => unpack(x.event.get))
-       |        .map(x => x.event.map(unpack))
-       |        .map(x => x.map(eventApply.on))
+       |        .map(eventApply.on)
        |        .filter(_ => false) // to drainage
        |        .map(x => printer.print(x.asInstanceOf[GeneratedMessage]))
        |
