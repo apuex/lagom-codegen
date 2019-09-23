@@ -115,7 +115,7 @@ class AlarmDaoImpl() extends AlarmDao {
     val sqlStr = s"""
       |${selectAlarmSql}
       |  ${whereClause.toWhereClause(cmd, 4)}
-      |  ORDER BY ${indent(if(!cmd.orderBy.isEmpty) whereClause.orderBy(cmd.orderBy, "t") else "", 4)}
+      |  ${indent(if(!cmd.orderBy.isEmpty) "ORDER BY " + whereClause.orderBy(cmd.orderBy, "t") else "", 4)}
      """.stripMargin.trim
     val stmt = SQL(sqlStr)
     val params = namedParams(cmd)
