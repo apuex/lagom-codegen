@@ -147,22 +147,29 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |
          |  <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
          |
+         |  <!--
          |  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
          |    <file>$${application.home :-.}/logs/application.log</file>
          |    <encoder>
          |      <pattern>%date [%level] from %logger in %thread - %message%n%xException</pattern>
          |    </encoder>
          |  </appender>
+         |  -->
          |
          |  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
          |    <encoder>
+         |      <!--
          |      <pattern>%coloredLevel %logger{15} - %message%n%xException{10}</pattern>
+         |      -->
+         |      <pattern>%date [%level] from %logger in %thread - %message%n%xException</pattern>
          |    </encoder>
          |  </appender>
          |
+         |  <!--
          |  <appender name="ASYNCFILE" class="ch.qos.logback.classic.AsyncAppender">
          |    <appender-ref ref="FILE" />
          |  </appender>
+         |  -->
          |
          |  <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
          |    <appender-ref ref="STDOUT" />
@@ -175,7 +182,9 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |
          |  <root level="INFO">
          |    <appender-ref ref="ASYNCSTDOUT" />
+         |    <!--
          |    <appender-ref ref="ASYNCFILE" />
+         |    -->
          |  </root>
          |
          |</configuration>
