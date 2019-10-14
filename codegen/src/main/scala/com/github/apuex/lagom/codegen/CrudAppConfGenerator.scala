@@ -51,7 +51,7 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |  filters {
          |    hosts {
          |      // TODO: replace it hosts allowed!
-         |      allowed=["localhost"]
+         |      allowed=["localhost", "${cToShell(modelName)}"]
          |    }
          |    headers {
          |      // TODO: replace it your own security options!
@@ -116,7 +116,7 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |db {
          |  ${cToShell(modelDbSchema)}-db {
          |    driver = com.mysql.cj.jdbc.Driver
-         |    dbhost = "localhost"
+         |    dbhost = "mysql"
          |    dbhost = $${? DBHOST}
          |    url = "jdbc:mysql://"$${db.${cToShell(modelDbSchema)}-db.dbhost}"/${modelDbSchema}?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&verifyServerCertificate=false"
          |    username = ${modelDbSchema}
