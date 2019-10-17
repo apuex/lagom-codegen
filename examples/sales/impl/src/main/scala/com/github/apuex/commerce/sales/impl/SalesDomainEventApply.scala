@@ -36,6 +36,7 @@ class SalesDomainEventApply(clusterShardingModule: ClusterShardingModule,
 
     case evt: OrderEvent =>
       shardingOrders ! evt
+
     case _ => None
   }
 }

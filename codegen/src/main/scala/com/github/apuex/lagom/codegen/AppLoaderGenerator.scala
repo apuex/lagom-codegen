@@ -76,6 +76,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |    // Bind the service that this server provides
        |    lazy val db = dbApi.database("${cToShell(modelDbSchema)}-db")
        |    lazy val publishQueue = config.getString("${cToShell(modelName)}.instant-event-publish-queue")
+       |    lazy val duration = Duration(config.getString("db.${cToShell(modelDbSchema)}-db.event.reschedule-duration")).asInstanceOf[FiniteDuration]
        |    lazy val mediator = DistributedPubSub(actorSystem).mediator
        |    lazy val daoModule = wire[DaoModule]
        |    lazy val clusterModule = wire[${cToPascal(s"${cluster}_${shard}")}Module]
@@ -87,26 +88,29 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |
        |    override lazy val lagomServer: LagomServer = serverFor[${cToPascal(serviceName)}](wire[${cToPascal(serviceImplName)}])
        |
-       |    val offset: Option[String] = db.withTransaction { implicit c =>
-       |      Some(daoModule.${cToCamel(journalTable)}Dao.selectCurrentOffset().toString)
-       |    }
+       |    subscribeJournalEvents()
        |
-       |    if(logger.isInfoEnabled) {
-       |      offset.map(x => logger.info(s"Starting from offset=$${x}"))
-       |    }
+       |    private def subscribeJournalEvents(): Unit = {
+       |      val offset: Option[String] = db.withTransaction { implicit c =>
+       |        Some(daoModule.${cToCamel(journalTable)}Dao.selectCurrentOffset().toString)
+       |      }
        |
-       |    readJournal
-       |      .eventsByTag(
-       |        "all",
-       |        offset
-       |          .map(x => {
-       |            if (x.matches("^[\\\\+\\\\-]{0,1}[0-9]+$$")) Offset.sequence(x.toLong)
-       |            else Offset.timeBasedUUID(UUID.fromString(x))
-       |          })
-       |          .getOrElse(Offset.noOffset)
-       |      )
-       |      .filter(ee => ee.event.isInstanceOf[GeneratedMessage])
-       |      .runForeach(ee => {
+       |      if (logger.isInfoEnabled) {
+       |        offset.map(x => logger.info(s"Starting from offset=$${x}"))
+       |      }
+       |
+       |      readJournal
+       |        .eventsByTag(
+       |          "all",
+       |          offset
+       |            .map(x => {
+       |              if (x.matches("^[\\\\+\\\\-]{0,1}[0-9]+$$")) Offset.sequence(x.toLong)
+       |              else Offset.timeBasedUUID(UUID.fromString(x))
+       |            })
+       |            .getOrElse(Offset.noOffset)
+       |        )
+       |        .filter(ee => ee.event.isInstanceOf[GeneratedMessage])
+       |        .runForeach(ee => {
        |          db.withTransaction { implicit c =>
        |            ee.event match {
        |              case x: Event =>
@@ -121,7 +125,13 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |              case _ =>
        |            }
        |          }
-       |      })(actorMaterializer)
+       |        })(actorMaterializer)
+       |        .recover({
+       |          case t: Throwable =>
+       |            logger.error("journal events by tag failed: {}", t)
+       |            actorSystem.scheduler.scheduleOnce(duration)(subscribeJournalEvents)
+       |        })
+       |    }
        |  }
        |
        |}

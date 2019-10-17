@@ -176,6 +176,7 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |    password = password
          |    event {
          |      query-interval = 3 seconds
+         |      reschedule-duration = 300 seconds
          |    }
          |  }
          |}

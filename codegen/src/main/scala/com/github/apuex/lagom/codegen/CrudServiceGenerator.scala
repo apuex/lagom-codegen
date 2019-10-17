@@ -95,6 +95,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
 
   def calls(root: Node): Seq[String] = {
     root.child.filter(_.label == "entity")
+      .filter(x => x.\@("name") != journalTable)
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         val enum = if ("true" == x.\@("enum")) true else false

@@ -113,14 +113,6 @@ class SalesQueryEventApply(alarmDao: AlarmDao,
     case evt: DeleteOrderItemEvent =>
       orderItemDao.deleteOrderItem(evt)
 
-    case evt: CreateEventJournalEvent =>
-      eventJournalDao.createEventJournal(evt)
-
-    case evt: UpdateEventJournalEvent =>
-      eventJournalDao.updateEventJournal(evt)
-
-    case evt: DeleteEventJournalEvent =>
-      eventJournalDao.deleteEventJournal(evt)
     case _ => None
   }
 }

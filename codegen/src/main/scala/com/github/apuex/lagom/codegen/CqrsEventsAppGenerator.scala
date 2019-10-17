@@ -70,6 +70,7 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
        |
        |  def dispatch(msg: Any): Any = msg match {
        |    ${indent(calls(), 4)}
+       |
        |    case _ => None
        |  }
        |}
@@ -84,6 +85,7 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
   def calls(root: Node): Seq[String] = {
     root.child
       .filter(_.label == "entity")
+      .filter(x => x.\@("name") != journalTable)
       .filter(x => ("true" != x.\@("transient")))
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .map(_.\@("name"))

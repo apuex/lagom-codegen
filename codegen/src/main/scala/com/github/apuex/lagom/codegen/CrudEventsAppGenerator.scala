@@ -78,6 +78,7 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
        |
        |  def dispatch(msg: Any)(implicit conn: Connection): Any = msg match {
        |    ${indent(calls(), 4)}
+       |
        |    case _ => None
        |  }
        |}
@@ -91,6 +92,7 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
 
   def calls(root: Node): Seq[String] = {
     root.child.filter(_.label == "entity")
+      .filter(x => x.\@("name") != journalTable)
       .map(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         val transient = if ("true" == x.\@("transient")) true else false

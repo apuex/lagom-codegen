@@ -425,69 +425,6 @@ class SalesServiceImpl (config: Config,
     )
   }
 
-  def createEventJournal(): ServiceCall[CreateEventJournalCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = CreateEventJournalEvent(cmd.userId, cmd.offset, cmd.persistenceId, cmd.occurredTime, cmd.metaData, cmd.content)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        eventJournalDao.createEventJournal(evt)
-      }
-    )
-  }
-
-  def retrieveEventJournal(): ServiceCall[RetrieveEventJournalCmd, EventJournalVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        eventJournalDao.retrieveEventJournal(cmd)
-      }
-    )
-  }
-
-  def updateEventJournal(): ServiceCall[UpdateEventJournalCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = UpdateEventJournalEvent(cmd.userId, cmd.offset, cmd.persistenceId, cmd.occurredTime, cmd.metaData, cmd.content)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        eventJournalDao.updateEventJournal(evt)
-      }
-    )
-  }
-
-  def deleteEventJournal(): ServiceCall[DeleteEventJournalCmd, Int] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-        val evt = DeleteEventJournalEvent(cmd.userId, cmd.offset)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
-        mediator ! Publish(publishQueue, evt)
-        eventJournalDao.deleteEventJournal(evt)
-      }
-    )
-  }
-
-  def queryEventJournal(): ServiceCall[QueryCommand, EventJournalListVo] = ServiceCall { cmd =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-         EventJournalListVo(eventJournalDao.queryEventJournal(cmd))
-      }
-    )
-  }
-
-  def retrieveEventJournalByRowid(rowid: String): ServiceCall[NotUsed, EventJournalVo] = ServiceCall { _ =>
-    Future.successful(
-      db.withTransaction { implicit c =>
-         eventJournalDao.retrieveEventJournalByRowid(rowid)
-      }
-    )
-  }
-
   def currentEvents(): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]] = {
     ServiceCall { is =>
       Future.successful({

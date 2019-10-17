@@ -115,18 +115,6 @@ trait SalesService extends Service {
 
   def deleteOrderItemByProductId(productId: String): ServiceCall[NotUsed, Int]
 
-  def createEventJournal(): ServiceCall[CreateEventJournalCmd, Int]
-
-  def retrieveEventJournal(): ServiceCall[RetrieveEventJournalCmd, EventJournalVo]
-
-  def updateEventJournal(): ServiceCall[UpdateEventJournalCmd, Int]
-
-  def deleteEventJournal(): ServiceCall[DeleteEventJournalCmd, Int]
-
-  def queryEventJournal(): ServiceCall[QueryCommand, EventJournalListVo]
-
-  def retrieveEventJournalByRowid(rowid: String): ServiceCall[NotUsed, EventJournalVo]
-
   def currentEvents(): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]]
 
   def events(offset: Option[String]): ServiceCall[Source[String, NotUsed], Source[String, NotUsed]]
@@ -197,12 +185,6 @@ trait SalesService extends Service {
     implicit val retrieveOrderItemCmdFormat = jsonFormat[RetrieveOrderItemCmd]
     implicit val updateOrderItemCmdFormat = jsonFormat[UpdateOrderItemCmd]
     implicit val deleteOrderItemCmdFormat = jsonFormat[DeleteOrderItemCmd]
-    implicit val eventJournalVoFormat = jsonFormat[EventJournalVo]
-    implicit val eventJournalListVoFormat = jsonFormat[EventJournalListVo]
-    implicit val createEventJournalCmdFormat = jsonFormat[CreateEventJournalCmd]
-    implicit val retrieveEventJournalCmdFormat = jsonFormat[RetrieveEventJournalCmd]
-    implicit val updateEventJournalCmdFormat = jsonFormat[UpdateEventJournalCmd]
-    implicit val deleteEventJournalCmdFormat = jsonFormat[DeleteEventJournalCmd]
 
     named("sales")
       .withCalls(
@@ -258,13 +240,7 @@ trait SalesService extends Service {
         pathCall("/sales-api/order-item/select-order-item-by-order-id?orderId", selectOrderItemByOrderId _),
         pathCall("/sales-api/order-item/delete-order-item-by-order-id?orderId", deleteOrderItemByOrderId _),
         pathCall("/sales-api/order-item/select-order-item-by-product-id?productId", selectOrderItemByProductId _),
-        pathCall("/sales-api/order-item/delete-order-item-by-product-id?productId", deleteOrderItemByProductId _),
-        pathCall("/sales-api/event-journal/create-event-journal", createEventJournal _),
-        pathCall("/sales-api/event-journal/retrieve-event-journal", retrieveEventJournal _),
-        pathCall("/sales-api/event-journal/update-event-journal", updateEventJournal _),
-        pathCall("/sales-api/event-journal/delete-event-journal", deleteEventJournal _),
-        pathCall("/sales-api/event-journal/query-event-journal", queryEventJournal _),
-        pathCall("/sales-api/event-journal/retrieve-event-journal-by-rowid/:rowid", retrieveEventJournalByRowid _)
+        pathCall("/sales-api/order-item/delete-order-item-by-product-id?productId", deleteOrderItemByProductId _)
       ).withAutoAcl(true)
   }
 }
