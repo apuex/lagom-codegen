@@ -440,6 +440,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val crudAppProjectDir = s"${rootProjectDir}/${crud}-${app}"
   val crudAppProjectConfDir = s"${crudAppProjectDir}/conf"
   val hyphen = if ("microsoft" == s"${System.getProperty("symbol.naming", "microsoft")}") "" else "-"
+  val disableJournal = if ("true" == s"${System.getProperty("disable.journal", "false")}") true else false
 
   val entityNames = xml.child
     .filter(x => x.label == "entity" && "true" != x.\@("enum"))

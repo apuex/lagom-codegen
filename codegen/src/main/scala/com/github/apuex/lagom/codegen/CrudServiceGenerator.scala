@@ -615,11 +615,16 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        """.stripMargin.trim
       }
     } else {
-      s"""
-         |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-         |  Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-         |)
-         |mediator ! Publish(publishQueue, evt)
+      if (disableJournal)
+        s"""
+           |mediator ! Publish(publishQueue, evt)
+         """.stripMargin.trim
+      else
+        s"""
+           |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
+           |  Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+           |)
+           |mediator ! Publish(publishQueue, evt)
        """.stripMargin.trim
     }
   }
