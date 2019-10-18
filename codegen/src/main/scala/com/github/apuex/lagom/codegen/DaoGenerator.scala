@@ -184,9 +184,8 @@ class DaoGenerator(modelLoader: ModelLoader) {
     val offset = if(journalTable == name) {
       fields.filter("offset" == _.name)
         .map(x => {
-          val offsetType = if("long" == x._type) cToPascal(x._type) else x._type.toUpperCase
           s"""
-             |def selectCurrentOffset()(implicit conn: Connection): ${offsetType}
+             |def selectCurrentOffset()(implicit conn: Connection): ${cToPascal(name)}Vo
            """.stripMargin.trim
         })
         .reduceOption((l, r) => s"${l}\n${r}")

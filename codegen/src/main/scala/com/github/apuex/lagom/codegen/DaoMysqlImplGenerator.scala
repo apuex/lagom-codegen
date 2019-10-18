@@ -557,6 +557,21 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
+  def selectCurrentOffsetSql(name: String, fields: Seq[Field], pkFields: Seq[Field]): String = {
+    val ordered = pkFields
+      .map(x => s"${name}.${x.name} DESC")
+      .reduceOption((l, r) => s"${l}, ${r}")
+      .map(x => s"ORDER BY ${x}")
+      .getOrElse("")
+    s"""
+       |SELECT
+       |  ${indent(defSqlFields(name, fields), 2)}
+       |FROM ${modelDbSchema}.${name}
+       |  ${ordered}
+       |  LIMIT 1
+     """.stripMargin.trim
+  }
+
   def retrieveSql(name: String, fields: Seq[Field], pkFields: Seq[Field]): String = {
     s"""
        |SELECT
@@ -591,23 +606,10 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       val offset = if (journalTable == name) {
         fields.filter("offset" == _.name)
           .map(x => {
-            val offsetType = if("long" == x._type) cToPascal(x._type) else x._type.toUpperCase
-            val defaultValue = if("long" == x._type)
-              "0"
-            else
-              s"""
-                 |UUIDs.startOf(0)
-              """.stripMargin.trim
             s"""
-               |${offsetParser(offsetType)}
-               |
-               |def selectCurrentOffset()(implicit conn: Connection): ${offsetType} = {
-               |  try {
-               |    val max = SQL("SELECT max(${name}.offset) as offset FROM ${modelDbSchema}.${name}").as(offsetParser.*)
-               |    if (max.isEmpty) ${defaultValue} else max.head
-               |  } catch {
-               |    case _: Throwable => ${defaultValue}
-               |  }
+               |def selectCurrentOffset()(implicit conn: Connection): ${cToPascal(name)}Vo = {
+               |  SQL(${indentWithLeftMargin(blockQuote(selectCurrentOffsetSql(name, persistFields, primaryKey.fields), 2), 2)}
+               |  ).as(${cToCamel(name)}Parser.single)
                |}
      """.stripMargin.trim
           })

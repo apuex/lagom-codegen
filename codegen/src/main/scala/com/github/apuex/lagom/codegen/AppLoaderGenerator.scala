@@ -36,12 +36,10 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |import akka.persistence.query.scaladsl.EventsByTagQuery
        |import akka.persistence.query._
        |import akka.stream.ActorMaterializer
-       |import com.datastax.driver.core.utils.UUIDs
        |import ${apiSrcPackage}._
        |import ${apiSrcPackage}.${dao}.${mysql}._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
        |import ${apiSrcPackage}.${shard}._
-       |import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
        |import com.lightbend.lagom.scaladsl.client._
        |import com.lightbend.lagom.scaladsl.devmode._
        |import com.lightbend.lagom.scaladsl.server._
@@ -93,7 +91,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |
        |    private def subscribeJournalEvents(): Unit = {
        |      val offset: Option[String] = db.withTransaction { implicit c =>
-       |        Some(daoModule.${cToCamel(journalTable)}Dao.selectCurrentOffset().toString)
+       |        Some(daoModule.${cToCamel(journalTable)}Dao.selectCurrentOffset().offsetTime)
        |      }
        |
        |      if (logger.isInfoEnabled) {
@@ -106,6 +104,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |          offset
        |            .map(x => {
        |              if (x.matches("^[\\\\+\\\\-]{0,1}[0-9]+$$")) Offset.sequence(x.toLong)
+       |              else if(x != "") Offset.timeBasedUUID(UUID.fromString(x))
        |              else Offset.timeBasedUUID(UUID.fromString(x))
        |            })
        |            .getOrElse(Offset.noOffset)
@@ -118,7 +117,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |                daoModule.eventJournalDao.createEventJournal(
        |                  ee.offset match {
        |                    case Sequence(x) =>
-       |                      CreateEventJournalEvent(evt.userId, x, evt.entityId, UUIDs.timeBased().toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+       |                      CreateEventJournalEvent(evt.userId, x, evt.entityId, x.toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
        |                    case TimeBasedUUID(x) =>
        |                      CreateEventJournalEvent(evt.userId, 0L, evt.entityId, x.toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
        |                  })
