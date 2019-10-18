@@ -133,6 +133,8 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
     case "float" => "FLOAT"
     case "double" => "DOUBLE"
     case "blob" => "BLOB"
+    case "uuid" => "VARCHAR(36)"
+    case "timeuuid" => "VARCHAR(36)"
     case _ => "INT" // enum type
   }
 }

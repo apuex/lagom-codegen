@@ -346,6 +346,10 @@ object ModelLoader {
       if (required) value else s"${value}.getOrElse(0)"
     case "blob" =>
       if (required) s"ByteString.readFrom(${value})" else s"${value}.map(ByteString.readFrom(_)).getOrElse(ByteString.EMPTY)"
+    case "uuid" =>
+      if (required) s"""${value}.toString""" else s"""${value}.map(_.toString).getOrElse("")"""
+    case "timeuuid" =>
+      if (required) s"""${value}.toString""" else s"""${value}.map(_.toString).getOrElse("")"""
     case _ => ""
   }
 
@@ -521,6 +525,8 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
     case "float" => "0"
     case "double" => "0"
     case "blob" => "ByteString.EMPTY"
+    case "uuid" => "\"\""
+    case "timeuuid" => "\"\""
     case x => if (isEnum(x)) s"${cToPascal(x)}.fromValue(0)" else ""
   }
 

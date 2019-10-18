@@ -1,5 +1,6 @@
 package com.github.apuex.lagom.codegen
 
+import com.github.apuex.lagom.codegen.JournalUtils._
 import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime.TextUtils.indent
@@ -58,6 +59,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
        |import akka.stream.scaladsl._
        |import akka.stream.{OverflowStrategy, SourceShape}
        |import akka.util.Timeout
+       |import com.datastax.driver.core.utils.UUIDs
        |import ${messageSrcPackage}.ScalapbJson._
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.dao._
@@ -117,7 +119,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
     val get = if (aggregate.transient || nonKeyPersistFields.isEmpty)
       s"""
          |def get${cToPascal(aggregate.name)}(): ServiceCall[Get${cToPascal(aggregate.name)}Cmd, ${cToPascal(aggregate.name)}Vo] = ServiceCall { cmd =>
-         |  ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty, s"${cToPascal(aggregate.name)}Vo"), 2)}
+         |  ${indent(defPublishCmdOrEvent("cmd", aggregate.transient, nonKeyPersistFields.isEmpty, s"${cToPascal(aggregate.name)}Vo"), 2)}
          |}
      """.stripMargin.trim
     else
@@ -135,7 +137,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
         s"""
            |def update${cToPascal(aggregate.name)}(): ServiceCall[Update${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
            |  Future.successful({
-           |    ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
+           |    ${indent(defPublishCmdOrEvent("cmd", aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
            |    0
            |  })
            |}
@@ -146,7 +148,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |  Future.successful(
            |    db.withTransaction { implicit c =>
            |      val evt = Update${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-           |      ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
+           |      ${indent(defPublishCmdOrEvent("evt", aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
            |      ${cToCamel(name)}Dao.update${cToPascal(aggregate.name)}(evt)
            |    }
            |  )
@@ -159,14 +161,14 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
           s"""
              |def add${cToPascal(aggregate.name)}(): ServiceCall[Add${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
              |  Future.successful({
-             |    ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
+             |    ${indent(defPublishCmdOrEvent("cmd", aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
              |    0
              |  })
              |}
              |
              |def remove${cToPascal(aggregate.name)}(): ServiceCall[Remove${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
              |  Future.successful({
-             |    ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
+             |    ${indent(defPublishCmdOrEvent("cmd", aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
              |    0
              |  })
              |}
@@ -177,7 +179,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
              |  Future.successful(
              |    db.withTransaction { implicit c =>
              |      val evt = Add${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-             |      ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 6)}
+             |      ${indent(defPublishCmdOrEvent("evt", aggregate.transient, nonKeyPersistFields.isEmpty), 6)}
              |      ${cToCamel(name)}Dao.add${cToPascal(aggregate.name)}(evt)
              |    }
              |  )
@@ -187,7 +189,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
              |  Future.successful(
              |    db.withTransaction { implicit c =>
              |      val evt = Remove${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: aggregate.primaryKey.fields, "cmd")})
-             |      ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 6)}
+             |      ${indent(defPublishCmdOrEvent("evt", aggregate.transient, nonKeyPersistFields.isEmpty), 6)}
              |      ${cToCamel(name)}Dao.remove${cToPascal(aggregate.name)}(evt)
              |    }
              |  )
@@ -198,7 +200,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
           s"""
              |def change${cToPascal(aggregate.name)}(): ServiceCall[Change${cToPascal(aggregate.name)}Cmd, Int] = ServiceCall { cmd =>
              |  Future.successful({
-             |    ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
+             |    ${indent(defPublishCmdOrEvent("cmd", aggregate.transient, nonKeyPersistFields.isEmpty), 4)}
              |    0
              |  })
              |}
@@ -209,7 +211,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
              |  Future.successful(
              |    db.withTransaction { implicit c =>
              |      val evt = Change${cToPascal(aggregate.name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-             |      ${indent(defPublishCmdOrEvent(aggregate.transient, nonKeyPersistFields.isEmpty), 6)}
+             |      ${indent(defPublishCmdOrEvent("evt", aggregate.transient, nonKeyPersistFields.isEmpty), 6)}
              |      ${cToCamel(name)}Dao.change${cToPascal(aggregate.name)}(evt)
              |    }
              |  )
@@ -272,7 +274,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       }
     }
 
-    val publish = defPublishCmdOrEvent(message.transient, nonKeyPersistFields.isEmpty, returnType)
+    val publish = defPublishCmdOrEvent("cmd", message.transient, nonKeyPersistFields.isEmpty, returnType)
 
     val daoCall = if (message.transient || nonKeyPersistFields.isEmpty)
       s"""
@@ -340,7 +342,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |  Future.successful(
            |    db.withTransaction { implicit c =>
            |      val evt = Create${cToPascal(name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-           |      ${indent(defPublishCmdOrEvent(transient, nonKeyPersistFields.isEmpty), 6)}
+           |      ${indent(defPublishCmdOrEvent("evt", transient, nonKeyPersistFields.isEmpty), 6)}
            |      ${cToCamel(name)}Dao.create${cToPascal(name)}(evt)
            |    }
            |  )
@@ -365,7 +367,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
              |  Future.successful(
              |    db.withTransaction { implicit c =>
              |      val evt = Update${cToPascal(name)}Event(${substituteMethodParams(userField +: persistFields, "cmd")})
-             |      ${indent(defPublishCmdOrEvent(transient, nonKeyPersistFields.isEmpty), 6)}
+             |      ${indent(defPublishCmdOrEvent("evt", transient, nonKeyPersistFields.isEmpty), 6)}
              |      ${cToCamel(name)}Dao.update${cToPascal(name)}(evt)
              |    }
              |  )
@@ -376,7 +378,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
            |  Future.successful(
            |    db.withTransaction { implicit c =>
            |      val evt = Delete${cToPascal(name)}Event(${substituteMethodParams(userField +: primaryKey.fields, "cmd")})
-           |      ${indent(defPublishCmdOrEvent(transient, nonKeyPersistFields.isEmpty), 6)}
+           |      ${indent(defPublishCmdOrEvent("evt", transient, nonKeyPersistFields.isEmpty), 6)}
            |      ${cToCamel(name)}Dao.delete${cToPascal(name)}(evt)
            |    }
            |  )
@@ -600,15 +602,15 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  private def defPublishCmdOrEvent(transient: Boolean, noPersistFields: Boolean, returnVal: String = ""): String = {
+  private def defPublishCmdOrEvent(alias: String, transient: Boolean, noPersistFields: Boolean, returnVal: String = ""): String = {
     if (transient || noPersistFields) {
       if ("" == returnVal || "Int" == returnVal) {
         s"""
-           |mediator ! Publish(publishQueue, cmd)
+           |mediator ! Publish(publishQueue, ${alias})
        """.stripMargin.trim
       } else {
         s"""
-           |mediator.ask(Publish(publishQueue, cmd))(Timeout(duration))
+           |mediator.ask(Publish(publishQueue, ${alias}))(Timeout(duration))
            |  .mapTo[${returnVal}]
        """.stripMargin.trim
       }

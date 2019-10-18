@@ -1,5 +1,6 @@
 package com.github.apuex.lagom.codegen
 
+import com.github.apuex.lagom.codegen.JournalUtils._
 import com.github.apuex.lagom.codegen.ModelLoader._
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 import com.github.apuex.springbootsolution.runtime.TextUtils.indent
@@ -52,6 +53,7 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
        |
        |import akka.actor._
        |import akka.cluster.pubsub.DistributedPubSubMediator._
+       |import com.datastax.driver.core.utils.UUIDs
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.dao._
        |import com.github.apuex.springbootsolution.runtime.DateFormat._
@@ -65,7 +67,7 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
        |      event match {
        |        case x: Event =>
        |          ${cToCamel(journalTable)}Dao.createEventJournal(
-       |            Create${cToPascal(journalTable)}Event(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
+       |            ${createJournalEvent(journalTable, "x", "0L", "UUIDs.timeBased().toString")}
        |          )
        |          dispatch(x)
        |          mediator ! Publish(publishQueue, x)

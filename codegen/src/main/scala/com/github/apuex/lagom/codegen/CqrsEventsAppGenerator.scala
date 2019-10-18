@@ -48,6 +48,7 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
        |
        |import akka.actor._
        |import akka.cluster.pubsub.DistributedPubSubMediator._
+       |import com.datastax.driver.core.utils.UUIDs
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.${shard}._
        |import scalapb.GeneratedMessage

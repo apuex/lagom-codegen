@@ -101,6 +101,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
          |import com.github.apuex.springbootsolution.runtime._
          |import com.google.protobuf.timestamp.Timestamp
          |import java.sql.Connection
+         |import java.util.UUID
          |
          |trait ${className} {
          |  ${indent(calls, 2)}

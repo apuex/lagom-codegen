@@ -397,11 +397,11 @@ class MessageGenerator(modelLoader: ModelLoader) {
         if ("timestamp" == x._type) {
           dependencies += "com.google.protobuf.timestamp.Timestamp"
           s"""
-             |def ${cToCamel(x.name)}: Option[${cToPascal(toJavaType(x._type))}]
+             |def ${cToCamel(x.name)}: Option[${cToPascal(toProtoJavaType(x._type))}]
          """.stripMargin.trim
         } else {
           s"""
-             |def ${cToCamel(x.name)}: ${cToPascal(toJavaType(x._type))}
+             |def ${cToCamel(x.name)}: ${cToPascal(toProtoJavaType(x._type))}
          """.stripMargin.trim
         }
       })
@@ -491,5 +491,12 @@ class MessageGenerator(modelLoader: ModelLoader) {
        |  def entityId: String
        |}
      """.stripMargin.trim
+  }
+
+  private def toProtoJavaType(typeName: String): String = typeName match {
+    case "uuid" => "String"
+    case "timeuuid" => "String"
+    case x =>
+      toJavaType(x)
   }
 }

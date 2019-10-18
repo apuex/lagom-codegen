@@ -95,22 +95,22 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |    }
          |  }
          |
-         |//  remote {
-         |//    startup-timeout = 60 s
-         |//
-         |//    netty.tcp {
-         |//      hostname = "localhost"      // default to the first seed node
-         |//      port = 2553                 // default port
-         |//      hostname = $${? HOSTNAME}   // override with -DHOSTNAME
-         |//      port = $${? PORT}           // override with -DPORT
-         |//    }
-         |//  }
-         |//
-         |//  cluster {
-         |//    seed-nodes = [
-         |//      "akka.tcp://${cToShell(modelName)}@localhost:2553",
-         |//    ]
-         |//  }
+         |  remote {
+         |    startup-timeout = 60 s
+         |
+         |    netty.tcp {
+         |      hostname = "localhost"      // default to the first seed node
+         |      port = 2553                 // default port
+         |      hostname = $${? HOSTNAME}   // override with -DHOSTNAME
+         |      port = $${? PORT}           // override with -DPORT
+         |    }
+         |  }
+         |
+         |  cluster {
+         |    seed-nodes = [
+         |      "akka.tcp://${cToShell(modelName)}@localhost:2553",
+         |    ]
+         |  }
          |}
          |
          |db {

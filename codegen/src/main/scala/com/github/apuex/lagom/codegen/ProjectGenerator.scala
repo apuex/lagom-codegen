@@ -480,7 +480,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  lazy val macwireUtil     = "com.softwaremill.macwire"  %%  "util"                                % "2.3.0"
          |  lazy val macwireProxy    = "com.softwaremill.macwire"  %%  "proxy"                               % "2.3.0"
          |
-         |  lazy val sbRuntime       = "com.github.apuex.springbootsolution" %% "scala-runtime"              % "1.0.9"
+         |  lazy val sbRuntime       = "com.github.apuex.springbootsolution" %% "scala-runtime"              % "1.0.10"
          |  lazy val playEvents      = "com.github.apuex"          %%  "play-events"                         % "1.0.2"
          |  lazy val codegenUtil     = "com.github.apuex"          %%  "lagom-codegen-util"                  % "1.0.0"
          |  lazy val serializer      = "com.github.apuex.protobuf" %   "protobuf-serializer"                 % "1.0.1"

@@ -97,7 +97,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
          |
          |import java.io.InputStream
          |import java.sql.Connection
-         |import java.util.Date
+         |import java.util.{Date, UUID}
          |
          |import anorm.ParameterValue._
          |import anorm.SqlParser._
@@ -597,14 +597,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
             else
               s"""
                  |UUIDs.startOf(0)
-              """".stripMargin.trim
+              """.stripMargin.trim
             s"""
                |${offsetParser(offsetType)}
                |
                |def selectCurrentOffset()(implicit conn: Connection): ${offsetType} = {
                |  try {
                |    val max = SQL("SELECT max(${name}.offset) as offset FROM ${modelDbSchema}.${name}").as(offsetParser.*)
-               |    if (max.isEmpty) 0 else max.head
+               |    if (max.isEmpty) ${defaultValue} else max.head
                |  } catch {
                |    case _: Throwable => ${defaultValue}
                |  }

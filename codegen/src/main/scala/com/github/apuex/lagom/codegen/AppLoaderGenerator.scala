@@ -36,6 +36,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |import akka.persistence.query.scaladsl.EventsByTagQuery
        |import akka.persistence.query._
        |import akka.stream.ActorMaterializer
+       |import com.datastax.driver.core.utils.UUIDs
        |import ${apiSrcPackage}._
        |import ${apiSrcPackage}.${dao}.${mysql}._
        |import ${crudImplSrcPackage}.${cToPascal(crudAppLoaderName)}._
@@ -113,13 +114,15 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |        .runForeach(ee => {
        |          db.withTransaction { implicit c =>
        |            ee.event match {
-       |              case x: Event =>
-       |                daoModule.${cToCamel(journalTable)}Dao.createEventJournal(
-       |                  Create${cToPascal(journalTable)}Event(x.userId, ee.offset match {
-       |                    ${indent(offsetPattern(), 20)}
-       |                  }, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
-       |                )
-       |                queryEventApply.dispatch(x)
+       |              case evt: Event =>
+       |                daoModule.eventJournalDao.createEventJournal(
+       |                  ee.offset match {
+       |                    case Sequence(x) =>
+       |                      CreateEventJournalEvent(evt.userId, x, evt.entityId, UUIDs.timeBased().toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+       |                    case TimeBasedUUID(x) =>
+       |                      CreateEventJournalEvent(evt.userId, 0L, evt.entityId, x.toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+       |                  })
+       |                queryEventApply.dispatch(evt)
        |              case x: ValueObject =>
        |                mediator ! Publish(publishQueue, x)
        |              case _ =>
@@ -208,14 +211,14 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
       .map(x => x.\@("type") match {
         case "long" =>
           s"""
-             |case Sequence(x) => x
-             |// case TimeBasedUUID(x) => x
+             |case Sequence(x) => x.toString
+             |case TimeBasedUUID(x) => x.toString
            """.stripMargin.trim
 
         case "uuid" =>
           s"""
-             |// case Sequence(x) => x
-             |case TimeBasedUUID(x) => x
+             |case Sequence(x) => x.toString
+             |case TimeBasedUUID(x) => x.toString
            """.stripMargin.trim
 
       })
