@@ -121,7 +121,7 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
   }
 
   def toMysqlType(typeName: String, length: Int, scale: Int): String = typeName match {
-    case "bool" => "TINYINT"
+    case "bool" => "TINYINT(1)"
     case "short" => "SHORT"
     case "byte" => if (length == 0) "CHAR" else if (length > 0 && length < 256) s"CHAR(${length})" else "BLOB"
     case "int" => "INT"
