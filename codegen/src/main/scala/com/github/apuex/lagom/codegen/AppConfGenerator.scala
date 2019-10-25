@@ -104,7 +104,7 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |    startup-timeout = 60 s
          |
          |    netty.tcp {
-         |      hostname = "localhost"      // default to the first seed node
+         |      hostname = "${cToShell(modelName)}"      // default to the first seed node
          |      port = 2553                 // default port
          |      hostname = $${? HOSTNAME}   // override with -DHOSTNAME
          |      port = $${? PORT}           // override with -DPORT
@@ -113,7 +113,7 @@ class AppConfGenerator(modelLoader: ModelLoader) {
          |
          |  cluster {
          |    seed-nodes = [
-         |      "akka.tcp://${cToShell(modelName)}@localhost:2553",
+         |      "akka.tcp://${cToShell(modelName)}@${cToShell(modelName)}:2553",
          |    ]
          |    sharding {
          |      // The state of the coordinator and the state of
