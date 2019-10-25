@@ -622,7 +622,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
       else
         s"""
            |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-           |  Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
+           |  ${createJournalEvent(journalTable, "x", "0L", "UUIDs.timeBased().toString")}
            |)
            |mediator ! Publish(publishQueue, evt)
        """.stripMargin.trim
