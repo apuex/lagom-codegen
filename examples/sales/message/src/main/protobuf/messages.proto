@@ -644,7 +644,7 @@ message EventJournalVo {
   option (scalapb.message).extends = "com.github.apuex.commerce.sales.ValueObject";
   int64 offset = 1; // 事件顺序号
   string persistenceId = 2; // 实体ID
-  google.protobuf.Timestamp occurredTime = 3; // 事件发生时间
+  string offsetTime = 3; // 事件发生时间
   string metaData = 4; // 事件元数据
   bytes content = 5; // 事件内容
 }
@@ -659,7 +659,7 @@ message CreateEventJournalCmd {
   string userId = 1; // 用户ID
   int64 offset = 2; // 事件顺序号
   string persistenceId = 3; // 实体ID
-  google.protobuf.Timestamp occurredTime = 4; // 事件发生时间
+  string offsetTime = 4; // 事件发生时间
   string metaData = 5; // 事件元数据
   bytes content = 6; // 事件内容
 }
@@ -675,7 +675,7 @@ message UpdateEventJournalCmd {
   string userId = 1; // 用户ID
   int64 offset = 2; // 事件顺序号
   string persistenceId = 3; // 实体ID
-  google.protobuf.Timestamp occurredTime = 4; // 事件发生时间
+  string offsetTime = 4; // 事件发生时间
   string metaData = 5; // 事件元数据
   bytes content = 6; // 事件内容
 }
@@ -691,7 +691,7 @@ message CreateEventJournalEvent {
   string userId = 1; // 用户ID
   int64 offset = 2; // 事件顺序号
   string persistenceId = 3; // 实体ID
-  google.protobuf.Timestamp occurredTime = 4; // 事件发生时间
+  string offsetTime = 4; // 事件发生时间
   string metaData = 5; // 事件元数据
   bytes content = 6; // 事件内容
 }
@@ -701,7 +701,7 @@ message UpdateEventJournalEvent {
   string userId = 1; // 用户ID
   int64 offset = 2; // 事件顺序号
   string persistenceId = 3; // 实体ID
-  google.protobuf.Timestamp occurredTime = 4; // 事件发生时间
+  string offsetTime = 4; // 事件发生时间
   string metaData = 5; // 事件元数据
   bytes content = 6; // 事件内容
 }

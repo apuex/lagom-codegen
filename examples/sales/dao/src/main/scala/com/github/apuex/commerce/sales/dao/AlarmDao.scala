@@ -7,6 +7,7 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.springbootsolution.runtime._
 import com.google.protobuf.timestamp.Timestamp
 import java.sql.Connection
+import java.util.UUID
 
 trait AlarmDao {
   def createAlarm(evt: CreateAlarmEvent)(implicit conn: Connection): Int

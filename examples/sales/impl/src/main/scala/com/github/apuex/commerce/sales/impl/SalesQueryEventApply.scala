@@ -8,6 +8,7 @@ import java.util.Date
 
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSubMediator._
+import com.datastax.driver.core.utils.UUIDs
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao._
 import com.github.apuex.springbootsolution.runtime.DateFormat._
@@ -29,7 +30,7 @@ class SalesQueryEventApply(alarmDao: AlarmDao,
       event match {
         case x: Event =>
           eventJournalDao.createEventJournal(
-            CreateEventJournalEvent(x.userId, 0L, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.toByteString)
+            CreateEventJournalEvent(x.userId, 0L, x.entityId, UUIDs.timeBased().toString, x.getClass.getName, x.toByteString)
           )
           dispatch(x)
           mediator ! Publish(publishQueue, x)

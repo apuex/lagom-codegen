@@ -105,9 +105,6 @@ class SalesServiceImpl (config: Config,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = CreatePaymentTypeEvent(cmd.userId, cmd.paymentTypeId, cmd.paymentTypeName, cmd.paymentTypeLabel)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
         mediator ! Publish(publishQueue, evt)
         paymentTypeDao.createPaymentType(evt)
       }
@@ -126,9 +123,6 @@ class SalesServiceImpl (config: Config,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = UpdatePaymentTypeEvent(cmd.userId, cmd.paymentTypeId, cmd.paymentTypeName, cmd.paymentTypeLabel)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
         mediator ! Publish(publishQueue, evt)
         paymentTypeDao.updatePaymentType(evt)
       }
@@ -139,9 +133,6 @@ class SalesServiceImpl (config: Config,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = DeletePaymentTypeEvent(cmd.userId, cmd.paymentTypeId)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
         mediator ! Publish(publishQueue, evt)
         paymentTypeDao.deletePaymentType(evt)
       }
@@ -334,9 +325,6 @@ class SalesServiceImpl (config: Config,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = CreateOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId, cmd.productName, cmd.itemUnit, cmd.unitPrice, cmd.orderQuantity)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
         mediator ! Publish(publishQueue, evt)
         orderItemDao.createOrderItem(evt)
       }
@@ -355,9 +343,6 @@ class SalesServiceImpl (config: Config,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = UpdateOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId, cmd.productName, cmd.itemUnit, cmd.unitPrice, cmd.orderQuantity)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
         mediator ! Publish(publishQueue, evt)
         orderItemDao.updateOrderItem(evt)
       }
@@ -368,9 +353,6 @@ class SalesServiceImpl (config: Config,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = DeleteOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId)
-        eventJournalDao.createEventJournal(
-          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-        )
         mediator ! Publish(publishQueue, evt)
         orderItemDao.deleteOrderItem(evt)
       }

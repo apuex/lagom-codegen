@@ -5,7 +5,7 @@ package com.github.apuex.commerce.sales.dao.mysql
 
 import java.io.InputStream
 import java.sql.Connection
-import java.util.Date
+import java.util.{Date, UUID}
 
 import anorm.ParameterValue._
 import anorm.SqlParser._
@@ -25,19 +25,19 @@ import com.github.apuex.commerce.sales.dao._
 class EventJournalDaoImpl() extends EventJournalDao {
   val log = Logger.of(getClass)
 
-  private def offsetParser(implicit c: Connection): RowParser[Long] = {
-    get[Long]("offset") map {
-      case offset => offset
-    }
-  }
-  
-  def selectCurrentOffset()(implicit conn: Connection): Long = {
-    try {
-      val max = SQL("SELECT max(event_journal.offset) as offset FROM sales.event_journal").as(offsetParser.*)
-      if (max.isEmpty) 0 else max.head
-    } catch {
-      case _: Throwable => 0
-    }
+  def selectCurrentOffset()(implicit conn: Connection): EventJournalVo = {
+    SQL(s"""
+      |SELECT
+      |    event_journal.offset,
+      |    event_journal.persistence_id,
+      |    event_journal.offset_time,
+      |    event_journal.meta_data,
+      |    event_journal.content
+      |  FROM sales.event_journal
+      |    ORDER BY event_journal.offset DESC
+      |    LIMIT 1
+     """.stripMargin.trim
+    ).as(eventJournalParser.single)
   }
 
   def createEventJournal(evt: CreateEventJournalEvent)(implicit conn: Connection): Int = {
@@ -45,7 +45,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
       |UPDATE sales.event_journal
       |  SET
       |    event_journal.persistence_id = {persistenceId},
-      |    event_journal.occurred_time = {occurredTime},
+      |    event_journal.offset_time = {offsetTime},
       |    event_journal.meta_data = {metaData},
       |    event_journal.content = {content}
       |  WHERE offset = {offset}
@@ -53,7 +53,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
     .on(
       "offset" -> evt.offset,
       "persistenceId" -> evt.persistenceId,
-      "occurredTime" -> scalapbToDate(evt.occurredTime),
+      "offsetTime" -> evt.offsetTime,
       "metaData" -> evt.metaData,
       "content" -> evt.content.toByteArray
     ).executeUpdate()
@@ -61,15 +61,13 @@ class EventJournalDaoImpl() extends EventJournalDao {
     if(rowsAffected == 0)
       SQL(s"""
         |INSERT INTO sales.event_journal(
-        |    event_journal.offset,
         |    event_journal.persistence_id,
-        |    event_journal.occurred_time,
+        |    event_journal.offset_time,
         |    event_journal.meta_data,
         |    event_journal.content
         |  ) VALUES (
-        |    {offset},
         |    {persistenceId},
-        |    {occurredTime},
+        |    {offsetTime},
         |    {metaData},
         |    {content}
         |  )
@@ -77,7 +75,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
       .on(
         "offset" -> evt.offset,
         "persistenceId" -> evt.persistenceId,
-        "occurredTime" -> scalapbToDate(evt.occurredTime),
+        "offsetTime" -> evt.offsetTime,
         "metaData" -> evt.metaData,
         "content" -> evt.content.toByteArray
       ).executeUpdate()
@@ -89,7 +87,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
       |SELECT
       |    event_journal.offset,
       |    event_journal.persistence_id,
-      |    event_journal.occurred_time,
+      |    event_journal.offset_time,
       |    event_journal.meta_data,
       |    event_journal.content
       |  FROM sales.event_journal
@@ -105,7 +103,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
       |UPDATE sales.event_journal
       |  SET
       |    event_journal.persistence_id = {persistenceId},
-      |    event_journal.occurred_time = {occurredTime},
+      |    event_journal.offset_time = {offsetTime},
       |    event_journal.meta_data = {metaData},
       |    event_journal.content = {content}
       |  WHERE offset = {offset}
@@ -113,7 +111,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
     .on(
       "offset" -> evt.offset,
       "persistenceId" -> evt.persistenceId,
-      "occurredTime" -> scalapbToDate(evt.occurredTime),
+      "offsetTime" -> evt.offsetTime,
       "metaData" -> evt.metaData,
       "content" -> evt.content.toByteArray
     ).executeUpdate()
@@ -163,7 +161,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
       |SELECT
       |    event_journal.offset,
       |    event_journal.persistence_id,
-      |    event_journal.occurred_time,
+      |    event_journal.offset_time,
       |    event_journal.meta_data,
       |    event_journal.content
       |  FROM sales.event_journal
@@ -179,7 +177,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
       |SELECT
       |    t.offset,
       |    t.persistence_id,
-      |    t.occurred_time,
+      |    t.offset_time,
       |    t.meta_data,
       |    t.content
       |  FROM sales.event_journal t
@@ -188,7 +186,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
   private val fieldConverter: SymbolConverter = {
     case "offset" => "offset"
     case "persistenceId" => "persistence_id"
-    case "occurredTime" => "occurred_time"
+    case "offsetTime" => "offset_time"
     case "metaData" => "meta_data"
     case "content" => "content"
     case x: String => camelToC(x)
@@ -205,28 +203,28 @@ class EventJournalDaoImpl() extends EventJournalDao {
   private def parseParam(fieldName: String, paramName:String, paramValue: String): NamedParameter = fieldName match {
     case "offset" => paramName -> LongParser.parse(paramValue)
     case "persistenceId" => paramName -> paramValue
-    case "occurredTime" => paramName -> DateParser.parse(paramValue)
+    case "offsetTime" => paramName -> UUIDParser.parse(paramValue)
     case "metaData" => paramName -> paramValue
   }
 
   private def parseParam(fieldName: String, paramName:String, paramValue: Seq[String]): NamedParameter = fieldName match {
     case "offset" => paramName -> paramValue.map(LongParser.parse(_))
     case "persistenceId" => paramName -> paramValue
-    case "occurredTime" => paramName -> paramValue.map(DateParser.parse(_))
+    case "offsetTime" => paramName -> paramValue.map(UUIDParser.parse(_))
     case "metaData" => paramName -> paramValue
   }
 
   private def eventJournalParser(implicit c: Connection): RowParser[EventJournalVo] = {
     get[Long]("offset") ~ 
     get[String]("persistence_id") ~ 
-    get[Date]("occurred_time") ~ 
+    get[UUID]("offset_time") ~ 
     get[String]("meta_data") ~ 
     get[InputStream]("content") map {
-      case offset ~ persistenceId ~ occurredTime ~ metaData ~ content =>
+      case offset ~ persistenceId ~ offsetTime ~ metaData ~ content =>
         EventJournalVo(
           offset,
           persistenceId,
-          Some(toScalapbTimestamp(occurredTime)),
+          offsetTime.toString,
           metaData,
           ByteString.readFrom(content)
         )
@@ -234,8 +232,9 @@ class EventJournalDaoImpl() extends EventJournalDao {
   }
 
   private def namedParams(q: QueryCommand): Seq[NamedParameter] = {
-    whereClause.toNamedParams(q.getPredicate, q.params)
+    q.predicate.map(p => whereClause.toNamedParams(p, q.params)
       .map(x => parseParam(x._1, x._2, x._3))
-      .asInstanceOf[Seq[NamedParameter]]
+      .asInstanceOf[Seq[NamedParameter]])
+      .getOrElse(Seq())
   }
 }

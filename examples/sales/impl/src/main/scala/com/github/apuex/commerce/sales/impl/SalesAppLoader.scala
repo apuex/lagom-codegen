@@ -15,7 +15,6 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao.mysql._
 import com.github.apuex.commerce.sales.impl.SalesAppLoader._
 import com.github.apuex.commerce.sales.sharding._
-import com.github.apuex.springbootsolution.runtime.DateFormat.toScalapbTimestamp
 import com.lightbend.lagom.scaladsl.client._
 import com.lightbend.lagom.scaladsl.devmode._
 import com.lightbend.lagom.scaladsl.server._
@@ -51,6 +50,7 @@ object SalesAppLoader {
     // Bind the service that this server provides
     lazy val db = dbApi.database("sales-db")
     lazy val publishQueue = config.getString("sales.instant-event-publish-queue")
+    lazy val duration = Duration(config.getString("db.sales-db.event.reschedule-duration")).asInstanceOf[FiniteDuration]
     lazy val mediator = DistributedPubSub(actorSystem).mediator
     lazy val daoModule = wire[DaoModule]
     lazy val clusterModule = wire[ClusterShardingModule]
@@ -62,42 +62,53 @@ object SalesAppLoader {
 
     override lazy val lagomServer: LagomServer = serverFor[SalesService](wire[SalesServiceImpl])
 
-    val offset: Option[String] = db.withTransaction { implicit c =>
-      Some(daoModule.eventJournalDao.selectCurrentOffset().toString)
-    }
+    subscribeJournalEvents()
 
-    if(logger.isInfoEnabled) {
-      offset.map(x => logger.info(s"Starting from offset=${x}"))
-    }
+    private def subscribeJournalEvents(): Unit = {
+      val offset: Option[String] = db.withTransaction { implicit c =>
+        Some(daoModule.eventJournalDao.selectCurrentOffset().offsetTime)
+      }
 
-    readJournal
-      .eventsByTag(
-        "all",
-        offset
-          .map(x => {
-            if (x.matches("^[\\+\\-]{0,1}[0-9]+$")) Offset.sequence(x.toLong)
-            else Offset.timeBasedUUID(UUID.fromString(x))
-          })
-          .getOrElse(Offset.noOffset)
-      )
-      .filter(ee => ee.event.isInstanceOf[GeneratedMessage])
-      .runForeach(ee => {
+      if (logger.isInfoEnabled) {
+        offset.map(x => logger.info(s"Starting from offset=${x}"))
+      }
+
+      readJournal
+        .eventsByTag(
+          "all",
+          offset
+            .map(x => {
+              if (x.matches("^[\\+\\-]{0,1}[0-9]+$")) Offset.sequence(x.toLong)
+              else if(x != "") Offset.timeBasedUUID(UUID.fromString(x))
+              else Offset.timeBasedUUID(UUID.fromString(x))
+            })
+            .getOrElse(Offset.noOffset)
+        )
+        .filter(ee => ee.event.isInstanceOf[GeneratedMessage])
+        .runForeach(ee => {
           db.withTransaction { implicit c =>
             ee.event match {
-              case x: Event =>
+              case evt: Event =>
                 daoModule.eventJournalDao.createEventJournal(
-                  CreateEventJournalEvent(x.userId, ee.offset match {
-                    case Sequence(x) => x
-                    // case TimeBasedUUID(x) => x
-                  }, x.entityId, Some(toScalapbTimestamp(new Date())), x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
-                )
-                queryEventApply.dispatch(x)
+                  ee.offset match {
+                    case Sequence(x) =>
+                      CreateEventJournalEvent(evt.userId, x, evt.entityId, x.toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+                    case TimeBasedUUID(x) =>
+                      CreateEventJournalEvent(evt.userId, 0L, evt.entityId, x.toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+                  })
+                queryEventApply.dispatch(evt)
               case x: ValueObject =>
                 mediator ! Publish(publishQueue, x)
               case _ =>
             }
           }
-      })(actorMaterializer)
+        })(actorMaterializer)
+        .recover({
+          case t: Throwable =>
+            logger.error("journal events by tag failed: {}", t)
+            actorSystem.scheduler.scheduleOnce(duration)(subscribeJournalEvents)
+        })
+    }
   }
 
 }

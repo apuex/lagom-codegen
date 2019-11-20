@@ -190,8 +190,9 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
   }
 
   private def namedParams(q: QueryCommand): Seq[NamedParameter] = {
-    whereClause.toNamedParams(q.getPredicate, q.params)
+    q.predicate.map(p => whereClause.toNamedParams(p, q.params)
       .map(x => parseParam(x._1, x._2, x._3))
-      .asInstanceOf[Seq[NamedParameter]]
+      .asInstanceOf[Seq[NamedParameter]])
+      .getOrElse(Seq())
   }
 }

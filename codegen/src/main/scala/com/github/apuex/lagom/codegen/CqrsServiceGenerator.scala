@@ -469,27 +469,6 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
     """.stripMargin.trim
   }
 
-  private def defPublishCmdOrEvent(transient: Boolean, noPersistFields: Boolean, returnVal: String = ""): String = {
-    if (transient || noPersistFields) {
-      if ("" == returnVal || "Int" == returnVal) {
-        s"""
-           |mediator ! Publish(publishQueue, cmd)
-       """.stripMargin.trim
-      } else {
-        s"""
-           |mediator.ask(Publish(publishQueue, cmd))(Timeout(duration))
-           |  .mapTo[${returnVal}]
-       """.stripMargin.trim
-      }
-    } else {
-      s"""
-         |${cToCamel(journalTable)}Dao.create${cToPascal(journalTable)}(
-         |  Create${cToPascal(journalTable)}Event(cmd.userId, 0L, cmd.entityId, Some(toScalapbTimestamp(new Date())), evt.getClass.getName, evt.toByteString)
-         |)
-         |mediator ! Publish(publishQueue, evt)
-       """.stripMargin.trim
-    }
-  }
 }
 
 

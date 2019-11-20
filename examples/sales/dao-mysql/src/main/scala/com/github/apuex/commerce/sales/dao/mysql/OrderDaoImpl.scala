@@ -5,7 +5,7 @@ package com.github.apuex.commerce.sales.dao.mysql
 
 import java.io.InputStream
 import java.sql.Connection
-import java.util.Date
+import java.util.{Date, UUID}
 
 import anorm.ParameterValue._
 import anorm.SqlParser._
@@ -263,8 +263,9 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   }
 
   private def namedParams(q: QueryCommand): Seq[NamedParameter] = {
-    whereClause.toNamedParams(q.getPredicate, q.params)
+    q.predicate.map(p => whereClause.toNamedParams(p, q.params)
       .map(x => parseParam(x._1, x._2, x._3))
-      .asInstanceOf[Seq[NamedParameter]]
+      .asInstanceOf[Seq[NamedParameter]])
+      .getOrElse(Seq())
   }
 }

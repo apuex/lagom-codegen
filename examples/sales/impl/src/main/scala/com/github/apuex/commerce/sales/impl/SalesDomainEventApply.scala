@@ -5,6 +5,7 @@ package com.github.apuex.commerce.sales.impl
 
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSubMediator._
+import com.datastax.driver.core.utils.UUIDs
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.sharding._
 import scalapb.GeneratedMessage

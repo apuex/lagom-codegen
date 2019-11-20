@@ -14,10 +14,10 @@
       <field name="alarm_id"/>
       <field name="alarm_begin"/>
     </primaryKey>
-    <message name="begin_alarm" comment="告警发生">
+    <message name="begin_alarm" creator="true">
       <field name="alarm_desc"/>
     </message>
-    <message name="end_alarm" comment="告警结束">
+    <message name="end_alarm">
       <field name="alarm_end"/>
       <field name="alarm_desc"/>
     </message>
@@ -44,10 +44,11 @@
     <field name="unit_price" type="double" required="true" aggregate="true" comment="单价"/>
     <field name="record_time" type="timestamp" transient="true" comment="销量最后更新时间"/>
     <field name="quantity_sold" type="double" transient="true" comment="销量"/>
+    <field name="product_desc" type="string" length="64" required="true" aggregate="true" comment="商品描述"/>
     <primaryKey name="product_pk">
       <field name="product_id"/>
     </primaryKey>
-    <aggregate name="product_sales">
+    <aggregate name="product_sales" transient="true">
       <field name="record_time"/>
       <field name="quantity_sold"/>
     </aggregate>
@@ -76,5 +77,16 @@
     <foreignKey name="order_item_product_fk" refEntity="product">
       <field name="product_id" refField="product_id"/>
     </foreignKey>
+  </entity>
+
+  <entity name="event_journal" aggregate="true">
+    <field name="persistence_id" type="string" length="128" required="true" comment="实体ID" />
+    <field name="offset_time" type="timeuuid" required="true" comment="事件发生时间" />
+    <field name="offset" type="long" required="true" comment="事件顺序号"/>
+    <field name="meta_data" type="string" length="128" required="true" comment="事件元数据" />
+    <field name="content" type="blob" required="true" comment="事件内容" />
+    <primaryKey name="event_pk" generated="true">
+      <field name="offset" />
+    </primaryKey>
   </entity>
 </model>

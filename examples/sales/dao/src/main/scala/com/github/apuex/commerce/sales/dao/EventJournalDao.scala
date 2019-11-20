@@ -7,9 +7,10 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.springbootsolution.runtime._
 import com.google.protobuf.timestamp.Timestamp
 import java.sql.Connection
+import java.util.UUID
 
 trait EventJournalDao {
-  def selectCurrentOffset()(implicit conn: Connection): Long
+  def selectCurrentOffset()(implicit conn: Connection): EventJournalVo
 
   def createEventJournal(evt: CreateEventJournalEvent)(implicit conn: Connection): Int
 

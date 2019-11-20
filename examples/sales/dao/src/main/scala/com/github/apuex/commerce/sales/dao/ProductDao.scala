@@ -7,6 +7,7 @@ import com.github.apuex.commerce.sales._
 import com.github.apuex.springbootsolution.runtime._
 import com.google.protobuf.timestamp.Timestamp
 import java.sql.Connection
+import java.util.UUID
 
 trait ProductDao {
   def createProduct(evt: CreateProductEvent)(implicit conn: Connection): Int

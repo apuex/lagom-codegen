@@ -80,12 +80,12 @@
   </entity>
 
   <entity name="event_journal" aggregate="true">
-    <field name="persistence_id" type="string" length="64" required="true" comment="实体ID" />
-    <field name="occurred_time" type="timestamp" required="true" comment="事件发生时间" />
+    <field name="persistence_id" type="string" length="128" required="true" comment="实体ID" />
+    <field name="offset_time" type="timeuuid" required="true" comment="事件发生时间" />
     <field name="offset" type="long" required="true" comment="事件顺序号"/>
     <field name="meta_data" type="string" length="128" required="true" comment="事件元数据" />
     <field name="content" type="blob" required="true" comment="事件内容" />
-    <primaryKey name="event_pk">
+    <primaryKey name="event_pk" generated="true">
       <field name="offset" />
     </primaryKey>
   </entity>
