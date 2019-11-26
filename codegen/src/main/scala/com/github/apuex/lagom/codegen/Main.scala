@@ -25,6 +25,7 @@ object Main extends App {
       case "generate-dao-mysql" => DaoMysqlImplGenerator(args.drop(1)(0)).generate()
       case "generate-dbschema-mysql" => MysqlSchemaGenerator(args.drop(1)(0)).generate()
       case "generate-project-settings" => ProjectGenerator(args.drop(1)(0)).generate()
+      case "generate-frontend-message" => FrontendMessageGenerator(args.drop(1)(0)).generate()
       case "generate-all" => generateAll(args.drop(1)(0))
       case c =>
         println(s"unknown command '${c}'")

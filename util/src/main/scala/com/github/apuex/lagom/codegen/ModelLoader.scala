@@ -385,6 +385,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val crud = "crud"
   val impl = "impl"
   val app: String = "app"
+  val frontend = "frontend"
   val loader: String = "loader"
   val modelName = xml.\@("name")
   val modelPackage = xml.\@("package")
@@ -439,6 +440,10 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val crudAppProjectName = s"${cToShell(modelName)}-${cToShell(crud)}-${cToShell(app)}"
   val crudAppProjectDir = s"${rootProjectDir}/${crud}-${app}"
   val crudAppProjectConfDir = s"${crudAppProjectDir}/conf"
+
+  val frontendProjectDir = s"${rootProjectDir}/${frontend}"
+  val frontendSrcDir = s"${frontendProjectDir}/src/app/generated"
+
   val hyphen = if ("microsoft" == s"${System.getProperty("symbol.naming", "microsoft")}") "" else "-"
   val disableJournal = if ("true" == s"${System.getProperty("disable.journal", "false")}") true else false
 
