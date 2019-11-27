@@ -475,23 +475,23 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
 
   def defFieldType(name: String): String = {
     if (isAggregateEntity(name)) s"${cToPascal(name)}Vo"
-    else cToPascal(toJavaType(name))
+    else toTypeScriptType(name)
   }
 
   def defFieldType(field: Field): String = {
     // recursive array/map definition is not supported.
     if ("array" == field._type)
       s"""
-         |Seq[${defFieldType(field.valueType)}]
+         |${defFieldType(field.valueType)}[]
        """.stripMargin.trim
     else if ("map" == field._type)
       s"""
-         |Map[${defFieldType(field.keyType)}, ${defFieldType(field.valueType)}]
+         |Map<${defFieldType(field.keyType)}, ${defFieldType(field.valueType)}>
        """.stripMargin.trim
     else if ("any" == field._type)
-      s"Option[${defFieldType(field._type)}]"
+      s"${defFieldType(field._type)}"
     else if ("timestamp" == field._type)
-      s"Option[${defFieldType(field._type)}]"
+      s"${defFieldType(field._type)}"
     else if (isEnum(field._type))
       cToPascal(field._type)
     else {
@@ -544,6 +544,17 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
          """.stripMargin.trim
       })
       .reduceOption((l, r) => s"${l}, ${r}")
+      .getOrElse("")
+  }
+
+  def defUrlParams(fields: Seq[Field]): String = {
+    fields
+      .map(x => {
+        s"""
+           |'${cToCamel(x.name)}=' + encodeURIComponent(${cToCamel(x.name)})
+         """.stripMargin.trim
+      })
+      .reduceOption((l, r) => s"${l} + '&' + ${r}")
       .getOrElse("")
   }
 

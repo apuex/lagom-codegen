@@ -34,6 +34,13 @@ class FrontendMessageGenerator(modelLoader: ModelLoader) {
         val entityName = x.\@("name")
         val aggregatesTo = x.\@("aggregatesTo")
         val enum = if ("true" == x.\@("enum")) true else false
+        val prelude = Seq(
+          s"""
+             |/*****************************************************
+             | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+             | *****************************************************/
+           """.stripMargin
+        )
         val results: Seq[String] = if (!enum && "" == aggregatesTo) generateMessagesForAggregate(toAggregate(x, xml), messageSrcPackage)
         else {
           val valueObject = toValueObject(x, aggregatesTo, xml)
@@ -58,7 +65,7 @@ class FrontendMessageGenerator(modelLoader: ModelLoader) {
               )
           }
         }
-        (entityName, results)
+        (entityName, prelude ++ results)
       })
       .filter(x => !x._2.isEmpty)
       .map(x => (x._1, x._2.reduceOption((l, r) => s"${l}\n\n${r}").getOrElse("")))

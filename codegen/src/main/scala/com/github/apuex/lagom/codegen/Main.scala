@@ -6,34 +6,48 @@ object Main extends App {
     println("Usage:\n" +
       "\tjava -jar <this jar> <arg list>")
   } else {
+    val fileName = args.drop(1)(0)
+    val modelLoader = ModelLoader(fileName)
     args(0) match {
-      case "generate-app-conf" => AppConfGenerator(args.drop(1)(0)).generate()
-      case "generate-crud-app-conf" => CrudAppConfGenerator(args.drop(1)(0)).generate()
-      case "generate-app-loader" => AppLoaderGenerator(args.drop(1)(0)).generate()
-      case "generate-model-test" => ModelTestGenerator(args.drop(1)(0)).generate()
-      case "generate-message" => MessageGenerator(args.drop(1)(0)).generate()
-      case "generate-entity" => EntityGenerator(args.drop(1)(0)).generate()
-      case "generate-json-serializer" => JsonSerializerGenerator(args.drop(1)(0)).generate()
-      case "generate-crud-service" => CrudServiceGenerator(args.drop(1)(0)).generate()
-      case "generate-crud-event-apply" => CrudEventsAppGenerator(args.drop(1)(0)).generate()
-      case "generate-actor" => ActorGenerator(args.drop(1)(0)).generate()
-      case "generate-cluster-shard-actor" => ClusterShardActorGenerator(args.drop(1)(0)).generate()
-      case "generate-cqrs-service" => CqrsServiceGenerator(args.drop(1)(0)).generate()
-      case "generate-cqrs-event-apply" => CqrsEventsAppGenerator(args.drop(1)(0)).generate()
-      case "generate-service" => ServiceGenerator(args.drop(1)(0)).generate()
-      case "generate-dao" => DaoGenerator(args.drop(1)(0)).generate()
-      case "generate-dao-mysql" => DaoMysqlImplGenerator(args.drop(1)(0)).generate()
-      case "generate-dbschema-mysql" => MysqlSchemaGenerator(args.drop(1)(0)).generate()
-      case "generate-project-settings" => ProjectGenerator(args.drop(1)(0)).generate()
-      case "generate-frontend-message" => FrontendMessageGenerator(args.drop(1)(0)).generate()
-      case "generate-all" => generateAll(args.drop(1)(0))
+      case "generate-app-conf" => AppConfGenerator(modelLoader).generate()
+      case "generate-crud-app-conf" => CrudAppConfGenerator(modelLoader).generate()
+      case "generate-app-loader" => AppLoaderGenerator(modelLoader).generate()
+      case "generate-model-test" => ModelTestGenerator(modelLoader).generate()
+      case "generate-message" => MessageGenerator(modelLoader).generate()
+      case "generate-entity" => EntityGenerator(modelLoader).generate()
+      case "generate-json-serializer" => JsonSerializerGenerator(modelLoader).generate()
+      case "generate-crud-service" => CrudServiceGenerator(modelLoader).generate()
+      case "generate-crud-event-apply" => CrudEventsAppGenerator(modelLoader).generate()
+      case "generate-actor" => ActorGenerator(modelLoader).generate()
+      case "generate-cluster-shard-actor" => ClusterShardActorGenerator(modelLoader).generate()
+      case "generate-cqrs-service" => CqrsServiceGenerator(modelLoader).generate()
+      case "generate-cqrs-event-apply" => CqrsEventsAppGenerator(modelLoader).generate()
+      case "generate-service" => ServiceGenerator(modelLoader).generate()
+      case "generate-dao" => DaoGenerator(modelLoader).generate()
+      case "generate-dao-mysql" => DaoMysqlImplGenerator(modelLoader).generate()
+      case "generate-dbschema-mysql" => MysqlSchemaGenerator(modelLoader).generate()
+      case "generate-project-settings" => ProjectGenerator(modelLoader).generate()
+      case "generate-frontend-message" => FrontendMessageGenerator(modelLoader).generate()
+      case "generate-frontend-service" => FrontendServiceGenerator(modelLoader).generate()
+      case "generate-all" => generateAll(modelLoader)
+      case "generate-backend" => generateBackend(modelLoader)
+      case "generate-frontend" => generateFrontend(modelLoader)
       case c =>
         println(s"unknown command '${c}'")
     }
   }
 
-  def generateAll(fileName: String): Unit = {
-    val modelLoader = ModelLoader(fileName)
+  def generateAll(modelLoader: ModelLoader): Unit = {
+    generateBackend(modelLoader)
+    generateBackend(modelLoader)
+  }
+
+  def generateFrontend(modelLoader: ModelLoader): Unit = {
+    FrontendMessageGenerator(modelLoader).generate()
+    FrontendServiceGenerator(modelLoader).generate()
+  }
+
+  def generateBackend(modelLoader: ModelLoader): Unit = {
     AppConfGenerator(modelLoader).generate()
     CrudAppConfGenerator(modelLoader).generate()
     AppLoaderGenerator(modelLoader).generate()
