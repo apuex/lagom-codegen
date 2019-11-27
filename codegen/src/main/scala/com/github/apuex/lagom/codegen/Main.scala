@@ -39,7 +39,7 @@ object Main extends App {
 
   def generateAll(modelLoader: ModelLoader): Unit = {
     generateBackend(modelLoader)
-    generateBackend(modelLoader)
+    generateFrontend(modelLoader)
   }
 
   def generateFrontend(modelLoader: ModelLoader): Unit = {
