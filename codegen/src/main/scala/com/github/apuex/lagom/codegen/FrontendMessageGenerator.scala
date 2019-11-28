@@ -260,8 +260,8 @@ class FrontendMessageGenerator(modelLoader: ModelLoader) {
 
   def generateEnumOptions(options: Seq[EnumOption]): String = {
     options
-      .map(x => s"${x.name} = ${x.value}; // ${x.label}")
-      .reduceOption((l, r) => s"${l}\n${r}")
+      .map(x => s"${x.name} = ${x.value} // ${x.label}")
+      .reduceOption((l, r) => s"${l}\n, ${r}")
       .getOrElse("")
   }
 
