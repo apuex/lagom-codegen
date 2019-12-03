@@ -43,8 +43,8 @@ class ProductDaoImpl() extends ProductDao {
       "productDesc" -> evt.productDesc
     ).executeUpdate()
   
-    val rowsAffected = if(rowsAffected0 == 0)
-      SQL(s"""
+    val rowsAffected = if(rowsAffected0 == 0) {
+      val rowsAffected1 = SQL(s"""
         |INSERT INTO sales.product(
         |    product.product_id,
         |    product.product_name,
@@ -66,9 +66,9 @@ class ProductDaoImpl() extends ProductDao {
         "unitPrice" -> evt.unitPrice,
         "productDesc" -> evt.productDesc
       ).executeUpdate()
-    else rowsAffected0
-  
-    
+      
+      rowsAffected1
+    } else rowsAffected0
   
     rowsAffected
   }
@@ -90,7 +90,7 @@ class ProductDaoImpl() extends ProductDao {
   }
 
   def updateProduct(evt: UpdateProductEvent)(implicit conn: Connection): Int = {
-    SQL(s"""
+    val rowsAffected = SQL(s"""
       |UPDATE sales.product
       |  SET
       |    product.product_name = {productName},
@@ -106,6 +106,8 @@ class ProductDaoImpl() extends ProductDao {
       "unitPrice" -> evt.unitPrice,
       "productDesc" -> evt.productDesc
     ).executeUpdate()
+    
+    rowsAffected
   }
 
   def deleteProduct(evt: DeleteProductEvent)(implicit conn: Connection): Int = {

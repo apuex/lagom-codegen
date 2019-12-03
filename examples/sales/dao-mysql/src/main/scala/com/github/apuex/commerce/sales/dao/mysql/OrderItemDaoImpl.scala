@@ -44,8 +44,8 @@ class OrderItemDaoImpl() extends OrderItemDao {
       "orderQuantity" -> evt.orderQuantity
     ).executeUpdate()
   
-    val rowsAffected = if(rowsAffected0 == 0)
-      SQL(s"""
+    val rowsAffected = if(rowsAffected0 == 0) {
+      val rowsAffected1 = SQL(s"""
         |INSERT INTO sales.order_item(
         |    order_item.order_id,
         |    order_item.product_id,
@@ -70,9 +70,9 @@ class OrderItemDaoImpl() extends OrderItemDao {
         "unitPrice" -> evt.unitPrice,
         "orderQuantity" -> evt.orderQuantity
       ).executeUpdate()
-    else rowsAffected0
-  
-    
+      
+      rowsAffected1
+    } else rowsAffected0
   
     rowsAffected
   }
@@ -97,7 +97,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
   }
 
   def updateOrderItem(evt: UpdateOrderItemEvent)(implicit conn: Connection): Int = {
-    SQL(s"""
+    val rowsAffected = SQL(s"""
       |UPDATE sales.order_item
       |  SET
       |    order_item.product_name = {productName},
@@ -115,6 +115,8 @@ class OrderItemDaoImpl() extends OrderItemDao {
       "unitPrice" -> evt.unitPrice,
       "orderQuantity" -> evt.orderQuantity
     ).executeUpdate()
+    
+    rowsAffected
   }
 
   def deleteOrderItem(evt: DeleteOrderItemEvent)(implicit conn: Connection): Int = {

@@ -41,8 +41,8 @@ class AlarmDaoImpl() extends AlarmDao {
       "alarmDesc" -> evt.alarmDesc
     ).executeUpdate()
   
-    val rowsAffected = if(rowsAffected0 == 0)
-      SQL(s"""
+    val rowsAffected = if(rowsAffected0 == 0) {
+      val rowsAffected1 = SQL(s"""
         |INSERT INTO sales.alarm(
         |    alarm.alarm_id,
         |    alarm.alarm_begin,
@@ -61,9 +61,9 @@ class AlarmDaoImpl() extends AlarmDao {
         "alarmEnd" -> scalapbToDate(evt.alarmEnd),
         "alarmDesc" -> evt.alarmDesc
       ).executeUpdate()
-    else rowsAffected0
-  
-    
+      
+      rowsAffected1
+    } else rowsAffected0
   
     rowsAffected
   }
@@ -86,7 +86,7 @@ class AlarmDaoImpl() extends AlarmDao {
   }
 
   def updateAlarm(evt: UpdateAlarmEvent)(implicit conn: Connection): Int = {
-    SQL(s"""
+    val rowsAffected = SQL(s"""
       |UPDATE sales.alarm
       |  SET
       |    alarm.alarm_end = {alarmEnd},
@@ -100,6 +100,8 @@ class AlarmDaoImpl() extends AlarmDao {
       "alarmEnd" -> scalapbToDate(evt.alarmEnd),
       "alarmDesc" -> evt.alarmDesc
     ).executeUpdate()
+    
+    rowsAffected
   }
 
   def deleteAlarm(evt: DeleteAlarmEvent)(implicit conn: Connection): Int = {

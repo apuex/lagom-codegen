@@ -39,8 +39,8 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
       "orderPaymentType" -> toValue(evt.orderPaymentType)
     ).executeUpdate()
   
-    val rowsAffected = if(rowsAffected0 == 0)
-      SQL(s"""
+    val rowsAffected = if(rowsAffected0 == 0) {
+      val rowsAffected1 = SQL(s"""
         |INSERT INTO sales.order(
         |    order.order_id,
         |    order.order_time,
@@ -56,11 +56,11 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
         "orderTime" -> scalapbToDate(evt.orderTime),
         "orderPaymentType" -> toValue(evt.orderPaymentType)
       ).executeUpdate()
-    else rowsAffected0
-  
-    evt.orderLines
-      .map(x => CreateOrderItemEvent(evt.userId, x.orderId, x.productId, x.productName, x.itemUnit, x.unitPrice, x.orderQuantity))
-      .foreach(x => orderItemDao.createOrderItem(x))
+      evt.orderLines
+        .map(x => CreateOrderItemEvent(evt.userId, x.orderId, x.productId, x.productName, x.itemUnit, x.unitPrice, x.orderQuantity))
+        .foreach(x => orderItemDao.createOrderItem(x))
+      rowsAffected1
+    } else rowsAffected0
   
     rowsAffected
   }
@@ -80,7 +80,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   }
 
   def updateOrder(evt: UpdateOrderEvent)(implicit conn: Connection): Int = {
-    SQL(s"""
+    val rowsAffected = SQL(s"""
       |UPDATE sales.order
       |  SET
       |    order.order_time = {orderTime},
@@ -92,6 +92,10 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
       "orderTime" -> scalapbToDate(evt.orderTime),
       "orderPaymentType" -> toValue(evt.orderPaymentType)
     ).executeUpdate()
+    evt.orderLines
+      .map(x => UpdateOrderItemEvent(evt.userId, x.orderId, x.productId, x.productName, x.itemUnit, x.unitPrice, x.orderQuantity))
+      .foreach(x => orderItemDao.updateOrderItem(x))
+    rowsAffected
   }
 
   def deleteOrder(evt: DeleteOrderEvent)(implicit conn: Connection): Int = {

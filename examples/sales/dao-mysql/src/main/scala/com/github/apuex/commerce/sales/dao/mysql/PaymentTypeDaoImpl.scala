@@ -38,8 +38,8 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
       "paymentTypeLabel" -> evt.paymentTypeLabel
     ).executeUpdate()
   
-    val rowsAffected = if(rowsAffected0 == 0)
-      SQL(s"""
+    val rowsAffected = if(rowsAffected0 == 0) {
+      val rowsAffected1 = SQL(s"""
         |INSERT INTO sales.payment_type(
         |    payment_type.payment_type_id,
         |    payment_type.payment_type_name,
@@ -55,9 +55,9 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
         "paymentTypeName" -> evt.paymentTypeName,
         "paymentTypeLabel" -> evt.paymentTypeLabel
       ).executeUpdate()
-    else rowsAffected0
-  
-    
+      
+      rowsAffected1
+    } else rowsAffected0
   
     rowsAffected
   }
@@ -77,7 +77,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
   }
 
   def updatePaymentType(evt: UpdatePaymentTypeEvent)(implicit conn: Connection): Int = {
-    SQL(s"""
+    val rowsAffected = SQL(s"""
       |UPDATE sales.payment_type
       |  SET
       |    payment_type.payment_type_name = {paymentTypeName},
@@ -89,6 +89,8 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
       "paymentTypeName" -> evt.paymentTypeName,
       "paymentTypeLabel" -> evt.paymentTypeLabel
     ).executeUpdate()
+    
+    rowsAffected
   }
 
   def deletePaymentType(evt: DeletePaymentTypeEvent)(implicit conn: Connection): Int = {
