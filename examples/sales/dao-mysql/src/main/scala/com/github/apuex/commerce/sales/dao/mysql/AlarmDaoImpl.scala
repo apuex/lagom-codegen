@@ -26,7 +26,7 @@ class AlarmDaoImpl() extends AlarmDao {
   val log = Logger.of(getClass)
 
   def createAlarm(evt: CreateAlarmEvent)(implicit conn: Connection): Int = {
-    val rowsAffected = SQL(s"""
+    val rowsAffected0 = SQL(s"""
       |UPDATE sales.alarm
       |  SET
       |    alarm.alarm_end = {alarmEnd},
@@ -41,7 +41,7 @@ class AlarmDaoImpl() extends AlarmDao {
       "alarmDesc" -> evt.alarmDesc
     ).executeUpdate()
   
-    if(rowsAffected == 0)
+    val rowsAffected = if(rowsAffected0 == 0)
       SQL(s"""
         |INSERT INTO sales.alarm(
         |    alarm.alarm_id,
@@ -61,7 +61,11 @@ class AlarmDaoImpl() extends AlarmDao {
         "alarmEnd" -> scalapbToDate(evt.alarmEnd),
         "alarmDesc" -> evt.alarmDesc
       ).executeUpdate()
-    else rowsAffected
+    else rowsAffected0
+  
+    
+  
+    rowsAffected
   }
 
   def retrieveAlarm(cmd: RetrieveAlarmCmd)(implicit conn: Connection): AlarmVo = {

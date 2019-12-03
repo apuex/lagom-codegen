@@ -26,7 +26,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
   val log = Logger.of(getClass)
 
   def createOrder(evt: CreateOrderEvent)(implicit conn: Connection): Int = {
-    val rowsAffected = SQL(s"""
+    val rowsAffected0 = SQL(s"""
       |UPDATE sales.order
       |  SET
       |    order.order_time = {orderTime},
@@ -39,7 +39,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
       "orderPaymentType" -> toValue(evt.orderPaymentType)
     ).executeUpdate()
   
-    if(rowsAffected == 0)
+    val rowsAffected = if(rowsAffected0 == 0)
       SQL(s"""
         |INSERT INTO sales.order(
         |    order.order_id,
@@ -56,7 +56,13 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
         "orderTime" -> scalapbToDate(evt.orderTime),
         "orderPaymentType" -> toValue(evt.orderPaymentType)
       ).executeUpdate()
-    else rowsAffected
+    else rowsAffected0
+  
+    evt.orderLines
+      .map(x => CreateOrderItemEvent(evt.userId, x.orderId, x.productId, x.productName, x.itemUnit, x.unitPrice, x.orderQuantity))
+      .foreach(x => orderItemDao.createOrderItem(x))
+  
+    rowsAffected
   }
 
   def retrieveOrder(cmd: RetrieveOrderCmd)(implicit conn: Connection): OrderVo = {

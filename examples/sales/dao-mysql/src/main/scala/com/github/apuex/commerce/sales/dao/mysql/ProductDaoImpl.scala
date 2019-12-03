@@ -26,7 +26,7 @@ class ProductDaoImpl() extends ProductDao {
   val log = Logger.of(getClass)
 
   def createProduct(evt: CreateProductEvent)(implicit conn: Connection): Int = {
-    val rowsAffected = SQL(s"""
+    val rowsAffected0 = SQL(s"""
       |UPDATE sales.product
       |  SET
       |    product.product_name = {productName},
@@ -43,7 +43,7 @@ class ProductDaoImpl() extends ProductDao {
       "productDesc" -> evt.productDesc
     ).executeUpdate()
   
-    if(rowsAffected == 0)
+    val rowsAffected = if(rowsAffected0 == 0)
       SQL(s"""
         |INSERT INTO sales.product(
         |    product.product_id,
@@ -66,7 +66,11 @@ class ProductDaoImpl() extends ProductDao {
         "unitPrice" -> evt.unitPrice,
         "productDesc" -> evt.productDesc
       ).executeUpdate()
-    else rowsAffected
+    else rowsAffected0
+  
+    
+  
+    rowsAffected
   }
 
   def retrieveProduct(cmd: RetrieveProductCmd)(implicit conn: Connection): ProductVo = {

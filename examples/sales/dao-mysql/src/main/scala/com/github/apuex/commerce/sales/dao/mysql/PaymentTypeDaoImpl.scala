@@ -25,7 +25,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
   val log = Logger.of(getClass)
 
   def createPaymentType(evt: CreatePaymentTypeEvent)(implicit conn: Connection): Int = {
-    val rowsAffected = SQL(s"""
+    val rowsAffected0 = SQL(s"""
       |UPDATE sales.payment_type
       |  SET
       |    payment_type.payment_type_name = {paymentTypeName},
@@ -38,7 +38,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
       "paymentTypeLabel" -> evt.paymentTypeLabel
     ).executeUpdate()
   
-    if(rowsAffected == 0)
+    val rowsAffected = if(rowsAffected0 == 0)
       SQL(s"""
         |INSERT INTO sales.payment_type(
         |    payment_type.payment_type_id,
@@ -55,7 +55,11 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
         "paymentTypeName" -> evt.paymentTypeName,
         "paymentTypeLabel" -> evt.paymentTypeLabel
       ).executeUpdate()
-    else rowsAffected
+    else rowsAffected0
+  
+    
+  
+    rowsAffected
   }
 
   def retrievePaymentType(cmd: RetrievePaymentTypeCmd)(implicit conn: Connection): PaymentTypeVo = {

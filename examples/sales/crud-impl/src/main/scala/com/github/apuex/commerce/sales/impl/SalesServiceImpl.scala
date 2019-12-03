@@ -47,6 +47,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = CreateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         alarmDao.createAlarm(evt)
       }
@@ -65,6 +68,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = UpdateAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         alarmDao.updateAlarm(evt)
       }
@@ -75,6 +81,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = DeleteAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         alarmDao.deleteAlarm(evt)
       }
@@ -101,6 +110,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = BeginAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, UUIDs.timeBased().toString, cmd.getClass.getName, cmd.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         alarmDao.beginAlarm(evt)
       }
@@ -111,6 +123,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = EndAlarmEvent(cmd.userId, cmd.alarmId, cmd.alarmBegin, cmd.alarmEnd, cmd.alarmDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(cmd.userId, 0L, cmd.entityId, UUIDs.timeBased().toString, cmd.getClass.getName, cmd.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         alarmDao.endAlarm(evt)
       }
@@ -121,6 +136,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = CreatePaymentTypeEvent(cmd.userId, cmd.paymentTypeId, cmd.paymentTypeName, cmd.paymentTypeLabel)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         paymentTypeDao.createPaymentType(evt)
       }
@@ -139,6 +157,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = UpdatePaymentTypeEvent(cmd.userId, cmd.paymentTypeId, cmd.paymentTypeName, cmd.paymentTypeLabel)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         paymentTypeDao.updatePaymentType(evt)
       }
@@ -149,6 +170,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = DeletePaymentTypeEvent(cmd.userId, cmd.paymentTypeId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         paymentTypeDao.deletePaymentType(evt)
       }
@@ -175,6 +199,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = CreateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         productDao.createProduct(evt)
       }
@@ -193,6 +220,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = UpdateProductEvent(cmd.userId, cmd.productId, cmd.productName, cmd.productUnit, cmd.unitPrice, cmd.productDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         productDao.updateProduct(evt)
       }
@@ -203,6 +233,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = DeleteProductEvent(cmd.userId, cmd.productId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         productDao.deleteProduct(evt)
       }
@@ -249,6 +282,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = ChangeProductNameEvent(cmd.userId, cmd.productId, cmd.productName)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         productDao.changeProductName(evt)
       }
@@ -267,6 +303,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = ChangeProductUnitEvent(cmd.userId, cmd.productId, cmd.productUnit)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         productDao.changeProductUnit(evt)
       }
@@ -285,6 +324,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = ChangeUnitPriceEvent(cmd.userId, cmd.productId, cmd.unitPrice)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         productDao.changeUnitPrice(evt)
       }
@@ -303,6 +345,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = ChangeProductDescEvent(cmd.userId, cmd.productId, cmd.productDesc)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         productDao.changeProductDesc(evt)
       }
@@ -313,6 +358,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = CreateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         orderDao.createOrder(evt)
       }
@@ -331,6 +379,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = UpdateOrderEvent(cmd.userId, cmd.orderId, cmd.orderTime, cmd.orderLines, cmd.orderPaymentType)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         orderDao.updateOrder(evt)
       }
@@ -341,6 +392,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = DeleteOrderEvent(cmd.userId, cmd.orderId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         orderDao.deleteOrder(evt)
       }
@@ -375,6 +429,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = AddOrderLinesEvent(cmd.userId, cmd.orderId, cmd.orderLines)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         orderDao.addOrderLines(evt)
       }
@@ -385,6 +442,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = RemoveOrderLinesEvent(cmd.userId, cmd.orderId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         orderDao.removeOrderLines(evt)
       }
@@ -403,6 +463,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = ChangeOrderPaymentTypeEvent(cmd.userId, cmd.orderId, cmd.orderPaymentType)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         orderDao.changeOrderPaymentType(evt)
       }
@@ -413,6 +476,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = CreateOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId, cmd.productName, cmd.itemUnit, cmd.unitPrice, cmd.orderQuantity)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         orderItemDao.createOrderItem(evt)
       }
@@ -431,6 +497,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = UpdateOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId, cmd.productName, cmd.itemUnit, cmd.unitPrice, cmd.orderQuantity)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         orderItemDao.updateOrderItem(evt)
       }
@@ -441,6 +510,9 @@ class SalesServiceImpl (alarmDao: AlarmDao,
     Future.successful(
       db.withTransaction { implicit c =>
         val evt = DeleteOrderItemEvent(cmd.userId, cmd.orderId, cmd.productId)
+        eventJournalDao.createEventJournal(
+          CreateEventJournalEvent(evt.userId, 0L, evt.entityId, UUIDs.timeBased().toString, evt.getClass.getName, evt.toByteString)
+        )
         mediator ! Publish(publishQueue, evt)
         orderItemDao.deleteOrderItem(evt)
       }

@@ -513,6 +513,34 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
   }
 
+  def defCascadedInserts(name: String, fields: Seq[Field], alias: String): String = {
+    val t = if ("" == alias) "evt" else s"${alias}"
+    fields
+      .filter(x => !x.transient && !isJdbcType(x._type) && !isEnum(x._type)) // enums treated as ints
+      .map(x => {
+        if(x._type == "array") {
+          val entity = getEntity(x.valueType, xml)
+          val primaryKey = getPrimaryKey(entity, xml)
+          val cascadedPersistentFields = shuffleFields(getFields(entity, xml), primaryKey.fields)
+            .filter(x => !x.transient && (isJdbcType(x._type) || isEnum(x._type)))
+          s"""
+             |${t}.${cToCamel(x.name)}
+             |  .map(x => Create${cToPascal(x.valueType)}Event(${substituteMethodParams(Seq(userField), t)}, ${substituteMethodParams(cascadedPersistentFields, "x")}))
+             |  .foreach(x => ${cToCamel(x.valueType)}Dao.create${cToPascal(x.valueType)}(x))
+             |""".stripMargin.trim
+        } else if(x._type == "map") // TODO: implement cascade insert of map type
+          s"""
+             |// TODO: implement cascade insert of map type
+           """.stripMargin.trim
+        else // TODO: implement cascade insert of object type
+          s"""
+             |// TODO: implement cascade insert of object type
+           """.stripMargin.trim
+      })
+      .reduceOption((l, r) => s"$l,\n$r")
+      .getOrElse("")
+  }
+
   def insertSql(name: String, fields: Seq[Field]): String = {
     s"""
        |INSERT INTO ${modelDbSchema}.${name}(
@@ -621,17 +649,21 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
         offset.getOrElse(""),
         s"""
            |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int = {
-           |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, persistFields, primaryKey.fields), 2), 2)})
+           |  val rowsAffected0 = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, persistFields, primaryKey.fields), 2), 2)})
            |  .on(
            |    ${indent(defFieldSubstitution(name, persistFields, "evt"), 4)}
            |  ).executeUpdate()
            |
-           |  if(rowsAffected == 0)
+           |  val rowsAffected = if(rowsAffected0 == 0)
            |    SQL(${indentWithLeftMargin(blockQuote(insertSql(name, filterGenerated(persistFields, primaryKey)), 2), 4)})
            |    .on(
            |      ${indent(defFieldSubstitution(name, persistFields, "evt"), 6)}
            |    ).executeUpdate()
-           |  else rowsAffected
+           |  else rowsAffected0
+           |
+           |  ${indent(defCascadedInserts(name, persistFields, "evt"), 2)}
+           |
+           |  rowsAffected
            |}
      """.stripMargin.trim,
         s"""

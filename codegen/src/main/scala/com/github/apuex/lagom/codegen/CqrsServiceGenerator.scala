@@ -57,6 +57,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
        |import akka.stream.scaladsl._
        |import akka.stream.{OverflowStrategy, SourceShape}
        |import akka.util.Timeout
+       |import com.datastax.driver.core.utils.UUIDs
        |import ${messageSrcPackage}.ScalapbJson._
        |import ${messageSrcPackage}._
        |import ${messageSrcPackage}.${dao}.${mysql}._

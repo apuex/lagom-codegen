@@ -41,7 +41,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
   }
 
   def createEventJournal(evt: CreateEventJournalEvent)(implicit conn: Connection): Int = {
-    val rowsAffected = SQL(s"""
+    val rowsAffected0 = SQL(s"""
       |UPDATE sales.event_journal
       |  SET
       |    event_journal.persistence_id = {persistenceId},
@@ -58,7 +58,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
       "content" -> evt.content.toByteArray
     ).executeUpdate()
   
-    if(rowsAffected == 0)
+    val rowsAffected = if(rowsAffected0 == 0)
       SQL(s"""
         |INSERT INTO sales.event_journal(
         |    event_journal.persistence_id,
@@ -79,7 +79,11 @@ class EventJournalDaoImpl() extends EventJournalDao {
         "metaData" -> evt.metaData,
         "content" -> evt.content.toByteArray
       ).executeUpdate()
-    else rowsAffected
+    else rowsAffected0
+  
+    
+  
+    rowsAffected
   }
 
   def retrieveEventJournal(cmd: RetrieveEventJournalCmd)(implicit conn: Connection): EventJournalVo = {

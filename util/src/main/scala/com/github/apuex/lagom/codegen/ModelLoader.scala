@@ -475,23 +475,23 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
 
   def defFieldType(name: String): String = {
     if (isAggregateEntity(name)) s"${cToPascal(name)}Vo"
-    else toTypeScriptType(name)
+    else cToPascal(toJavaType(name))
   }
 
   def defFieldType(field: Field): String = {
     // recursive array/map definition is not supported.
     if ("array" == field._type)
       s"""
-         |${defFieldType(field.valueType)}[]
+         |Seq[${defFieldType(field.valueType)}]
        """.stripMargin.trim
     else if ("map" == field._type)
       s"""
          |Map<${defFieldType(field.keyType)}, ${defFieldType(field.valueType)}>
        """.stripMargin.trim
     else if ("any" == field._type)
-      s"${defFieldType(field._type)}"
+      s"Option[${defFieldType(field._type)}]"
     else if ("timestamp" == field._type)
-      s"${defFieldType(field._type)}"
+      s"Option[${defFieldType(field._type)}]"
     else if (isEnum(field._type))
       cToPascal(field._type)
     else {

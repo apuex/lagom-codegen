@@ -25,7 +25,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
   val log = Logger.of(getClass)
 
   def createOrderItem(evt: CreateOrderItemEvent)(implicit conn: Connection): Int = {
-    val rowsAffected = SQL(s"""
+    val rowsAffected0 = SQL(s"""
       |UPDATE sales.order_item
       |  SET
       |    order_item.product_name = {productName},
@@ -44,7 +44,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
       "orderQuantity" -> evt.orderQuantity
     ).executeUpdate()
   
-    if(rowsAffected == 0)
+    val rowsAffected = if(rowsAffected0 == 0)
       SQL(s"""
         |INSERT INTO sales.order_item(
         |    order_item.order_id,
@@ -70,7 +70,11 @@ class OrderItemDaoImpl() extends OrderItemDao {
         "unitPrice" -> evt.unitPrice,
         "orderQuantity" -> evt.orderQuantity
       ).executeUpdate()
-    else rowsAffected
+    else rowsAffected0
+  
+    
+  
+    rowsAffected
   }
 
   def retrieveOrderItem(cmd: RetrieveOrderItemCmd)(implicit conn: Connection): OrderItemVo = {
