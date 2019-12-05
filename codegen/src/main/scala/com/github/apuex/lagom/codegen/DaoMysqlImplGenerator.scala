@@ -683,7 +683,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
              |  .on(
              |    ${indent(defFieldSubstitution(name, persistFields, "evt"), 4)}
              |  ).executeUpdate()
-             |  ${indent(defCascadedUpdates("update", name, persistFields, "evt"), 2)}
+             |
              |  rowsAffected
              |}
      """.stripMargin.trim,
