@@ -89,7 +89,7 @@ class PaymentTypeDaoImpl() extends PaymentTypeDao {
       "paymentTypeName" -> evt.paymentTypeName,
       "paymentTypeLabel" -> evt.paymentTypeLabel
     ).executeUpdate()
-    
+  
     rowsAffected
   }
 

@@ -92,9 +92,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
       "orderTime" -> scalapbToDate(evt.orderTime),
       "orderPaymentType" -> toValue(evt.orderPaymentType)
     ).executeUpdate()
-    evt.orderLines
-      .map(x => UpdateOrderItemEvent(evt.userId, x.orderId, x.productId, x.productName, x.itemUnit, x.unitPrice, x.orderQuantity))
-      .foreach(x => orderItemDao.updateOrderItem(x))
+  
     rowsAffected
   }
 

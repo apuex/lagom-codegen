@@ -100,7 +100,7 @@ class AlarmDaoImpl() extends AlarmDao {
       "alarmEnd" -> scalapbToDate(evt.alarmEnd),
       "alarmDesc" -> evt.alarmDesc
     ).executeUpdate()
-    
+  
     rowsAffected
   }
 

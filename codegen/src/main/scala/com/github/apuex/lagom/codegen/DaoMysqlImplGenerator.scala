@@ -518,25 +518,25 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     fields
       .filter(x => !x.transient && !isJdbcType(x._type) && !isEnum(x._type)) // enums treated as ints
       .map(x => {
-        if(x._type == "array") {
-          val entity = getEntity(x.valueType, xml)
-          val primaryKey = getPrimaryKey(entity, xml)
-          val cascadedPersistentFields = shuffleFields(getFields(entity, xml), primaryKey.fields)
-            .filter(x => !x.transient && (isJdbcType(x._type) || isEnum(x._type)))
-          s"""
-             |${t}.${cToCamel(x.name)}
-             |  .map(x => ${cToPascal(operation)}${cToPascal(x.valueType)}Event(${substituteMethodParams(Seq(userField), t)}, ${substituteMethodParams(cascadedPersistentFields, "x")}))
-             |  .foreach(x => ${cToCamel(x.valueType)}Dao.${operation}${cToPascal(x.valueType)}(x))
-             |""".stripMargin.trim
-        } else if(x._type == "map") // TODO: implement cascade insert of map type
-          s"""
-             |// TODO: implement cascade insert of map type
+      if (x._type == "array") {
+        val entity = getEntity(x.valueType, xml)
+        val primaryKey = getPrimaryKey(entity, xml)
+        val cascadedPersistentFields = shuffleFields(getFields(entity, xml), primaryKey.fields)
+          .filter(x => !x.transient && (isJdbcType(x._type) || isEnum(x._type)))
+        s"""
+           |${t}.${cToCamel(x.name)}
+           |  .map(x => ${cToPascal(operation)}${cToPascal(x.valueType)}Event(${substituteMethodParams(Seq(userField), t)}, ${substituteMethodParams(cascadedPersistentFields, "x")}))
+           |  .foreach(x => ${cToCamel(x.valueType)}Dao.${operation}${cToPascal(x.valueType)}(x))
+           |""".stripMargin.trim
+      } else if (x._type == "map") // TODO: implement cascade insert of map type
+        s"""
+           |// TODO: implement cascade insert of map type
            """.stripMargin.trim
-        else // TODO: implement cascade insert of object type
-          s"""
-             |// TODO: implement cascade insert of object type
+      else // TODO: implement cascade insert of object type
+        s"""
+           |// TODO: implement cascade insert of object type
            """.stripMargin.trim
-      })
+    })
       .reduceOption((l, r) => s"$l\n$r")
       .getOrElse("")
   }
@@ -647,24 +647,37 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
       Seq(
         offset.getOrElse(""),
-        s"""
-           |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int = {
-           |  val rowsAffected0 = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, persistFields, primaryKey.fields), 2), 2)})
-           |  .on(
-           |    ${indent(defFieldSubstitution(name, persistFields, "evt"), 4)}
-           |  ).executeUpdate()
-           |
-           |  val rowsAffected = if(rowsAffected0 == 0) {
-           |    val rowsAffected1 = SQL(${indentWithLeftMargin(blockQuote(insertSql(name, filterGenerated(persistFields, primaryKey)), 2), 4)})
-           |    .on(
-           |      ${indent(defFieldSubstitution(name, persistFields, "evt"), 6)}
-           |    ).executeUpdate()
-           |    ${indent(defCascadedUpdates("create", name, persistFields, "evt"), 4)}
-           |    rowsAffected1
-           |  } else rowsAffected0
-           |
-           |  rowsAffected
-           |}
+        if (nonKeyPersistFields.isEmpty)
+          s"""
+             |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int = {
+             |  val rowsAffected = SQL(${indentWithLeftMargin(blockQuote(insertSql(name, filterGenerated(persistFields, primaryKey)), 2), 4)})
+             |  .on(
+             |    ${indent(defFieldSubstitution(name, persistFields, "evt"), 6)}
+             |  ).executeUpdate()
+             |  ${indent(defCascadedUpdates("create", name, persistFields, "evt"), 4)}
+             |
+             |  rowsAffected
+             |}
+     """.stripMargin.trim
+        else
+          s"""
+             |def create${cToPascal(name)}(evt: Create${cToPascal(name)}Event)(implicit conn: Connection): Int = {
+             |  val rowsAffected0 = SQL(${indentWithLeftMargin(blockQuote(updateSql(name, persistFields, primaryKey.fields), 2), 2)})
+             |  .on(
+             |    ${indent(defFieldSubstitution(name, persistFields, "evt"), 4)}
+             |  ).executeUpdate()
+             |
+             |  val rowsAffected = if(rowsAffected0 == 0) {
+             |    val rowsAffected1 = SQL(${indentWithLeftMargin(blockQuote(insertSql(name, filterGenerated(persistFields, primaryKey)), 2), 4)})
+             |    .on(
+             |      ${indent(defFieldSubstitution(name, persistFields, "evt"), 6)}
+             |    ).executeUpdate()
+             |    ${indent(defCascadedUpdates("create", name, persistFields, "evt"), 4)}
+             |    rowsAffected1
+             |  } else rowsAffected0
+             |
+             |  rowsAffected
+             |}
      """.stripMargin.trim,
         s"""
            |def retrieve${cToPascal(name)}(cmd: Retrieve${cToPascal(name)}Cmd)(implicit conn: Connection): ${cToPascal(name)}Vo = {
@@ -675,7 +688,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
            |}
      """.stripMargin.trim,
         if (nonKeyPersistFields.isEmpty)
-          ""
+          s"""
+             |def delete${cToPascal(name)}(evt: Delete${cToPascal(name)}Event)(implicit conn: Connection): Int = {
+             |  SQL(${indentWithLeftMargin(blockQuote(deleteSql(name, primaryKey.fields), 2), 2)})
+             |  .on(
+             |    ${indent(defFieldSubstitution(name, primaryKey.fields, "evt"), 4)}
+             |  ).executeUpdate()
+             |}
+     """.stripMargin.trim
         else
           s"""
              |def update${cToPascal(name)}(evt: Update${cToPascal(name)}Event)(implicit conn: Connection): Int = {

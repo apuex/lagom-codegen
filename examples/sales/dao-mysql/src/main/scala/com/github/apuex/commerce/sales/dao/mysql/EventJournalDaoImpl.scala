@@ -119,7 +119,7 @@ class EventJournalDaoImpl() extends EventJournalDao {
       "metaData" -> evt.metaData,
       "content" -> evt.content.toByteArray
     ).executeUpdate()
-    
+  
     rowsAffected
   }
 

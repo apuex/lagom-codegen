@@ -115,7 +115,7 @@ class OrderItemDaoImpl() extends OrderItemDao {
       "unitPrice" -> evt.unitPrice,
       "orderQuantity" -> evt.orderQuantity
     ).executeUpdate()
-    
+  
     rowsAffected
   }
 
