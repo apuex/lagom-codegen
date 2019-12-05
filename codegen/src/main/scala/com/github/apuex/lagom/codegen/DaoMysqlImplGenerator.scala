@@ -689,12 +689,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim,
         if (nonKeyPersistFields.isEmpty)
           s"""
-             |def delete${cToPascal(name)}(evt: Delete${cToPascal(name)}Event)(implicit conn: Connection): Int = {
-             |  SQL(${indentWithLeftMargin(blockQuote(deleteSql(name, primaryKey.fields), 2), 2)})
-             |  .on(
-             |    ${indent(defFieldSubstitution(name, primaryKey.fields, "evt"), 4)}
-             |  ).executeUpdate()
-             |}
+             |
      """.stripMargin.trim
         else
           s"""

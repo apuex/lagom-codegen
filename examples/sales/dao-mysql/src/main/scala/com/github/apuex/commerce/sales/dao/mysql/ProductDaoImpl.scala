@@ -106,7 +106,7 @@ class ProductDaoImpl() extends ProductDao {
       "unitPrice" -> evt.unitPrice,
       "productDesc" -> evt.productDesc
     ).executeUpdate()
-
+  
     rowsAffected
   }
 
