@@ -537,7 +537,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
              |// TODO: implement cascade insert of object type
            """.stripMargin.trim
       })
-      .reduceOption((l, r) => s"$l,\n$r")
+      .reduceOption((l, r) => s"$l\n$r")
       .getOrElse("")
   }
 
