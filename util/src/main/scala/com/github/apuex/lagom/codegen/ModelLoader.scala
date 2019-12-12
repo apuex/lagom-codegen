@@ -64,7 +64,27 @@ object ModelLoader {
   }
 
   def getEntity(name: String, root: Node): Node = {
-    root.child.filter(x => x.label == "entity" && name == x.\@("name")).head
+    try {
+      root.child.filter(x => x.label == "entity" && name == x.\@("name")).head
+    } catch {
+      case t: Throwable =>
+        throw new RuntimeException(s"entity with name `${name}` not found.", t)
+    }
+  }
+
+
+  def findEntityByAggregateName(name: String, root: Node): Node = {
+    try {
+      root.child.filter(x => x.label == "entity")
+        .filter(x => {
+          (name == x.\@("name")) ||
+            x.child.map(a => a.label == "aggregate" && name == a.\@("name")).foldLeft(false)(_ || _) ||
+            x.child.map(f => f.label == "field" && f.\@("aggregate") == "true" && name == f.\@("name")).foldLeft(false)(_ || _)
+        }).head
+    } catch {
+      case t: Throwable =>
+        throw new RuntimeException(s"entity or aggregate with name `${name}` not found.", t)
+    }
   }
 
   def toField(node: Node): Field = {
@@ -237,7 +257,7 @@ object ModelLoader {
       primaryKey,
       transient,
       node.\@("returnType"),
-      if("true" == node.\@("creator")) true else false
+      if ("true" == node.\@("creator")) true else false
     )
   }
 

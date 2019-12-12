@@ -302,12 +302,14 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def selectComposite(field: Field, keyFields: Seq[Field]): String = {
     if ("array" == field._type) {
+      val entity = findEntityByAggregateName(field.valueType, xml)
       s"""
-         |${cToCamel(field.valueType)}Dao.${callSelectByFk(keyFields)}
+         |${cToCamel(entity.\@("name"))}Dao.${callSelectByFk(keyFields)}
       """.stripMargin.trim
     } else if ("map" == field._type) {
+      val entity = findEntityByAggregateName(field.entity, xml)
       s"""
-         |${cToCamel(field.entity)}Dao.${callSelectByFk(keyFields)}
+         |${cToCamel(entity.\@("name"))}Dao.${callSelectByFk(keyFields)}
          |  .map(x => (x.${cToCamel(field.keyField)} -> x.${cToCamel(field.valueField)}))
          |  .toMap
       """.stripMargin.trim
@@ -411,8 +413,9 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def defDaoDependencies(fields: Seq[Field]): String = {
     fields
-      .filter(x => ("array" == x._type && isEntity(x.valueType)) || ("map" == x._type && isEntity(x.entity)))
-      .map(x => if ("array" == x._type) x.valueType else x.entity)
+      .filter(x => ("array" == x._type && isAggregateEntity(x.valueType)) || ("map" == x._type && isAggregateEntity(x.entity)))
+      .map(x => if ("array" == x._type) findEntityByAggregateName(x.valueType, xml) else findEntityByAggregateName(x.entity, xml))
+      .map(_.\@("name"))
       .map(x => {
         s"""
            |${cToCamel(x)}Dao: ${cToPascal(x)}Dao
@@ -519,15 +522,20 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .filter(x => !x.transient && !isJdbcType(x._type) && !isEnum(x._type)) // enums treated as ints
       .map(x => {
       if (x._type == "array") {
-        val entity = getEntity(x.valueType, xml)
+        val entity = findEntityByAggregateName(x.valueType, xml)
         val primaryKey = getPrimaryKey(entity, xml)
         val cascadedPersistentFields = shuffleFields(getFields(entity, xml), primaryKey.fields)
           .filter(x => !x.transient && (isJdbcType(x._type) || isEnum(x._type)))
+        if(isEntity(x.valueType))
         s"""
            |${t}.${cToCamel(x.name)}
            |  .map(x => ${cToPascal(operation)}${cToPascal(x.valueType)}Event(${substituteMethodParams(Seq(userField), t)}, ${substituteMethodParams(cascadedPersistentFields, "x")}))
-           |  .foreach(x => ${cToCamel(x.valueType)}Dao.${operation}${cToPascal(x.valueType)}(x))
+           |  .foreach(x => ${cToCamel(entity.\@("name"))}Dao.${operation}${cToPascal(x.valueType)}(x))
            |""".stripMargin.trim
+        else
+          s"""
+             |
+           """.stripMargin.trim
       } else if (x._type == "map") // TODO: implement cascade insert of map type
         s"""
            |// TODO: implement cascade insert of map type

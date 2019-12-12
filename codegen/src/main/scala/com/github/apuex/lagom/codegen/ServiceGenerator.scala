@@ -390,7 +390,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
   def defByForeignKeyCallDesc(name: String, keyFields: Seq[Field]): Seq[String] = {
     val byMethod = keyFields
       .map(x => cToPascal(x.name))
-      .reduceOption((x, y) => s"${x}-${y}")
+      .reduceOption((x, y) => s"${x}${y}")
       .getOrElse("")
 
     val byPath = keyFields

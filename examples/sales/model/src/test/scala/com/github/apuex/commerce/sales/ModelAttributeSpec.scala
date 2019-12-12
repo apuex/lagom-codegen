@@ -7,7 +7,7 @@ import com.github.apuex.lagom.codegen.ModelLoader._
 import org.scalatest._
 
 class ModelAttributeSpec extends FlatSpec with Matchers {
-  val model = fromClasspath("codegen/src/test/resources/sales_entities.xml")
+  val model = fromClasspath("sales_entities.xml")
   import model._
 
   "A Model" should "have modelName == \"sales\"" in {
