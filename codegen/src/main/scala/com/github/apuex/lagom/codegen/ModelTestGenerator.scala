@@ -13,6 +13,11 @@ class ModelTestGenerator(modelLoader: ModelLoader) {
     )
   }
 
+  def modelFileShortName(name: String): String = {
+    val index = name.lastIndexOf('/')
+    if(index == -1) name
+    else name.substring(index + 1)
+  }
   def modelAttributeSpec(): String =
     s"""
        |/*****************************************************
@@ -24,7 +29,7 @@ class ModelTestGenerator(modelLoader: ModelLoader) {
        |import org.scalatest._
        |
        |class ModelAttributeSpec extends FlatSpec with Matchers {
-       |  val model = fromClasspath("${modelFileName}")
+       |  val model = fromClasspath("${modelFileShortName(modelFileName)}")
        |  import model._
        |
        |  "A Model" should "have modelName == \\\"${modelName}\\\"" in {
