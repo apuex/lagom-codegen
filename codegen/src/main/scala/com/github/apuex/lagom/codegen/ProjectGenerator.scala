@@ -74,6 +74,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |libraryDependencies ++= {
          |  Seq(
+         |    playEvents,
          |    sbRuntime,
          |    scalapbRuntime         % "protobuf",
          |    scalapbJson4s,
@@ -107,9 +108,6 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |libraryDependencies ++= {
          |  Seq(
-         |    sbRuntime,
-         |    playEvents,
-         |    scalapbJson4s,
          |    scalaTest              % Test
          |  )
          |}
@@ -578,9 +576,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |lazy val `${model}` = (project in file("${model}"))
          |lazy val `${message}` = (project in file("${message}"))
          |  .dependsOn(`${model}`)
+         |  .enablePlugins(LagomScala)
          |lazy val `${api}` = (project in file("${api}"))
          |  .dependsOn(`${message}`)
-         |  .enablePlugins(LagomScala)
          |lazy val `${domain}` = (project in file("${domain}"))
          |  .dependsOn(`${message}`)
          |lazy val `${cluster}` = (project in file("${cluster}"))

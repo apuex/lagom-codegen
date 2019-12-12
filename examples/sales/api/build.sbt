@@ -11,9 +11,6 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
-    sbRuntime,
-    playEvents,
-    scalapbJson4s,
     scalaTest              % Test
   )
 }

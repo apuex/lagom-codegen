@@ -17,7 +17,7 @@ class JsonSerializerGenerator(modelLoader: ModelLoader) {
        |/*****************************************************
        | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
        | *****************************************************/
-       |package ${apiSrcPackage}
+       |package ${messageSrcPackage}
        |
        |import com.github.apuex.events.play.{EventEnvelope, EventEnvelopeProto}
        |import com.google.protobuf.ByteString
@@ -62,8 +62,8 @@ class JsonSerializerGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
 
   def generate(): Unit = {
-    new File(apiSrcDir).mkdirs()
-    val printWriter = new PrintWriter(s"${apiSrcDir}/ScalapbJson.scala", "utf-8")
+    new File(messageSrcDir).mkdirs()
+    val printWriter = new PrintWriter(s"${messageSrcDir}/ScalapbJson.scala", "utf-8")
     printWriter.println(scalapbJson)
     printWriter.close()
   }

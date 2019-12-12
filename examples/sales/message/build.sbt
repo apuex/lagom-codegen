@@ -11,6 +11,7 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
+    playEvents,
     sbRuntime,
     scalapbRuntime         % "protobuf",
     scalapbJson4s,
