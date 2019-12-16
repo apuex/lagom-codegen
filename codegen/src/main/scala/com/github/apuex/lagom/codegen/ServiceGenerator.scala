@@ -66,14 +66,14 @@ class ServiceGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def calls(): String = calls(xml)
+  def calls(): String = calls(modelXml)
     .filter(x => "" != x)
     .reduceOption((l, r) => s"${l}\n\n${r}")
     .getOrElse("")
 
   def jsonFormats(): String = {
     var existing: Set[String] = Set()
-    jsonFormats(xml)
+    jsonFormats(modelXml)
       .filter(x => {
         val exists = existing.contains(x)
         if (!exists) existing += x
@@ -84,7 +84,7 @@ class ServiceGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
   }
 
-  def callDescs(): String = callDescs(xml)
+  def callDescs(): String = callDescs(modelXml)
     .filter(x => "" != x)
     .reduceOption((l, r) => s"${l},\n${r}")
     .getOrElse("")

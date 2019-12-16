@@ -11,8 +11,8 @@ class DaoMysqlImplGeneratorSpec extends FlatSpec with Matchers {
   import model._
 
   "A DaoMysqlImplGenerator" should "generate dao dependencies" in {
-    val daoDependencies = xml.child.filter(x => x.label == "entity" && x.\@("name") == "order")
-      .map(x => toValueObject(x, "order", xml))
+    val daoDependencies = modelXml.child.filter(x => x.label == "entity" && x.\@("name") == "order")
+      .map(x => toValueObject(x, "order", modelXml))
       .map(x => defDaoDependencies(x.fields))
       .reduceOption((l, r) => s"$l\n$r")
       .getOrElse("")

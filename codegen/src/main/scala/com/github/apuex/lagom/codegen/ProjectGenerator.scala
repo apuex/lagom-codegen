@@ -18,6 +18,8 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     rootProjectSettings()
     modelProjectSettings()
     messageProjectSettings()
+    messageJsonProjectSettings()
+    messageXmlProjectSettings()
     apiProjectSettings()
     domainProjectSettings()
     clusterProjectSettings()
@@ -74,10 +76,72 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |
          |libraryDependencies ++= {
          |  Seq(
-         |    playEvents,
          |    sbRuntime,
          |    scalapbRuntime         % "protobuf",
+         |    scalaTest              % Test
+         |  )
+         |}
+         |
+         |PB.targets in Compile := Seq(
+         |  scalapb.gen() -> (sourceManaged in Compile).value
+         |)
+       """.stripMargin.trim
+    )
+    printWriter.close()
+  }
+
+  def messageJsonProjectSettings(): Unit = {
+    new File(messageJsonProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${messageJsonProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
+         |import Dependencies._
+         |
+         |name         := "${messageJsonProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    playEvents,
+         |    playJson,
          |    scalapbJson4s,
+         |    scalaTest              % Test
+         |  )
+         |}
+         |
+         |PB.targets in Compile := Seq(
+         |  scalapb.gen() -> (sourceManaged in Compile).value
+         |)
+       """.stripMargin.trim
+    )
+    printWriter.close()
+  }
+
+  def messageXmlProjectSettings(): Unit = {
+    new File(messageXmlProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${messageXmlProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
+         |import Dependencies._
+         |
+         |name         := "${messageXmlProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    scalaXml,
          |    scalaTest              % Test
          |  )
          |}
@@ -450,7 +514,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  lazy val playVersion           = "2.7.2"
          |  lazy val lagomVersion          = "1.5.0"
          |
-         |  lazy val scalaXml        = "org.scala-lang.modules"    %%  "scala-xml"                           % "1.0.6"
+         |  lazy val scalaXml        = "org.scala-lang.modules"    %%  "scala-xml"                           % "1.2.0"
          |  lazy val akkaActor       = "com.typesafe.akka"         %%  "akka-actor"                          % akkaVersion
          |  lazy val akkaRemote      = "com.typesafe.akka"         %%  "akka-remote"                         % akkaVersion
          |  lazy val akkaStream      = "com.typesafe.akka"         %%  "akka-stream"                         % akkaVersion
@@ -562,6 +626,8 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  .aggregate(
          |    `${model}`,
          |    `${message}`,
+         |    `${message}-${json}`,
+         |    `${message}-${xml}`,
          |    `${api}`,
          |    `${domain}`,
          |    `${cluster}`,
@@ -576,9 +642,13 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |lazy val `${model}` = (project in file("${model}"))
          |lazy val `${message}` = (project in file("${message}"))
          |  .dependsOn(`${model}`)
-         |  .enablePlugins(LagomScala)
-         |lazy val `${api}` = (project in file("${api}"))
+         |lazy val `${message}-${json}` = (project in file("${message}-${json}"))
          |  .dependsOn(`${message}`)
+         |lazy val `${message}-${xml}` = (project in file("${message}-${xml}"))
+         |  .dependsOn(`${message}`)
+         |lazy val `${api}` = (project in file("${api}"))
+         |  .dependsOn(`${message}-${json}`)
+         |  .enablePlugins(LagomScala)
          |lazy val `${domain}` = (project in file("${domain}"))
          |  .dependsOn(`${message}`)
          |lazy val `${cluster}` = (project in file("${cluster}"))

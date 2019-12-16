@@ -93,7 +93,7 @@ class CqrsServiceGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def calls(): String = calls(xml)
+  def calls(): String = calls(modelXml)
     .reduceOption((l, r) => s"${l}\n\n${r}")
     .getOrElse("")
 

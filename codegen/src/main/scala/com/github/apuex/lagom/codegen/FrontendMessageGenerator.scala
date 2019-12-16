@@ -20,7 +20,7 @@ class FrontendMessageGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    generateMessageContent(xml, messageSrcPackage)
+    generateMessageContent(modelXml, messageSrcPackage)
       .foreach(x => save(
         s"${cToShell(x._1)}.ts",
         s"${x._2}",

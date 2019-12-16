@@ -18,7 +18,7 @@ class MysqlSchemaGenerator(modelLoader: ModelLoader) {
 
   def generate(): Unit = {
     save(s"${cToShell(modelDbSchema)}-db-mysql-schema.ddl",
-      generateDaoContent(xml),
+      generateDaoContent(modelXml),
       daoMysqlResDir)
   }
 

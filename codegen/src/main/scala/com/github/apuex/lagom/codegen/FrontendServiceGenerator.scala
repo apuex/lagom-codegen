@@ -28,7 +28,7 @@ class FrontendServiceGenerator(modelLoader: ModelLoader) {
   }
 
   def generateServiceImpl(): Seq[(String, String)] = {
-    xml.child.filter(_.label == "entity")
+    modelXml.child.filter(_.label == "entity")
       .map(generateEntityServiceImpl(_))
   }
 
@@ -79,7 +79,7 @@ class FrontendServiceGenerator(modelLoader: ModelLoader) {
   }
 
 
-  def calls(entity: Node, root: Node = xml): String = {
+  def calls(entity: Node, root: Node = modelXml): String = {
       if(entity.\@("name") == journalTable) {
         ""
       }

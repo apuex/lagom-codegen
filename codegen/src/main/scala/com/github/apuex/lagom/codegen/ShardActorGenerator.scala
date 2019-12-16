@@ -17,10 +17,10 @@ class ShardActorGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    xml.child.filter(_.label == "entity")
+    modelXml.child.filter(_.label == "entity")
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .sortWith((x, y) => depends(x, y))
-      .map(x => toAggregate(x, xml))
+      .map(x => toAggregate(x, modelXml))
       .map(generateShardActor)
       .foreach(x => save(
         x._1,

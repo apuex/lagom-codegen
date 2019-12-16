@@ -18,7 +18,7 @@ class DaoGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    generateDaoContent(xml)
+    generateDaoContent(modelXml)
       .foreach(x => save(x._1, x._2, daoSrcDir))
   }
 

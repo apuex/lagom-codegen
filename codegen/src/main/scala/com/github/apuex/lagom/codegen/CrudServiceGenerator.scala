@@ -28,7 +28,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
 
   def generateServiceImpl(srcPackage: String = crudImplSrcPackage): String = {
     val constructorParams = (
-      xml.child
+      modelXml.child
         .filter(_.label == "entity")
         .filter(x => ("true" != x.\@("transient")))
         .map(_.\@("name"))
@@ -91,7 +91,7 @@ class CrudServiceGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def calls(): String = calls(xml)
+  def calls(): String = calls(modelXml)
     .reduceOption((l, r) => s"${l}\n\n${r}")
     .getOrElse("")
 

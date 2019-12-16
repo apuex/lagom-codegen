@@ -17,8 +17,8 @@ object ModelLoader {
 
   def fromClasspath(path: String): ModelLoader = {
     val factory = new NoBindingFactoryAdapter
-    val xml: Node = factory.load(getClass.getClassLoader.getResourceAsStream(path))
-    ModelLoader(xml, path)
+    val modelXml: Node = factory.load(getClass.getClassLoader.getResourceAsStream(path))
+    ModelLoader(modelXml, path)
   }
 
   def apply(xml: Node, modelFileName: String): ModelLoader = new ModelLoader(xml, modelFileName)
@@ -389,9 +389,11 @@ object ModelLoader {
   }
 }
 
-class ModelLoader(val xml: Node, val modelFileName: String) {
+class ModelLoader(val modelXml: Node, val modelFileName: String) {
   val model = "model"
   val message = "message"
+  val json = "json"
+  val xml = "xml"
   val event = "event"
   val apply: String = "apply"
   val api = "api"
@@ -407,12 +409,12 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val app: String = "app"
   val frontend = "frontend"
   val loader: String = "loader"
-  val modelName = xml.\@("name")
-  val modelPackage = xml.\@("package")
-  val modelVersion = xml.\@("version")
-  val modelMaintainer = xml.\@("maintainer")
-  val modelDbSchema = xml.\@("dbSchema")
-  val journalTable = xml.\@("journalTable")
+  val modelName = modelXml.\@("name")
+  val modelPackage = modelXml.\@("package")
+  val modelVersion = modelXml.\@("version")
+  val modelMaintainer = modelXml.\@("maintainer")
+  val modelDbSchema = modelXml.\@("dbSchema")
+  val journalTable = modelXml.\@("journalTable")
   val outputDir = s"${System.getProperty("output.dir", "target/generated")}"
   val rootProjectName = s"${cToShell(modelName)}"
   val rootProjectDir = s"${outputDir}/${rootProjectName}"
@@ -425,6 +427,12 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val messageSrcPackage = s"${modelPackage}"
   val messageSrcDir = s"${messageProjectDir}/src/main/scala/${messageSrcPackage.replace('.', '/')}"
   val messageProtoDir = s"${messageProjectDir}/src/main/protobuf"
+  val messageJsonProjectName = s"${cToShell(modelName)}-${message}-${json}"
+  val messageJsonProjectDir = s"${rootProjectDir}/${message}-${json}"
+  val messageJsonSrcDir = s"${messageJsonProjectDir}/src/main/scala/${messageSrcPackage.replace('.', '/')}"
+  val messageXmlProjectName = s"${cToShell(modelName)}-${message}-${xml}"
+  val messageXmlProjectDir = s"${rootProjectDir}/${message}-${xml}"
+  val messageXmlSrcDir = s"${messageXmlProjectDir}/src/main/scala/${messageSrcPackage.replace('.', '/')}"
   val apiProjectName = s"${cToShell(modelName)}-${api}"
   val apiProjectDir = s"${rootProjectDir}/${api}"
   val apiSrcPackage = s"${modelPackage}"
@@ -467,12 +475,12 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
   val hyphen = if ("microsoft" == s"${System.getProperty("symbol.naming", "microsoft")}") "" else "-"
   val disableJournal = if ("true" == s"${System.getProperty("disable.journal", "false")}") true else false
 
-  val entityNames = xml.child
+  val entityNames = modelXml.child
     .filter(x => x.label == "entity" && "true" != x.\@("enum"))
     .map(_.\@("name"))
     .toSet
 
-  val nonEnumNames = xml.child
+  val nonEnumNames = modelXml.child
     .filter(x => x.label == "entity" && "true" != x.\@("enum"))
     .map(x => x.\@("name") +:
       (x.child.filter(_.label == "aggregate")
@@ -483,7 +491,7 @@ class ModelLoader(val xml: Node, val modelFileName: String) {
     .flatMap(x => x)
     .toSet
 
-  val enumNames = xml.child.filter(x => x.label == "entity" && "true" == x.\@("enum"))
+  val enumNames = modelXml.child.filter(x => x.label == "entity" && "true" == x.\@("enum"))
     .map(_.\@("name"))
     .toSet
 

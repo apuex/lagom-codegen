@@ -34,9 +34,9 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
   }
 
   "A ModelLoader" should "load aggregate roots" in {
-    val aggregates = xml.child.filter(x => x.label == "entity" && x.\@("name") == "alarm")
+    val aggregates = modelXml.child.filter(x => x.label == "entity" && x.\@("name") == "alarm")
       .map(x => {
-        if ("" == x.\@("aggregatesTo")) Some(toAggregate(x, xml))
+        if ("" == x.\@("aggregatesTo")) Some(toAggregate(x, modelXml))
         else None
       })
       .filter(_.isDefined)
@@ -109,9 +109,9 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
   }
 
   it should "getPrimaryKey" in {
-    val primaryKeys = xml.child.filter(_.label == "entity")
+    val primaryKeys = modelXml.child.filter(_.label == "entity")
       .map(x => {
-        val primaryKey = getPrimaryKey(x, xml)
+        val primaryKey = getPrimaryKey(x, modelXml)
         x.child.filter(_.label == "aggregate")
           .map(x => (x.\@("name") -> primaryKey)) :+ (x.\@("name") -> primaryKey)
       })
@@ -176,8 +176,8 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
   }
 
   it should "define method params by field descriptors" in {
-    val selectByPkDefs = xml.child.filter(_.label == "entity")
-      .map(x => (x.\@("name"), getPrimaryKey(x, xml)))
+    val selectByPkDefs = modelXml.child.filter(_.label == "entity")
+      .map(x => (x.\@("name"), getPrimaryKey(x, modelXml)))
       .map(x => s"def selectBy${cToPascal(x._2.name)}(${defMethodParams(x._2.fields)}): ${cToPascal(x._1)}Vo")
       .reduceOption((l, r) => s"${l}\n${r}")
       .getOrElse("")

@@ -14,7 +14,7 @@ object Dependencies {
   lazy val playVersion           = "2.7.2"
   lazy val lagomVersion          = "1.5.0"
 
-  lazy val scalaXml        = "org.scala-lang.modules"    %%  "scala-xml"                           % "1.0.6"
+  lazy val scalaXml        = "org.scala-lang.modules"    %%  "scala-xml"                           % "1.2.0"
   lazy val akkaActor       = "com.typesafe.akka"         %%  "akka-actor"                          % akkaVersion
   lazy val akkaRemote      = "com.typesafe.akka"         %%  "akka-remote"                         % akkaVersion
   lazy val akkaStream      = "com.typesafe.akka"         %%  "akka-stream"                         % akkaVersion

@@ -11,9 +11,9 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
   import model._
 
   "A MessageGenerator" should "generateMessagesForEmbeddedAggregate" in {
-    val aggregate = xml.child.filter(_.label == "entity")
+    val aggregate = modelXml.child.filter(_.label == "entity")
       .map(x => {
-        if ("" == x.\@("aggregatesTo")) Some(toAggregate(x, xml))
+        if ("" == x.\@("aggregatesTo")) Some(toAggregate(x, modelXml))
         else None
       })
       .filter(_.isDefined)
@@ -181,9 +181,9 @@ class MessageGeneratorSpec extends FlatSpec with Matchers {
   }
 
   it should "generateMessagesForAggregate" in {
-    val aggregate = xml.child.filter(_.label == "entity")
+    val aggregate = modelXml.child.filter(_.label == "entity")
       .map(x => {
-        if ("" == x.\@("aggregatesTo")) Some(toAggregate(x, xml))
+        if ("" == x.\@("aggregatesTo")) Some(toAggregate(x, modelXml))
         else None
       })
       .filter(_.isDefined)

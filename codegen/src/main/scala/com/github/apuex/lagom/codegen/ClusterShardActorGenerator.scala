@@ -17,18 +17,18 @@ class ClusterShardActorGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    xml.child
+    modelXml.child
       .filter(x => x.label == "entity" && !(x.\@("transient") == "true"))
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .sortWith((x, y) => depends(x, y))
-      .map(x => toAggregate(x, xml))
+      .map(x => toAggregate(x, modelXml))
       .map(generateClusterShardActor)
       .foreach(x => save(
         x._1,
         x._2,
         clusterSrcDir
       ))
-    save(s"""${cToPascal(s"${cluster}_${shard}")}Module.scala""", wireModule(xml), clusterSrcDir)
+    save(s"""${cToPascal(s"${cluster}_${shard}")}Module.scala""", wireModule(modelXml), clusterSrcDir)
   }
 
   def generateClusterShardActor(aggregate: Aggregate): (String, String) = {

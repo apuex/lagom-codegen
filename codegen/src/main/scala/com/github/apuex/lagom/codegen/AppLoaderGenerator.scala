@@ -205,7 +205,7 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
   }
 
   def offsetPattern(): String = {
-    xml.child.filter(x => "entity" == x.label && journalTable == x.\@("name"))
+    modelXml.child.filter(x => "entity" == x.label && journalTable == x.\@("name"))
       .flatMap(_.child.filter(x => x.label == "field" && "offset" == x.\@("name")))
       .map(x => x.\@("type") match {
         case "long" =>

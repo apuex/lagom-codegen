@@ -62,8 +62,8 @@ class JsonSerializerGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
 
   def generate(): Unit = {
-    new File(messageSrcDir).mkdirs()
-    val printWriter = new PrintWriter(s"${messageSrcDir}/ScalapbJson.scala", "utf-8")
+    new File(messageJsonSrcDir).mkdirs()
+    val printWriter = new PrintWriter(s"${messageJsonSrcDir}/ScalapbJson.scala", "utf-8")
     printWriter.println(scalapbJson)
     printWriter.close()
   }

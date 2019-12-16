@@ -78,7 +78,7 @@ class CqrsEventsAppGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def calls(): String = calls(xml)
+  def calls(): String = calls(modelXml)
     .filter(_ != "")
     .reduceOption((l, r) => s"${l}\n\n${r}")
     .getOrElse("")

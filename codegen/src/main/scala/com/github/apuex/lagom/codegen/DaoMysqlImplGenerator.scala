@@ -19,9 +19,9 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   import modelLoader._
 
   def generate(): Unit = {
-    generateDaoContent(xml)
+    generateDaoContent(modelXml)
       .foreach(x => save(x._1, x._2, daoMysqlSrcDir))
-    save("DaoModule.scala", wireModule(xml), daoMysqlSrcDir)
+    save("DaoModule.scala", wireModule(modelXml), daoMysqlSrcDir)
   }
 
   def wireModule(root: Node): String = {
@@ -302,12 +302,12 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
 
   def selectComposite(field: Field, keyFields: Seq[Field]): String = {
     if ("array" == field._type) {
-      val entity = findEntityByAggregateName(field.valueType, xml)
+      val entity = findEntityByAggregateName(field.valueType, modelXml)
       s"""
          |${cToCamel(entity.\@("name"))}Dao.${callSelectByFk(keyFields)}
       """.stripMargin.trim
     } else if ("map" == field._type) {
-      val entity = findEntityByAggregateName(field.entity, xml)
+      val entity = findEntityByAggregateName(field.entity, modelXml)
       s"""
          |${cToCamel(entity.\@("name"))}Dao.${callSelectByFk(keyFields)}
          |  .map(x => (x.${cToCamel(field.keyField)} -> x.${cToCamel(field.valueField)}))
@@ -414,7 +414,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
   def defDaoDependencies(fields: Seq[Field]): String = {
     fields
       .filter(x => ("array" == x._type && isAggregateEntity(x.valueType)) || ("map" == x._type && isAggregateEntity(x.entity)))
-      .map(x => if ("array" == x._type) findEntityByAggregateName(x.valueType, xml) else findEntityByAggregateName(x.entity, xml))
+      .map(x => if ("array" == x._type) findEntityByAggregateName(x.valueType, modelXml) else findEntityByAggregateName(x.entity, modelXml))
       .map(_.\@("name"))
       .map(x => {
         s"""
@@ -522,9 +522,9 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .filter(x => !x.transient && !isJdbcType(x._type) && !isEnum(x._type)) // enums treated as ints
       .map(x => {
       if (x._type == "array") {
-        val entity = findEntityByAggregateName(x.valueType, xml)
-        val primaryKey = getPrimaryKey(entity, xml)
-        val cascadedPersistentFields = shuffleFields(getFields(entity, xml), primaryKey.fields)
+        val entity = findEntityByAggregateName(x.valueType, modelXml)
+        val primaryKey = getPrimaryKey(entity, modelXml)
+        val cascadedPersistentFields = shuffleFields(getFields(entity, modelXml), primaryKey.fields)
           .filter(x => !x.transient && (isJdbcType(x._type) || isEnum(x._type)))
         if(isEntity(x.valueType))
         s"""
@@ -798,7 +798,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     else if (nonKeyFieldCount == 1) {
       val field = nonKeyFields.head
       if ("array" == field._type) {
-        val embedded = toValueObject(getEntity(field.valueType, xml), name, xml)
+        val embedded = toValueObject(getEntity(field.valueType, modelXml), name, modelXml)
         val otherKeyFields = embedded.primaryKey.fields.filter(x => !keyFieldNames.contains(x.name))
         val embeddedFields = embedded.fields.filter(x => !keyFieldNames.contains(x.name))
         s"""
@@ -847,7 +847,7 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
     else if (nonKeyFieldCount == 1) {
       val field = nonKeyFields.head
       if ("array" == field._type) {
-        val embedded = toValueObject(getEntity(field.valueType, xml), name, xml)
+        val embedded = toValueObject(getEntity(field.valueType, modelXml), name, modelXml)
         val otherKeyFields = embedded.primaryKey.fields.filter(x => !keyFieldNames.contains(x.name))
         val embeddedFields = embedded.fields.filter(x => !keyFieldNames.contains(x.name))
         s"""

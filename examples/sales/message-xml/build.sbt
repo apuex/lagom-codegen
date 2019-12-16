@@ -3,7 +3,7 @@
  *****************************************************/
 import Dependencies._
 
-name         := "sales-message"
+name         := "sales-message-xml"
 scalaVersion := scalaVersionNumber
 organization := artifactGroupName
 version      := artifactVersionNumber
@@ -11,8 +11,7 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
-    sbRuntime,
-    scalapbRuntime         % "protobuf",
+    scalaXml,
     scalaTest              % Test
   )
 }

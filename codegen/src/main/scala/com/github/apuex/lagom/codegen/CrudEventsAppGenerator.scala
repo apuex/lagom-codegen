@@ -29,7 +29,7 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
 
   def generateServiceImpl(srcPackage: String): String = {
     val constructorParams = (
-      xml.child
+      modelXml.child
         .filter(x => x.label == "entity" && !(x.\@("transient") == "true"))
         .map(_.\@("name"))
         .map(x => s"${cToCamel(x)}Dao: ${cToPascal(x)}Dao") ++
@@ -87,7 +87,7 @@ class CrudEventsAppGenerator(modelLoader: ModelLoader) {
      """.stripMargin.trim
   }
 
-  def calls(): String = calls(xml)
+  def calls(): String = calls(modelXml)
     .filter(_ != "")
     .reduceOption((l, r) => s"${l}\n\n${r}")
     .getOrElse("")

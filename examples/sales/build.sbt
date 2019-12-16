@@ -13,6 +13,8 @@ lazy val root = (project in file("."))
   .aggregate(
     `model`,
     `message`,
+    `message-json`,
+    `message-xml`,
     `api`,
     `domain`,
     `cluster`,
@@ -27,9 +29,13 @@ lazy val root = (project in file("."))
 lazy val `model` = (project in file("model"))
 lazy val `message` = (project in file("message"))
   .dependsOn(`model`)
-  .enablePlugins(LagomScala)
-lazy val `api` = (project in file("api"))
+lazy val `message-json` = (project in file("message-json"))
   .dependsOn(`message`)
+lazy val `message-xml` = (project in file("message-xml"))
+  .dependsOn(`message`)
+lazy val `api` = (project in file("api"))
+  .dependsOn(`message-json`)
+  .enablePlugins(LagomScala)
 lazy val `domain` = (project in file("domain"))
   .dependsOn(`message`)
 lazy val `cluster` = (project in file("cluster"))

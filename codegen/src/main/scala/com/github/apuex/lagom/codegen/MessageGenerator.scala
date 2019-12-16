@@ -34,21 +34,21 @@ class MessageGenerator(modelLoader: ModelLoader) {
       messageSrcDir
     )
 
-    val aggregates = xml.child.filter(_.label == "entity")
+    val aggregates = modelXml.child.filter(_.label == "entity")
       .filter(x => {
         val aggregatesTo = x.\@("aggregatesTo")
         ("" == aggregatesTo)
       })
     aggregates
-      .map(x => (x.\@("name"), generateShardingEntityCommand(x.\@("name"), getPrimaryKey(x, xml).fields, messageSrcPackage)))
+      .map(x => (x.\@("name"), generateShardingEntityCommand(x.\@("name"), getPrimaryKey(x, modelXml).fields, messageSrcPackage)))
       .foreach(x => save(s"${cToPascal(x._1)}Command.scala", x._2, messageSrcDir))
     aggregates
-      .map(x => (x.\@("name"), generateShardingEntityEvent(x.\@("name"), getPrimaryKey(x, xml).fields, messageSrcPackage)))
+      .map(x => (x.\@("name"), generateShardingEntityEvent(x.\@("name"), getPrimaryKey(x, modelXml).fields, messageSrcPackage)))
       .foreach(x => save(s"${cToPascal(x._1)}Event.scala", x._2, messageSrcDir))
 
     save(
       "messages.proto",
-      s"${generateProtoContent(xml, messageSrcPackage)}\n",
+      s"${generateProtoContent(modelXml, messageSrcPackage)}\n",
       messageProtoDir
     )
   }

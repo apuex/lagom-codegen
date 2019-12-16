@@ -3,7 +3,7 @@
  *****************************************************/
 import Dependencies._
 
-name         := "sales-message"
+name         := "sales-message-json"
 scalaVersion := scalaVersionNumber
 organization := artifactGroupName
 version      := artifactVersionNumber
@@ -11,8 +11,9 @@ maintainer   := artifactMaintainer
 
 libraryDependencies ++= {
   Seq(
-    sbRuntime,
-    scalapbRuntime         % "protobuf",
+    playEvents,
+    playJson,
+    scalapbJson4s,
     scalaTest              % Test
   )
 }

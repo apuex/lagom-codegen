@@ -18,11 +18,11 @@ class ActorGenerator(modelLoader: ModelLoader) {
   val eventsGen = ActorEventPatternsGenerator(modelLoader)
 
   def generate(): Unit = {
-    xml.child
+    modelXml.child
       .filter(x => x.label == "entity" && !(x.\@("transient") == "true"))
       .filter(x => "true" != x.\@("enum") && "" == x.\@("aggregatesTo") && journalTable != x.\@("name"))
       .sortWith((x, y) => depends(x, y))
-      .map(x => toAggregate(x, xml))
+      .map(x => toAggregate(x, modelXml))
       .map(generateActor)
       .foreach(x => save(
         x._1,
