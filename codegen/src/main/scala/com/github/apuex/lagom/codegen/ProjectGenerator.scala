@@ -139,16 +139,14 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |version      := artifactVersionNumber
          |maintainer   := artifactMaintainer
          |
+         |fork := true
+         |
          |libraryDependencies ++= {
          |  Seq(
          |    scalaXml,
          |    scalaTest              % Test
          |  )
          |}
-         |
-         |PB.targets in Compile := Seq(
-         |  scalapb.gen() -> (sourceManaged in Compile).value
-         |)
        """.stripMargin.trim
     )
     printWriter.close()
@@ -583,6 +581,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.2")
          |addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.5")
          |addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.20")
+         |addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
          |
          |addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.20")
          |libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.9.0-M5"
