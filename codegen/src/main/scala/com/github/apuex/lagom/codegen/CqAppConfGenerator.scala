@@ -4,13 +4,13 @@ import java.io.{File, PrintWriter}
 
 import com.github.apuex.springbootsolution.runtime.SymbolConverters._
 
-object CrudAppConfGenerator {
-  def apply(fileName: String): CrudAppConfGenerator = new CrudAppConfGenerator(ModelLoader(fileName))
+object CqAppConfGenerator {
+  def apply(fileName: String): CqAppConfGenerator = new CqAppConfGenerator(ModelLoader(fileName))
 
-  def apply(modelLoader: ModelLoader): CrudAppConfGenerator = new CrudAppConfGenerator(modelLoader)
+  def apply(modelLoader: ModelLoader): CqAppConfGenerator = new CqAppConfGenerator(modelLoader)
 }
 
-class CrudAppConfGenerator(modelLoader: ModelLoader) {
+class CqAppConfGenerator(modelLoader: ModelLoader) {
 
   import modelLoader._
 
@@ -22,8 +22,8 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
   }
 
   def generateAppConf(): Unit = {
-    new File(crudAppProjectConfDir).mkdirs()
-    val printWriter = new PrintWriter(s"${crudAppProjectConfDir}/application.conf", "utf-8")
+    new File(cqAppProjectConfDir).mkdirs()
+    val printWriter = new PrintWriter(s"${cqAppProjectConfDir}/application.conf", "utf-8")
     printWriter.println(
       s"""
          |#######################################################
@@ -35,11 +35,15 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |${cToShell(modelName)} {
          |  instant-event-publish-queue = instant-event-publish-queue
          |  request-timeout = 30 seconds
+         |  entity {
+         |    // default number of shards
+         |    number-of-shards = 100
+         |  }
          |}
          |
          |play {
          |  application {
-         |    loader = "${implSrcPackage}.${cToPascal(s"${modelName}_${crud}_${app}_${loader}")}"
+         |    loader = "${implSrcPackage}.${cToPascal(s"${modelName}_${cq}_${app}_${loader}")}"
          |  }
          |  http {
          |    secret {
@@ -95,6 +99,7 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |    }
          |  }
          |
+         |  // Uncomment in multi-node cluster deployments.
          |  remote {
          |    startup-timeout = 60 s
          |
@@ -110,6 +115,54 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |    seed-nodes = [
          |      "akka.tcp://${cToShell(modelName)}@${cToShell(modelName)}:2553",
          |    ]
+         |    sharding {
+         |      // The state of the coordinator and the state of
+         |      // Remembering Entities of the shards are persistent (durable) to survive failures.
+         |      // Distributed Data or Persistence can be used for the storage.
+         |      // Distributed Data is used by default.
+         |      state-store-mode = ddata           // Distributed Data
+         |      // state-store-mode = persistence  // Persistence
+         |    }
+         |  }
+         |
+         |  // leveldb persistence plugin for development environment.
+         |  // TODO: replace it with cassandra plugins for production unless you known what you are doing.
+         |  persistence {
+         |    journal {
+         |      plugin = "akka.persistence.journal.leveldb"
+         |      auto-start-journals = ["akka.persistence.journal.leveldb"]
+         |      leveldb {
+         |        dir = "${cToShell(modelName)}/journal"
+         |        native = on
+         |        fsync = off
+         |      }
+         |    }
+         |    snapshot-store {
+         |      plugin = "akka.persistence.snapshot-store.local"
+         |      auto-start-snapshot-stores = ["akka.persistence.snapshot-store.local"]
+         |      local {
+         |        dir = "${cToShell(modelName)}/snapshots"
+         |        native = on
+         |        fsync = off
+         |      }
+         |    }
+         |    query {
+         |      journal {
+         |        leveldb {
+         |          class = "akka.persistence.query.journal.leveldb.LeveldbReadJournalProvider"
+         |          write-plugin="akka.persistence.journal.leveldb"
+         |          dir = "${cToShell(modelName)}/journal"
+         |          native = on
+         |          // switch off fsync would not survive process crashes.
+         |          fsync = off
+         |          # Verify checksum on read.
+         |          checksum = on
+         |          // the max-buffer-size requires fine adjustments
+         |          // to balance between performance and system load.
+         |          max-buffer-size = 100000
+         |        }
+         |      }
+         |    }
          |  }
          |}
          |
@@ -123,6 +176,7 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |    password = password
          |    event {
          |      query-interval = 3 seconds
+         |      reschedule-duration = 300 seconds
          |    }
          |  }
          |}
@@ -133,8 +187,8 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
   }
 
   def generateLogConf(): Unit = {
-    new File(crudAppProjectConfDir).mkdirs()
-    val printWriter = new PrintWriter(s"${crudAppProjectConfDir}/logback.xml", "utf-8")
+    new File(cqAppProjectConfDir).mkdirs()
+    val printWriter = new PrintWriter(s"${cqAppProjectConfDir}/logback.xml", "utf-8")
     printWriter.println(
       s"""
          |<!--
@@ -147,29 +201,22 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |
          |  <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
          |
-         |  <!--
          |  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
          |    <file>$${application.home :-.}/logs/application.log</file>
          |    <encoder>
          |      <pattern>%date [%level] from %logger in %thread - %message%n%xException</pattern>
          |    </encoder>
          |  </appender>
-         |  -->
          |
          |  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
          |    <encoder>
-         |      <!--
          |      <pattern>%coloredLevel %logger{15} - %message%n%xException{10}</pattern>
-         |      -->
-         |      <pattern>%date [%level] from %logger in %thread - %message%n%xException</pattern>
          |    </encoder>
          |  </appender>
          |
-         |  <!--
          |  <appender name="ASYNCFILE" class="ch.qos.logback.classic.AsyncAppender">
          |    <appender-ref ref="FILE" />
          |  </appender>
-         |  -->
          |
          |  <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
          |    <appender-ref ref="STDOUT" />
@@ -182,9 +229,7 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
          |
          |  <root level="INFO">
          |    <appender-ref ref="ASYNCSTDOUT" />
-         |    <!--
          |    <appender-ref ref="ASYNCFILE" />
-         |    -->
          |  </root>
          |
          |</configuration>
@@ -194,8 +239,8 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
   }
 
   def generateMessageConf(): Unit = {
-    new File(crudAppProjectConfDir).mkdirs()
-    val printWriter = new PrintWriter(s"${crudAppProjectConfDir}/messages", "utf-8")
+    new File(cqAppProjectConfDir).mkdirs()
+    val printWriter = new PrintWriter(s"${cqAppProjectConfDir}/messages", "utf-8")
     printWriter.println(
       s"""
          |#######################################################
@@ -209,8 +254,8 @@ class CrudAppConfGenerator(modelLoader: ModelLoader) {
   }
 
   def generateRoutesConf(): Unit = {
-    new File(crudAppProjectConfDir).mkdirs()
-    val printWriter = new PrintWriter(s"${crudAppProjectConfDir}/routes", "utf-8")
+    new File(cqAppProjectConfDir).mkdirs()
+    val printWriter = new PrintWriter(s"${cqAppProjectConfDir}/routes", "utf-8")
     printWriter.println(
       s"""
          |#######################################################

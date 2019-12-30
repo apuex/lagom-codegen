@@ -28,6 +28,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     implProjectSettings()
     crudImplProjectSettings()
     appProjectSettings()
+    cqAppProjectSettings()
     crudAppProjectSettings()
   }
 
@@ -424,6 +425,63 @@ class ProjectGenerator(modelLoader: ModelLoader) {
     printWriter.close()
   }
 
+  def cqAppProjectSettings(): Unit = {
+    new File(cqAppProjectDir).mkdirs()
+    val printWriter = new PrintWriter(s"${cqAppProjectDir}/build.sbt", "utf-8")
+    printWriter.println(
+      s"""
+         |/*****************************************************
+         | ** This file is 100% ***GENERATED***, DO NOT EDIT! **
+         | *****************************************************/
+         |import Dependencies._
+         |import sbtassembly.MergeStrategy
+         |
+         |name         := "${cqAppProjectName}"
+         |scalaVersion := scalaVersionNumber
+         |organization := artifactGroupName
+         |version      := artifactVersionNumber
+         |maintainer   := artifactMaintainer
+         |
+         |libraryDependencies ++= {
+         |  Seq(
+         |    logback,
+         |    leveldbjni,
+         |    scalaTest              % Test
+         |  )
+         |}
+         |
+         |assemblyJarName in assembly := s"$${name.value}-assembly-$${version.value}.jar"
+         |mainClass in assembly := Some("play.core.server.ProdServerStart")
+         |fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)
+         |
+         |assemblyExcludedJars in assembly := {
+         |  val cp = (fullClasspath in assembly).value
+         |  cp.filter( x =>
+         |    x.data.getName.contains("javax.activation-api")
+         |      || x.data.getName.contains("lagom-logback")
+         |  )
+         |}
+         |
+         |assemblyMergeStrategy in assembly := {
+         |  case manifest if manifest.contains("MANIFEST.MF") =>
+         |    // We don't need manifest files since sbt-assembly will create
+         |    // one with the given settings
+         |    MergeStrategy.discard
+         |  case PathList("META-INF", "io.netty.versions.properties") =>
+         |    MergeStrategy.discard
+         |  case referenceOverrides if referenceOverrides.contains("reference-overrides.conf") =>
+         |    // Keep the content for all reference-overrides.conf files
+         |    MergeStrategy.concat
+         |  case x =>
+         |    // For all the other files, use the default sbt-assembly merge strategy
+         |    val oldStrategy = (assemblyMergeStrategy in assembly).value
+         |    oldStrategy(x)
+         |}
+       """.stripMargin.trim
+    )
+    printWriter.close()
+  }
+
   def crudAppProjectSettings(): Unit = {
     new File(crudAppProjectDir).mkdirs()
     val printWriter = new PrintWriter(s"${crudAppProjectDir}/build.sbt", "utf-8")
@@ -632,6 +690,7 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |    `${cluster}`,
          |    `${impl}`,
          |    `${app}`,
+         |    `${cq}-${app}`,
          |    `${dao}`,
          |    `${dao}-${mysql}`,
          |    `${crud}-${impl}`,
@@ -664,6 +723,9 @@ class ProjectGenerator(modelLoader: ModelLoader) {
          |  .dependsOn(`${api}`)
          |  .dependsOn(`${dao}-${mysql}`)
          |lazy val `${app}` = (project in file("${app}"))
+         |  .dependsOn(`${impl}`)
+         |  .enablePlugins(PlayScala)
+         |lazy val `${cq}-${app}` = (project in file("${cq}-${app}"))
          |  .dependsOn(`${impl}`)
          |  .enablePlugins(PlayScala)
          |lazy val `${crud}-${app}` = (project in file("${crud}-${app}"))

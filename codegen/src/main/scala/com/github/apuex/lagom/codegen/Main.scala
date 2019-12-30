@@ -10,6 +10,7 @@ object Main extends App {
     val modelLoader = ModelLoader(fileName)
     args(0) match {
       case "generate-app-conf" => AppConfGenerator(modelLoader).generate()
+      case "generate-cq-app-conf" => CqAppConfGenerator(modelLoader).generate()
       case "generate-crud-app-conf" => CrudAppConfGenerator(modelLoader).generate()
       case "generate-app-loader" => AppLoaderGenerator(modelLoader).generate()
       case "generate-model-test" => ModelTestGenerator(modelLoader).generate()
@@ -49,6 +50,7 @@ object Main extends App {
 
   def generateBackend(modelLoader: ModelLoader): Unit = {
     AppConfGenerator(modelLoader).generate()
+    CqAppConfGenerator(modelLoader).generate()
     CrudAppConfGenerator(modelLoader).generate()
     AppLoaderGenerator(modelLoader).generate()
     ModelTestGenerator(modelLoader).generate()

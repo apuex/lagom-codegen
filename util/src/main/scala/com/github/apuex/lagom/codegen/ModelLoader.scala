@@ -407,6 +407,7 @@ class ModelLoader(val modelXml: Node, val modelFileName: String) {
   val crud = "crud"
   val impl = "impl"
   val app: String = "app"
+  val cq: String = "cq"
   val frontend = "frontend"
   val loader: String = "loader"
   val modelName = modelXml.\@("name")
@@ -465,6 +466,9 @@ class ModelLoader(val modelXml: Node, val modelFileName: String) {
   val appProjectName = s"${cToShell(modelName)}-${cToShell(app)}"
   val appProjectDir = s"${rootProjectDir}/${app}"
   val appProjectConfDir = s"${appProjectDir}/conf"
+  val cqAppProjectName = s"${cToShell(modelName)}-${cToShell(cq)}-${cToShell(app)}"
+  val cqAppProjectDir = s"${rootProjectDir}/${cq}-${app}"
+  val cqAppProjectConfDir = s"${cqAppProjectDir}/conf"
   val crudAppProjectName = s"${cToShell(modelName)}-${cToShell(crud)}-${cToShell(app)}"
   val crudAppProjectDir = s"${rootProjectDir}/${crud}-${app}"
   val crudAppProjectConfDir = s"${crudAppProjectDir}/conf"
