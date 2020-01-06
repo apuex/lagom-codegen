@@ -119,9 +119,9 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |                daoModule.eventJournalDao.createEventJournal(
        |                  ee.offset match {
        |                    case Sequence(x) =>
-       |                      CreateEventJournalEvent(evt.userId, x, evt.entityId, x.toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+       |                      CreateEventJournalEvent(evt.userId, x, evt.entityId, x.toString, evt.getClass.getName, evt.asInstanceOf[GeneratedMessage].toByteString)
        |                    case TimeBasedUUID(x) =>
-       |                      CreateEventJournalEvent(evt.userId, 0L, evt.entityId, x.toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
+       |                      CreateEventJournalEvent(evt.userId, x.timestamp(), evt.entityId, x.toString, evt.getClass.getName, evt.asInstanceOf[GeneratedMessage].toByteString)
        |                  })
        |                queryEventApply.dispatch(evt)
        |              case x: ValueObject =>
