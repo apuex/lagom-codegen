@@ -381,6 +381,13 @@ object ModelLoader {
       .getOrElse("")
   }
 
+  def substituteConstructorParams(fields: Seq[Field], alias: String => String): String = {
+    fields
+      .map(x => s"${alias(x.name)}${cToCamel(x.name)}")
+      .reduceOption((l, r) => s"${l}, ${r}")
+      .getOrElse("")
+  }
+
   def save(fileName: String, content: String, dir: String): Unit = {
     new File(dir).mkdirs()
     val pw = new PrintWriter(new File(dir, fileName), "utf-8")

@@ -516,6 +516,15 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       .getOrElse("")
   }
 
+  /**
+    * Define cascaded create/update.
+    *
+    * @param operation create/update
+    * @param name      parent name
+    * @param fields    the fields of child elements
+    * @param alias     parent instance name/alias.
+    * @return
+    */
   def defCascadedUpdates(operation: String, name: String, fields: Seq[Field], alias: String): String = {
     val t = if ("" == alias) "evt" else s"${alias}"
     fields
@@ -524,12 +533,18 @@ class DaoMysqlImplGenerator(modelLoader: ModelLoader) {
       if (x._type == "array") {
         val entity = findEntityByAggregateName(x.valueType, modelXml)
         val primaryKey = getPrimaryKey(entity, modelXml)
+        val foreignKeyFields = getForeignKeys(entity)
+          .filter(_.refEntity == name)
+          .flatMap(_.fields)
+          .map(x => (x.name, "evt."))
+          .toMap
         val cascadedPersistentFields = shuffleFields(getFields(entity, modelXml), primaryKey.fields)
           .filter(x => !x.transient && (isJdbcType(x._type) || isEnum(x._type)))
+
         if(isEntity(x.valueType))
         s"""
            |${t}.${cToCamel(x.name)}
-           |  .map(x => ${cToPascal(operation)}${cToPascal(x.valueType)}Event(${substituteMethodParams(Seq(userField), t)}, ${substituteMethodParams(cascadedPersistentFields, "x")}))
+           |  .map(x => ${cToPascal(operation)}${cToPascal(x.valueType)}Event(${substituteMethodParams(Seq(userField), t)}, ${substituteConstructorParams(cascadedPersistentFields, (x) => foreignKeyFields.getOrElse(x, "x."))}))
            |  .foreach(x => ${cToCamel(entity.\@("name"))}Dao.${operation}${cToPascal(x.valueType)}(x))
            |""".stripMargin.trim
         else

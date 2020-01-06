@@ -93,7 +93,11 @@ class AppLoaderGenerator(modelLoader: ModelLoader) {
        |
        |    private def subscribeJournalEvents(): Unit = {
        |      val offset: Option[String] = db.withTransaction { implicit c =>
-       |        Some(daoModule.${cToCamel(journalTable)}Dao.selectCurrentOffset().offsetTime)
+       |        try {
+       |          Some(daoModule.${cToCamel(journalTable)}Dao.selectCurrentOffset().offsetTime)
+       |        } catch {
+       |          case _: Throwable => None
+       |        }
        |      }
        |
        |      if (logger.isInfoEnabled) {
