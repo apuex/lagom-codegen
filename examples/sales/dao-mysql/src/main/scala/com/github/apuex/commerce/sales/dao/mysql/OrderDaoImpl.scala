@@ -57,7 +57,7 @@ class OrderDaoImpl(orderItemDao: OrderItemDao) extends OrderDao {
         "orderPaymentType" -> toValue(evt.orderPaymentType)
       ).executeUpdate()
       evt.orderLines
-        .map(x => CreateOrderItemEvent(evt.userId, x.orderId, x.productId, x.productName, x.itemUnit, x.unitPrice, x.orderQuantity))
+        .map(x => CreateOrderItemEvent(evt.userId, evt.orderId, x.productId, x.productName, x.itemUnit, x.unitPrice, x.orderQuantity))
         .foreach(x => orderItemDao.createOrderItem(x))
       rowsAffected1
     } else rowsAffected0

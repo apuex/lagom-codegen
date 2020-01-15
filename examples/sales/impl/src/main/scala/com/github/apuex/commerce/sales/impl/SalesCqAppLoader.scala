@@ -13,7 +13,7 @@ import akka.persistence.query._
 import akka.stream.ActorMaterializer
 import com.github.apuex.commerce.sales._
 import com.github.apuex.commerce.sales.dao.mysql._
-import com.github.apuex.commerce.sales.impl.SalesAppLoader._
+import com.github.apuex.commerce.sales.impl.SalesCqAppLoader._
 import com.github.apuex.commerce.sales.sharding._
 import com.lightbend.lagom.scaladsl.client._
 import com.lightbend.lagom.scaladsl.devmode._
@@ -26,26 +26,26 @@ import scalapb.GeneratedMessage
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-class SalesAppLoader extends LagomApplicationLoader {
+class SalesCqAppLoader extends LagomApplicationLoader {
 
   override def load(context: LagomApplicationContext): LagomApplication =
-    new SalesApp(context) with ConfigurationServiceLocatorComponents
+    new SalesCqApp(context) with ConfigurationServiceLocatorComponents
 
   override def loadDevMode(context: LagomApplicationContext): LagomApplication =
-    new SalesApp(context) with LagomDevModeComponents
+    new SalesCqApp(context) with LagomDevModeComponents
 
   override def describeService = Some(readDescriptor[SalesService])
 }
 
-object SalesAppLoader {
+object SalesCqAppLoader {
 
-  abstract class SalesApp(context: LagomApplicationContext)
+  abstract class SalesCqApp(context: LagomApplicationContext)
     extends LagomApplication(context)
       with AhcWSComponents
       with DBComponents
       with HikariCPComponents {
 
-    val logger = Logger(classOf[SalesAppLoader])
+    val logger = Logger(classOf[SalesCqAppLoader])
 
     // Bind the service that this server provides
     lazy val db = dbApi.database("sales-db")
@@ -66,11 +66,7 @@ object SalesAppLoader {
 
     private def subscribeJournalEvents(): Unit = {
       val offset: Option[String] = db.withTransaction { implicit c =>
-        try {
-          Some(daoModule.eventJournalDao.selectCurrentOffset().offsetTime)
-        } catch {
-          case _: Throwable => None
-        }
+        Some(daoModule.eventJournalDao.selectCurrentOffset().offsetTime)
       }
 
       if (logger.isInfoEnabled) {
@@ -96,9 +92,9 @@ object SalesAppLoader {
                 daoModule.eventJournalDao.createEventJournal(
                   ee.offset match {
                     case Sequence(x) =>
-                      CreateEventJournalEvent(evt.userId, x, evt.entityId, x.toString, evt.getClass.getName, evt.asInstanceOf[GeneratedMessage].toByteString)
+                      CreateEventJournalEvent(evt.userId, x, evt.entityId, x.toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
                     case TimeBasedUUID(x) =>
-                      CreateEventJournalEvent(evt.userId, 0L, evt.entityId, x.toString, evt.getClass.getName, evt.asInstanceOf[GeneratedMessage].toByteString)
+                      CreateEventJournalEvent(evt.userId, 0L, evt.entityId, x.toString, x.getClass.getName, x.asInstanceOf[GeneratedMessage].toByteString)
                   })
                 queryEventApply.dispatch(evt)
               case x: ValueObject =>

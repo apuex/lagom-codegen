@@ -20,6 +20,7 @@ lazy val root = (project in file("."))
     `cluster`,
     `impl`,
     `app`,
+    `cq-app`,
     `dao`,
     `dao-mysql`,
     `crud-impl`,
@@ -52,6 +53,9 @@ lazy val `crud-impl` = (project in file("crud-impl"))
   .dependsOn(`api`)
   .dependsOn(`dao-mysql`)
 lazy val `app` = (project in file("app"))
+  .dependsOn(`impl`)
+  .enablePlugins(PlayScala)
+lazy val `cq-app` = (project in file("cq-app"))
   .dependsOn(`impl`)
   .enablePlugins(PlayScala)
 lazy val `crud-app` = (project in file("crud-app"))

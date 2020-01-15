@@ -9,13 +9,11 @@ organization := artifactGroupName
 version      := artifactVersionNumber
 maintainer   := artifactMaintainer
 
+fork := true
+
 libraryDependencies ++= {
   Seq(
     scalaXml,
     scalaTest              % Test
   )
 }
-
-PB.targets in Compile := Seq(
-  scalapb.gen() -> (sourceManaged in Compile).value
-)
