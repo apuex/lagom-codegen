@@ -71,7 +71,8 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
                 false
               ),
               false,
-              ""
+              "",
+              false
             ),
             Message(
               "end_alarm",
@@ -90,7 +91,8 @@ class ModelLoaderSpec extends FlatSpec with Matchers {
                 false
               ),
               false,
-              ""
+              "",
+              false
             )
           ),
           PrimaryKey(
